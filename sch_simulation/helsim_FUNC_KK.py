@@ -6,11 +6,78 @@ import warnings
 import copy
 import random
 import pkg_resources
+from dataclasses import dataclass
 warnings.filterwarnings('ignore')
 
 np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
+from numpy import ndarray
+
+@dataclass
+class Parameters:
+    numReps: int
+    maxTime: float #nYears
+    N: int #nHosts
+    R0: float # Basic reproductive number
+    lambda_egg: float # Eggs per gram
+    v2: float # Fraction of eggs produced when vaccinated.
+    gamma: float # Exponential density dependence of parasite adult stage
+    k: float # Shape parameter of assumed negative binomial distribution of worms amongst host
+    sigma: float # Worm death rate
+    v1: float # impact of vaccine on worm death rate KK. Assume worm death rate is v1*sigma.
+    LDecayRate: float # ReservoirDecayRate
+    DrugEfficacy: float
+    DrugEfficacy1: float
+    DrugEfficacy2: float
+    contactAgeBreaks: ndarray # 1-D array - Contact age group breaks (minus sign necessary to include zero age)
+    betaValues: ndarray # 1-D array - Relative contact rates
+    v3: ndarray # 1-D array, v3 beta values: impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK 
+    rho: ndarray # 1-D array, - Rho, contribution to the reservoir by contact age group. 
+    treatmentAgeBreaks: ndarray # 1-D array, treatmentBreaks Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
+    VaccTreatmentBreaks: ndarray # 1-D array, age range of vaccinated group.  ## KK: these are the lower bounds of ranges with width 1. THEY MUST BE > 1 YEAR APART!!
+    coverage1: ndarray
+    coverage2: ndarray
+    VaccCoverage: ndarray # Vaccine coverage of the age groups KK
+    #VaccEfficacy
+    treatInterval1: int # interval between treatments in years. 
+    treatInterval2: int # interval between treatments in years. 
+    treatStart1: float
+    treatStart2: float
+    nRounds1: int
+    nRounds2: int
+    chemoTimings1: ndarray # 1-D array
+    chemoTimings2: ndarray # 1-D array
+    VaccineTimings: ndarray # 1-D array
+    outTimings: ndarray # 1-D array, outputEvents
+    propNeverCompliers: float # neverTreated
+    highBurdenBreaks: ndarray # 1-D array Three categories here
+    highBurdenValues: ndarray # 1-D array
+    VaccDecayRate: ndarray #vacc decay rate. rate of vaccine decay = 1/duration of vaccine   A vector with value 0 in state 1 and the vacc decay rate for state 2. KK.
+    VaccTreatStart: float ##Vaccine administration year start KK 
+    nRoundsVacc: int ##number of vaccine rounds KK 
+    treatIntervalVacc: float #KK
+    heavyThreshold: int # The threshold for heavy burden of infection, egg count > heavyThreshold
+    mediumThreshold: int # The threshold of medium burden of infection, mediumThreshold <= egg count <= heavyThreshold
+    sampleSizeOne: int
+    sampleSizeTwo: int
+    nSamples: int
+    minSurveyAge: float
+    maxSurveyAge: float
+    demogType: str # demogName: subset of demography parameters to be extracted
+    reproFuncName: str # name of function for reproduction (a string).  [Deterministic] ## epgPerPerson   epgFertility	epgMonog
+    z: float # np.exp(-'gamma'),
+    k_epg: float
+    species: str
+    timeToFirstSurvey: float
+    timeToNextSurvey: float
+    surveyThreshold: float
+    Unfertilized: bool
+    hostMuData: ndarray
+    muBreaks: ndarray
+    SR: bool
+    psi: float = 1.0
+
 
 def readParam(fileName):
 
@@ -432,7 +499,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
     
     VaccineTimings = np.array([parameters['VaccTreatStart'] + x * parameters['treatIntervalVacc']
     for x in range(np.int(parameters['nRoundsVacc']))])
-    
+
     params = {'numReps': np.int(parameters['repNum']),
               'maxTime': parameters['nYears'],
               'N': np.int(parameters['nHosts']),
@@ -484,7 +551,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'demogType': demogName,
               'hostMuData': demographies[demogName + '_hostMuData'],
               'muBreaks': np.append(0, demographies[demogName + '_upperBoundData']),
-              'SR': [True if parameters['StochSR'] == 'TRUE' else False][0],
+              'SR': parameters['StochSR'] == 'TRUE',
               'reproFuncName': parameters['reproFuncName'],
               'z': np.exp(-parameters['gamma']),
               'psi': 1.0,
