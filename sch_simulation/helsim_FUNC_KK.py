@@ -7,12 +7,19 @@ import copy
 import random
 import pkg_resources
 from dataclasses import dataclass
+from scipy.special import gamma
 warnings.filterwarnings('ignore')
 
 np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
 from numpy import ndarray
+from typing import Callable, List, Tuple, Optional
+
+@dataclass
+class MonogParameters:
+    c_k: float
+    cosTheta: ndarray
 
 @dataclass
 class Parameters:
@@ -31,7 +38,7 @@ class Parameters:
     DrugEfficacy1: float
     DrugEfficacy2: float
     contactAgeBreaks: ndarray # 1-D array - Contact age group breaks (minus sign necessary to include zero age)
-    betaValues: ndarray # 1-D array - Relative contact rates
+    contactRates: ndarray # 1-D array - BetaValues: Relative contact rates
     v3: ndarray # 1-D array, v3 beta values: impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK 
     rho: ndarray # 1-D array, - Rho, contribution to the reservoir by contact age group. 
     treatmentAgeBreaks: ndarray # 1-D array, treatmentBreaks Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
@@ -77,7 +84,20 @@ class Parameters:
     muBreaks: ndarray
     SR: bool
     psi: float = 1.0
+    reproFunc: Optional[Callable[[np.ndarray, "Parameters"], np.ndarray]] = None
+    maxHostAge: Optional[ndarray] = None
+    muAges: Optional[ndarray] = None
+    hostMu: Optional[float] = None
+    monogParams: Optional[MonogParameters] = None
 
+@dataclass
+class Coverage:
+    mda: List[Tuple[float, float, ndarray]]
+    MDA_ages: ndarray # 2-D array lower/upper, age_num
+    MDA_coverage: ndarray # 2-D array years/coverage
+    drug1Eff: float
+    drug2Eff: float
+    MDA_age1: float
 
 def readParam(fileName):
 
@@ -454,9 +474,10 @@ def overWritePostMDA(params,  nextMDAAge, nextChemoIndex):
 
 
 def readCoverageFile(coverageTextFileStorageName, params):
+
     coverage = readCovFile(coverageTextFileStorageName)
-    params['nMDAAges'] = np.int(coverage['nMDAAges'])
-    params['nVaccAges'] = np.int(coverage['nVaccAges'])
+    params['nMDAAges'] = int(coverage['nMDAAges'])
+    params['nVaccAges'] = int(coverage['nVaccAges'])
     for i in range(1, params['nMDAAges'] + 1):
         params['MDA_age'+str(i)] = coverage['MDA_age'+ str(i)]
         params['MDA_Years'+str(i)] = coverage['MDA_Years'+ str(i)] - 2018
@@ -471,7 +492,7 @@ def readCoverageFile(coverageTextFileStorageName, params):
     params['drug2Split'] = np.array(coverage['drug2Split'])
     return params
 
-def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default'):
+def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default') -> Parameters:
 
     '''
     This function organizes the model parameters and
@@ -492,82 +513,103 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
 
     demographies = readParam(demogFileName)
     parameters = readParam(paramFileName)
-    chemoTimings1 = np.array([float(parameters['treatStart1'] + x * parameters['treatInterval1']) for x in range(np.int(parameters['nRounds1']))])
+    chemoTimings1 = np.array([float(parameters['treatStart1'] + x * parameters['treatInterval1']) for x in range(int(parameters['nRounds1']))])
 
     chemoTimings2 = np.array([parameters['treatStart2'] + x * parameters['treatInterval2']
-    for x in range(np.int(parameters['nRounds2']))])
+    for x in range(int(parameters['nRounds2']))])
     
     VaccineTimings = np.array([parameters['VaccTreatStart'] + x * parameters['treatIntervalVacc']
-    for x in range(np.int(parameters['nRoundsVacc']))])
+    for x in range(int(parameters['nRoundsVacc']))])
 
-    params = {'numReps': np.int(parameters['repNum']),
-              'maxTime': parameters['nYears'],
-              'N': np.int(parameters['nHosts']),
-              'R0': parameters['R0'],
-              'lambda': parameters['lambda'],
-              'v2': parameters['v2lambda'], # vacc par
-              'gamma': parameters['gamma'],
-              'k': parameters['k'],
-              'sigma': parameters['sigma'],
-              'v1':parameters['v1sigma'], # vacc par
-              'LDecayRate': parameters['ReservoirDecayRate'],
-              'DrugEfficacy': parameters['drugEff'],
-              'DrugEfficacy1': parameters['drugEff1'],
-              'DrugEfficacy2': parameters['drugEff2'],
-              'contactAgeBreaks': parameters['contactAgeBreaks'],
-              'contactRates': parameters['betaValues'],
-              'v3': parameters['v3betaValues'],  # vacc par
-              'rho': parameters['rhoValues'],
-              'treatmentAgeBreaks': parameters['treatmentBreaks'],
-              'VaccTreatmentBreaks': parameters['VaccTreatmentBreaks'], # vacc par
-              'coverage1': parameters['coverage1'],
-              'coverage2': parameters['coverage2'],
-              'VaccCoverage':parameters['VaccCoverage'], #vacc par
-              #'VaccEfficacy':parameters['vaccEff'], #vacc par
-              'treatInterval1': parameters['treatInterval1'],
-              'treatInterval2': parameters['treatInterval2'],
-              'treatStart1': parameters['treatStart1'],
-              'treatStart2': parameters['treatStart2'],
-              'nRounds1': np.int(parameters['nRounds1']),
-              'nRounds2': np.int(parameters['nRounds2']),
-              'chemoTimings1': chemoTimings1,
-              'chemoTimings2': chemoTimings2,
-              'VaccineTimings' : VaccineTimings,
-              'outTimings': parameters['outputEvents'],
-              'propNeverCompliers': parameters['neverTreated'],
-              'highBurdenBreaks': parameters['highBurdenBreaks'],
-              'highBurdenValues': parameters['highBurdenValues'],
-              'VaccDecayRate': parameters['VaccDecayRate'],
-              'VaccTreatStart':parameters['VaccTreatStart'],
-              'nRoundsVacc':parameters['nRoundsVacc'],
-              'treatIntervalVacc':parameters['treatIntervalVacc'],
-              'heavyThreshold':parameters['heavyThreshold'],
-              'mediumThreshold':parameters['mediumThreshold'],
-              'sampleSizeOne': np.int(parameters['sampleSizeOne']),
-              'sampleSizeTwo': np.int(parameters['sampleSizeTwo']),
-              'nSamples': np.int(parameters['nSamples']),
-              'minSurveyAge': parameters['minSurveyAge'],
-              'maxSurveyAge': parameters['maxSurveyAge'],
-              'demogType': demogName,
-              'hostMuData': demographies[demogName + '_hostMuData'],
-              'muBreaks': np.append(0, demographies[demogName + '_upperBoundData']),
-              'SR': parameters['StochSR'] == 'TRUE',
-              'reproFuncName': parameters['reproFuncName'],
-              'z': np.exp(-parameters['gamma']),
-              'psi': 1.0,
-              'k_epg': parameters['k_epg'],
-              'species' : parameters['species'],
-              'timeToFirstSurvey' : parameters['timeToFirstSurvey'],
-              'timeToNextSurvey' : parameters['timeToNextSurvey'],
-              'surveyThreshold' : parameters['surveyThreshold'],
-              'Unfertilized' : parameters['unfertilized']}
+    params = Parameters(
+        numReps = int(parameters['repNum']),
+        maxTime = parameters['nYears'],
+        N = int(parameters['nHosts']),
+        R0 = parameters['R0'],
+        lambda_egg = parameters['lambda'],
+        v2 = parameters['v2lambda'],
+        gamma = parameters['gamma'],
+        k = parameters['k'],
+        sigma = parameters['sigma'],
+        v1 = parameters['v1sigma'],
+        LDecayRate = parameters['ReservoirDecayRate'],
+        DrugEfficacy = parameters['drugEff'],
+        DrugEfficacy1 = parameters['drugEff1'],
+        DrugEfficacy2 = parameters['drugEff2'],
+        contactAgeBreaks = parameters['contactAgeBreaks'],
+        contactRates = parameters['betaValues'],
+        v3 = parameters['v3betaValues'],
+        rho = parameters['rhoValues'],
+        treatmentAgeBreaks = parameters['treatmentBreaks'],
+        VaccTreatmentBreaks = parameters['VaccTreatmentBreaks'],
+        coverage1 = parameters['coverage1'],
+        coverage2 = parameters['coverage2'],
+        VaccCoverage = parameters['VaccCoverage'],
+        treatInterval1 = parameters['treatInterval1'],
+        treatInterval2 = parameters['treatInterval2'],
+        treatStart1 = parameters['treatStart1'],
+        treatStart2 = parameters['treatStart2'],
+        nRounds1 = int(parameters['nRounds1']),
+        nRounds2 = int(parameters['nRounds2']),
+        chemoTimings1 = chemoTimings1,
+        chemoTimings2 = chemoTimings2,
+        VaccineTimings = VaccineTimings,
+        outTimings = parameters['outputEvents'],
+        propNeverCompliers = parameters['neverTreated'],
+        highBurdenBreaks = parameters['highBurdenBreaks'],
+        highBurdenValues = parameters['highBurdenValues'],
+        VaccDecayRate = parameters['VaccDecayRate'],
+        VaccTreatStart = parameters['VaccTreatStart'],
+        nRoundsVacc = parameters['nRoundsVacc'],
+        treatIntervalVacc = parameters['treatIntervalVacc'],
+        heavyThreshold = parameters['heavyThreshold'],
+        mediumThreshold = parameters['mediumThreshold'],
+        sampleSizeOne = int(parameters['sampleSizeOne']),
+        sampleSizeTwo = int(parameters['sampleSizeTwo']),
+        nSamples = int(parameters['nSamples']),
+        minSurveyAge = parameters['minSurveyAge'],
+        maxSurveyAge = parameters['maxSurveyAge'],
+        demogType = demogName,
+        hostMuData = demographies[demogName + '_hostMuData'],
+        muBreaks = np.append(0, demographies[demogName + '_upperBoundData']),
+        SR = parameters['StochSR'] == 'TRUE',
+        reproFuncName = parameters['reproFuncName'],
+        z = np.exp(-parameters['gamma']),
+        k_epg = parameters['k_epg'],
+        species = parameters['species'],
+        timeToFirstSurvey = parameters['timeToFirstSurvey'],
+        timeToNextSurvey = parameters['timeToNextSurvey'],
+        surveyThreshold = parameters['surveyThreshold'],
+        Unfertilized = parameters['unfertilized']
+    )
+
 
     return params
 
 
+def monogFertilityConfig(params: Parameters, N=30) -> MonogParameters:
 
+    '''
+    This function calculates the monogamous fertility
+    function parameters.
 
-def configure(params):
+    Parameters
+    ----------
+    params: dict
+        dictionary containing the parameter names and values;
+
+    N: int
+        resolution for the numerical integration
+    '''
+    p_k = float(params.k)
+    c_k = gamma(p_k + 0.5) * (2 * p_k / np.pi) ** 0.5 / gamma(p_k + 1)
+    cos_theta = np.cos(np.linspace(start=0, stop=2 * np.pi, num=N + 1)[:N])
+    return MonogParameters(
+        c_k=c_k,
+        cosTheta=cos_theta
+    )
+
+def configure(params: Parameters) -> Parameters:
 
     '''
     This function defines a number of additional parameters.
@@ -585,38 +627,41 @@ def configure(params):
     dT = 0.1
 
     # definition of the reproduction function
-    params['reproFunc'] = getattr(ParallelFuncs, params['reproFuncName'])
+    if params.reproFuncName == 'epgMonog':
+        params.monogParams = monogFertilityConfig(params)
+    else:
+        params.reproFunc = ParallelFuncs.mapper[params.reproFuncName]
 
     # max age cutoff point
-    params['maxHostAge'] = np.min(np.array([np.max(params['muBreaks']), np.max(params['contactAgeBreaks'])]))
+    params.maxHostAge = np.min([np.max(params.muBreaks), np.max(params.contactAgeBreaks)]))
 
     # full range of ages
-    params['muAges'] = np.arange(start=0, stop=np.max(params['muBreaks']), step=dT) + 0.5 * dT
+    params.muAges = np.arange(start=0, stop=np.max(params.muBreaks), step=dT) + 0.5 * dT
     
-    inner = np.digitize(params['muAges'], params['muBreaks'])-1
-    params['hostMu'] = params['hostMuData'][inner]
+    inner = np.digitize(params.muAges, params.muBreaks)-1
+    params.hostMu = params.hostMuData[inner]
 
     # probability of surviving
-    params['hostSurvivalCurve'] = np.exp(-np.cumsum(params['hostMu']) * dT)
+    params.hostSurvivalCurve = np.exp(-np.cumsum(params.hostMu) * dT)
 
     # the index for the last age group before the cutoff in this discretization
-    maxAgeIndex = np.argmax(np.array([params['muAges'] > params['maxHostAge']])) - 1
+    maxAgeIndex = np.argmax([params.muAges > params.maxHostAge]) - 1
 
     # cumulative probability of dying
-    params['hostAgeCumulDistr'] = np.append(np.cumsum(dT * params['hostMu'] * np.append(1,
-    params['hostSurvivalCurve'][:-1]))[:maxAgeIndex], 1)
+    params.hostAgeCumulDistr = np.append(np.cumsum(dT * params.hostMu * np.append(1,
+    params.hostSurvivalCurve[:-1]))[:maxAgeIndex], 1)
 
-    params['contactAgeGroupBreaks'] = np.append(params['contactAgeBreaks'][:-1], params['maxHostAge'])
-    params['treatmentAgeGroupBreaks'] = np.append(params['treatmentAgeBreaks'][:-1], params['maxHostAge'] + dT)
+    params.contactAgeGroupBreaks = np.append(params.contactAgeBreaks[:-1], params.maxHostAge)
+    params.treatmentAgeGroupBreaks = np.append(params.treatmentAgeBreaks[:-1], params.maxHostAge + dT)
     
-    constructedVaccBreaks = np.sort(np.append(params['VaccTreatmentBreaks'], params['VaccTreatmentBreaks'] + 1))
+    constructedVaccBreaks = np.sort(np.append(params.VaccTreatmentBreaks, params.VaccTreatmentBreaks + 1))
     a = np.append(-dT, constructedVaccBreaks)
-    params['VaccTreatmentAgeGroupBreaks'] = np.append(a, params['maxHostAge'] + dT)
-    if params['outTimings'][-1] != params['maxTime']:
-        params['outTimings'] = np.append(params['outTimings'], params['maxTime'])
+    params.VaccTreatmentAgeGroupBreaks = np.append(a, params.maxHostAge + dT)
 
-    if params['reproFuncName'] == 'epgMonog':
-        params['monogParams'] = ParallelFuncs.monogFertilityConfig(params)
+    if params.outTimings[-1] != params.maxTime:
+        params.outTimings = np.append(params.outTimings, params.maxTime)
+
+
 
     return params
 
@@ -691,7 +736,7 @@ def setupSD(params):
 
 
 
-def calcRates(params, SD):
+def calcRates(params: Parameters, SD):
 
     '''
     This function calculates the event rates; the events are
@@ -707,9 +752,9 @@ def calcRates(params, SD):
     array of event rates;
     '''
 
-    hostInfRates = SD['freeLiving'] * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
-    deathRate = params['sigma'] * np.sum(SD['worms']['total'] * params['v1'][SD['sv']])
-    hostVaccDecayRates = params['VaccDecayRate'][SD['sv']]
+    hostInfRates = SD['freeLiving'] * SD['si'] * params.contactRates[SD['contactAgeGroupIndices']]
+    deathRate = params.sigma * np.sum(SD['worms']['total'] * params.v1[SD['sv']])
+    hostVaccDecayRates = params.VaccDecayRate[SD['sv']]
     return np.append(hostInfRates, hostVaccDecayRates, deathRate)
 
 
@@ -729,9 +774,9 @@ def calcRates2(params, SD):
     -------
     array of event rates;
     '''
-    hostInfRates = float(SD['freeLiving']) * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
-    deathRate = params['sigma'] * SD['worms']['total'] * params['v1'][SD['sv']]
-    hostVaccDecayRates = params['VaccDecayRate'][SD['sv']]
+    hostInfRates = float(SD['freeLiving']) * SD['si'] * params.contactRates[SD['contactAgeGroupIndices']]
+    deathRate = params.sigma * SD['worms']['total'] * params['v1'][SD['sv']]
+    hostVaccDecayRates = params.VaccDecayRate[SD['sv']]
     args = (hostInfRates, hostVaccDecayRates, deathRate)
     return np.concatenate(args)
 
@@ -777,7 +822,7 @@ def doEvent(rates, params, SD):
 
 
 
-def doEvent2(rates, params, SD):
+def doEvent2(rates: ndarray, params: Parameters, SD):
 
     '''
     This function enacts the event; the events are
@@ -793,8 +838,8 @@ def doEvent2(rates, params, SD):
     SD: dict
         dictionary containing the updated equilibrium parameter values;
     '''
-    n_pop = params['N']
-    param_v3 = params['v3']
+    n_pop = params.N
+    param_v3 = params.v3
     event = np.argmax(random.random() * np.sum(rates) < np.cumsum(rates))
 
     eventType = ((event) // n_pop) + 1

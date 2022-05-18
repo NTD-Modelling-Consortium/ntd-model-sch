@@ -57,8 +57,8 @@ params    files and organizes them in a dictionary.
     params = configure(params)
 
     # update the parameters
-    params['psi'] = getPsi(params)
-    params['equiData'] = getEquilibrium(params)
+    params.psi = getPsi(params)
+    params.equiData = getEquilibrium(params)
 
     return params
 
