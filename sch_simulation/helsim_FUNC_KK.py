@@ -952,7 +952,7 @@ def doEvent2(sum_rates: float, cumsum_rates: NDArray[np.float_], params: Paramet
     param_v3 = params.v3
 
     rand_array = np.random.uniform(size=multiplier) * sum_rates
-    events_array = np.argmax([i<cumsum_rates for i in rand_array], axis=1)
+    events_array = np.argmax(cumsum_rates > rand_array[:, None], axis=1)
     event_types_array = ((events_array) // n_pop) + 1
     host_index_array = ((events_array) % n_pop)
 
