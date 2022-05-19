@@ -33,6 +33,12 @@ class Equilibrium:
     hostSurvival: Optional[ndarray] = None
 
 @dataclass
+class Coverage:
+    Age: ndarray
+    Years: ndarray # 1-D array lower/upper
+    Coverage: ndarray # 1-D array
+
+@dataclass
 class Parameters:
     numReps: int
     maxTime: float #nYears
@@ -106,18 +112,13 @@ class Parameters:
     contactAgeGroupBreaks: Optional[ndarray] = None
     treatmentAgeGroupBreaks: Optional[ndarray] = None
     VaccTreatmentAgeGroupBreaks: Optional[ndarray] = None
-
-
-
-
-@dataclass
-class Coverage:
-    mda: List[Tuple[float, float, ndarray]]
-    MDA_ages: ndarray # 2-D array lower/upper, age_num
-    MDA_coverage: ndarray # 2-D array years/coverage
-    drug1Eff: float
-    drug2Eff: float
-    MDA_age1: float
+    #Coverage
+    MDA: Optional[List[Coverage]] = None
+    Vacc: Optional[List[Coverage]] = None
+    drug1Years: Optional[ndarray] = None
+    drug1Split: Optional[ndarray] = None
+    drug2Years: Optional[ndarray] = None
+    drug2Split: Optional[ndarray] = None
 
 
 @dataclass
@@ -527,23 +528,34 @@ def overWritePostMDA(params,  nextMDAAge, nextChemoIndex):
     return params
 
 
-def readCoverageFile(coverageTextFileStorageName, params):
+def readCoverageFile(coverageTextFileStorageName, params: Parameters):
 
     coverage = readCovFile(coverageTextFileStorageName)
-    params['nMDAAges'] = int(coverage['nMDAAges'])
-    params['nVaccAges'] = int(coverage['nVaccAges'])
-    for i in range(1, params['nMDAAges'] + 1):
-        params['MDA_age'+str(i)] = coverage['MDA_age'+ str(i)]
-        params['MDA_Years'+str(i)] = coverage['MDA_Years'+ str(i)] - 2018
-        params['MDA_Coverage'+str(i)] = coverage['MDA_Coverage'+ str(i)]
-    for i in range(1, params['nVaccAges'] + 1):
-        params['Vacc_age'+str(i)] = coverage['Vacc_age'+ str(i)]
-        params['Vacc_Years'+str(i)] = coverage['Vacc_Years'+ str(i)] - 2018
-        params['Vacc_Coverage'+str(i)] = coverage['Vacc_Coverage'+ str(i)]
-    params['drug1Years'] = np.array(coverage['drug1Years'] - 2018)
-    params['drug1Split'] = np.array(coverage['drug1Split'])
-    params['drug2Years'] = np.array(coverage['drug2Years'] - 2018)
-    params['drug2Split'] = np.array(coverage['drug2Split'])
+
+    nMDAAges = int(coverage['nMDAAges'])
+    nVaccAges = int(coverage['nVaccAges'])
+    mda_covs = []
+    for i in range(nMDAAges):
+        cov = Coverage(
+            Age = coverage['MDA_age'+ str(i+1)],
+            Years = coverage['MDA_Years'+ str(i+1)] - 2018,
+            Coverage = coverage['MDA_Coverage'+ str(i+1)]
+        )
+        mda_covs.append(cov)
+    params.MDA = mda_covs
+    vacc_covs = []
+    for i in range(nVaccAges):
+        cov = Coverage(
+            Age = coverage['Vacc_age'+ str(i+1)],
+            Years = coverage['Vacc_Years'+ str(i+1)] - 2018,
+            Coverage = coverage['Vacc_Coverage'+ str(i+1)]
+        )
+        vacc_covs.append(cov)
+    params.Vacc = mda_covs
+    params.drug1Years = np.array(coverage['drug1Years'] - 2018)
+    params.drug1Split = np.array(coverage['drug1Split'])
+    params.drug2Years = np.array(coverage['drug2Years'] - 2018)
+    params.drug2Split = np.array(coverage['drug2Split'])
     return params
 
 def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default') -> Parameters:
@@ -818,7 +830,7 @@ def calcRates(params: Parameters, SD: SDEquilibrium):
 
     hostInfRates = SD.freeLiving * SD.si * params.contactRates[SD.contactAgeGroupIndices]
     deathRate = params.sigma * np.sum(SD.worms.total * params.v1[SD.sv])
-    hostVaccDecayRates = params.VaccDecayRate[SD['sv']]
+    hostVaccDecayRates = params.VaccDecayRate[SD.sv]
     return np.append(hostInfRates, hostVaccDecayRates, deathRate)
 
 
@@ -1123,13 +1135,16 @@ def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: int, minAge: int, 
     d2Share = 0
     
     # get the actual share of each drug for this treatment.
-    
+    assert params.drug1Years is not None
+    assert params.drug2Years is not None
+    assert params.drug1Split is not None
+    assert params.drug2Split is not None
     if t in params.drug1Years:
-        i = np.where(params['drug1Years'] == t)[0][0]
-        d1Share = params['drug1Split'][i]
-    if t in params['drug2Years']:
-        j = np.where(params['drug2Years'] == t)[0][0]
-        d2Share = params['drug2Split'][j]
+        i = np.where(params.drug1Years == t)[0][0]
+        d1Share = params.drug1Split[i]
+    if t in params.drug2Years:
+        j = np.where(params.drug2Years == t)[0][0]
+        d2Share = params.drug2Split[j]
         
     # assign which drug each person will take  
     drug = np.ones(int(sum(toTreatNow)))
@@ -1140,35 +1155,35 @@ def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: int, minAge: int, 
     
     # if drug 1 share is > 0, then treat the appropriate individuals with drug 1
     if d1Share > 0:
-        dEff = params['DrugEfficacy1']
+        dEff = params.DrugEfficacy1
         k = np.where(drug == 1)[0]
-        femaleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['female'][k], dtype = 'int32'), p=dEff)
-        maleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['total'][k] - SD['worms']['female'][k], dtype = 'int32'), p=dEff)
-        SD['worms']['female'][k] -= femaleToDie
-        SD['worms']['total'][k] -= (maleToDie + femaleToDie)
+        femaleToDie = np.random.binomial(size=len(k), n=np.array(SD.worms.female[k], dtype = 'int32'), p=dEff)
+        maleToDie = np.random.binomial(size=len(k), n=np.array(SD.worms.total[k] - SD.worms.female[k], dtype = 'int32'), p=dEff)
+        SD.worms.female[k] -= femaleToDie
+        SD.worms.total[k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
-        SD['attendanceRecord'].append(k)
-        SD['nChemo1'] += len(k)
+        SD.attendanceRecord.append(k)
+        SD.nChemo1 += len(k)
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
-        dEff = params['DrugEfficacy2']
+        dEff = params.DrugEfficacy2
         k = np.where(drug == 2)[0]
-        femaleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['female'][k], dtype = 'int32'), p=dEff)
-        maleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['total'][k] - SD['worms']['female'][k], dtype = 'int32'), p=dEff)
-        SD['worms']['female'][k] -= femaleToDie
-        SD['worms']['total'][k] -= (maleToDie + femaleToDie)
+        femaleToDie = np.random.binomial(size=len(k), n=np.array(SD.worms.female[k], dtype = 'int32'), p=dEff)
+        maleToDie = np.random.binomial(size=len(k), n=np.array(SD.worms.total[k] - SD.worms.female[k], dtype = 'int32'), p=dEff)
+        SD.worms.female[k] -= femaleToDie
+        SD.worms.total[k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
-        SD['attendanceRecord'].append(k)    
-        SD['nChemo2'] += len(k)
+        SD.attendanceRecord.append(k)    
+        SD.nChemo2 += len(k)
     
-    SD['ageAtChemo'].append(t - SD['demography']['birthDate'])
-    SD['adherenceFactorAtChemo'].append(SD['adherenceFactors'])
+    SD.ageAtChemo.append(t - SD.demography.birthDate)
+    SD.adherenceFactorAtChemo.append(SD.adherenceFactors)
 
     return SD
 
 
 
-def doVaccine(params: Parameters, SD: SDEquilibrium, t: int, VaccCoverage: ndarray):
+def doVaccine(params: Parameters, SD: SDEquilibrium, t: int, VaccCoverage: ndarray) -> SDEquilibrium:
     '''
     Vaccine function.
     Parameters
@@ -1413,9 +1428,9 @@ def getEquilibrium(params: Parameters) -> Equilibrium:
     # L_minus is the value that gives an age-averaged worm burden of 1; negative growth should
     # exist somewhere below this
     L_minus = MeanLifespan / np.sum(Q * hostSurvivalCurve * deltaT)
-    test_L = np.append(np.linspace(start=0, stop=L_minus, num=10), np.linspace(start=L_minus, stop=L_hat, num=20))
+    test_L: NDArray[np.float_] = np.append(np.linspace(start=0, stop=L_minus, num=10), np.linspace(start=L_minus, stop=L_hat, num=20))
 
-    def K_valueFunc(currentL, params: Parameters):
+    def K_valueFunc(currentL: float, params: Parameters) -> float:
         if params.reproFunc is None:
             raise ValueError('Reprofunc is not set')
         else:
