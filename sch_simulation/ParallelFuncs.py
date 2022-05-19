@@ -59,18 +59,18 @@ def monogFertilityFuncApprox(x: float, params: "Parameters"):
     params: dict
         dictionary containing the parameter names and values;
     '''
-
+    assert params.monogParams is not None
     if x > 25 * params.k:
 
-        return 1 - params.monogParams['c_k'] / np.sqrt(x)
+        return 1 - params.monogParams.c_k / np.sqrt(x)
 
     else:
 
         g = x / (x + params.k)
         integrand = (
-            1 - params['monogParams']['cosTheta']
+            1 - params.monogParams.cosTheta
         ) * (
-            1 + float(g) * params.monogParams['cosTheta']
+            1 + float(g) * params.monogParams.cosTheta
         ) ** (
             - 1 - float(params.k)
         )
@@ -78,7 +78,7 @@ def monogFertilityFuncApprox(x: float, params: "Parameters"):
 
         return 1 - (1 - g) ** (1 + params.k) * integral
 
-def epgMonog(x: np.ndarray, params: Parameters) -> np.ndarray:
+def epgMonog(x: np.ndarray, params: "Parameters") -> np.ndarray:
 
     '''
     This function calculates the generation of eggs with monogamous
@@ -95,7 +95,7 @@ def epgMonog(x: np.ndarray, params: Parameters) -> np.ndarray:
     vectorized = np.array([monogFertilityFuncApprox(i, params) for i in x])
     return epgPerPerson(x, params) * vectorized
 
-def epgFertility(x: np.ndarray, params: Parameters) -> np.ndarray:
+def epgFertility(x: np.ndarray, params: "Parameters") -> np.ndarray:
 
     '''
     This function calculates the generation of eggs with

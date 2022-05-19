@@ -1962,7 +1962,7 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
 
     return df
 
-def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100) -> pd.DataFrame:
+def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100) -> pd.DataFrame:
 
     '''
     This function provides the average SAC and adult prevalence at each time point,
@@ -2008,7 +2008,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
                    'age_end':np.repeat(age_end,len(low_prevalence)), 
                    'intensity':np.repeat('light',len(low_prevalence)),
-                   'species':np.repeat(params['species'], len(low_prevalence)),
+                   'species':np.repeat(params.species, len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
                    'draw_1':low_prevalence})
         
@@ -2017,7 +2017,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
                    'age_end':np.repeat(age_end,len(low_prevalence)), 
                    'intensity':np.repeat('light',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
+                   'species':np.repeat(params.species,len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
                    'draw_1':low_prevalence}))
             
@@ -2025,7 +2025,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                 'age_start': np.repeat(age_start,len(low_prevalence)), 
                 'age_end':np.repeat(age_end,len(low_prevalence)), 
                 'intensity':np.repeat('moderate',len(low_prevalence)),
-                'species':np.repeat(params['species'],len(low_prevalence)),
+                'species':np.repeat(params.species,len(low_prevalence)),
                 'measure':np.repeat('prevalence',len(low_prevalence)),
                 'draw_1':moderate_prevalence}))
         
@@ -2033,7 +2033,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                 'age_start': np.repeat(age_start,len(low_prevalence)), 
                 'age_end':np.repeat(age_end,len(low_prevalence)), 
                 'intensity':np.repeat('heavy',len(low_prevalence)),
-                'species':np.repeat(params['species'],len(low_prevalence)),
+                'species':np.repeat(params.species,len(low_prevalence)),
                 'measure':np.repeat('prevalence',len(low_prevalence)),
                 'draw_1':heavy_prevalence}))
             
@@ -2065,7 +2065,7 @@ def outputNumberInAgeGroup(results, params: Parameters):
         for j in range(int(params.maxHostAge)):
             age_counts.append(ages1.count(j))
             
-        if (i == 0):
+        if i == 0:
                 numEachAgeGroup = pd.DataFrame({
                         'Time': np.repeat(d['time'], len(age_counts)), 
                        'age_start': range(int(params.maxHostAge)), 

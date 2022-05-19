@@ -207,9 +207,9 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
                               nextChemoTime2, nextVaccineTime, nextAgeTime])
 
     #results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
-        # ageAtChemo=np.array(simData['ageAtChemo']),
-        # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
-    ))
+    #    # ageAtChemo=np.array(simData['ageAtChemo']),
+    #    # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
+    #))
 
     return results
 
@@ -601,9 +601,9 @@ def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
                        nextAgeTime, nextVaccTime])
 
     #results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
-        # ageAtChemo=np.array(simData['ageAtChemo']),
-        # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
-    ))
+    #    # ageAtChemo=np.array(simData['ageAtChemo']),
+    #    # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
+    #))
 
     return results
 
@@ -1001,7 +1001,7 @@ def singleSimulationDALYCoverage(params: Parameters, simData: SDEquilibrium,
 
 
 
-def multiple_simulations(params, pickleData, simparams, indices, i):
+def multiple_simulations(params: Parameters, pickleData, simparams, indices, i):
     print( f"==> multiple_simulations starting sim {i}" )
     start_time = time.time()
     # copy the parameters
@@ -1019,26 +1019,26 @@ def multiple_simulations(params, pickleData, simparams, indices, i):
 
     # Convert all layers to correct data format
 
-    simData['sv'] = np.zeros(len(simData['si']) ,dtype = int)
-    simData['attendanceRecord'] = []
-    simData['ageAtChemo'] = []
-    simData['adherenceFactorAtChemo'] = []
-    simData['vaccCount'] = 0
-    simData['nChemo1'] = 0
-    simData['nChemo2'] = 0
-    simData['numSurvey'] = 0
-    simData['compliers'] = np.random.uniform(low=0, high=1, size=len(simData['si'])) > params['propNeverCompliers']
-    simData['adherenceFactors']= np.random.uniform(low=0, high=1, size=len(simData['si']))
+    simData.sv = np.zeros(len(simData.si) ,dtype = int)
+    simData.attendanceRecord = []
+    simData.ageAtChemo = []
+    simData.adherenceFactorAtChemo = []
+    simData.vaccCount = 0
+    simData.nChemo1 = 0
+    simData.nChemo2 = 0
+    simData.numSurvey = 0
+    simData.compliers = np.random.uniform(low=0, high=1, size=len(simData.si)) > params.propNeverCompliers
+    simData.adherenceFactors= np.random.uniform(low=0, high=1, size=len(simData.si))
     # extract the previous random state
     #state = data['state']
     
     # extract the previous simulation times
     times = data['times']
-    simData['demography']['birthDate'] = simData['demography']['birthDate'] - times['maxTime']
-    simData['demography']['deathDate'] = simData['demography']['deathDate'] - times['maxTime']
+    simData.demography.birthDate = simData.demography.birthDate - times['maxTime']
+    simData.demography.deathDate = simData.demography.deathDate - times['maxTime']
     
-    simData['contactAgeGroupIndices'] = np.digitize(np.array(t - simData['demography']['birthDate']), np.array(parameters['contactAgeGroupBreaks']))-1
-    parameters['N'] = len(simData['si'])
+    simData.contactAgeGroupIndices = np.digitize(np.array(t - simData.demography.birthDate), np.array(parameters.contactAgeGroupBreaks))-1
+    parameters.N = len(simData.si)
    
     # update the parameters
     R0 = simparams.iloc[j, 1].tolist()
