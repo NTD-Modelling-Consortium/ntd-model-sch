@@ -932,7 +932,7 @@ def doEvent(rates: NDArray[np.float_], params: Parameters, SD: SDEquilibrium) ->
 
 
 
-def doEvent2(rates: NDArray[np.float_], params: Parameters, SD: SDEquilibrium) -> SDEquilibrium:
+def doEvent2(sum_rates: float, cumsum_rates: NDArray[np.float_], params: Parameters, SD: SDEquilibrium, multiplier: int = 1) -> SDEquilibrium:
 
     '''
     This function enacts the event; the events are
@@ -950,26 +950,45 @@ def doEvent2(rates: NDArray[np.float_], params: Parameters, SD: SDEquilibrium) -
     '''
     n_pop = params.N
     param_v3 = params.v3
-    event = np.argmax(random.random() * np.sum(rates) < np.cumsum(rates))
 
-    eventType = ((event) // n_pop) + 1
-    hostIndex = ((event) % n_pop)
-    
-    if eventType == 1:
-        if random.random() < param_v3[SD.sv[hostIndex]]:
-            SD.worms.total[hostIndex] += 1
-            if random.random() < 0.5:
-                SD.worms.female[hostIndex] += 1
-    elif eventType == 2:
-        SD.sv[hostIndex] = 0
-        
-    elif eventType == 3:
-        if random.random() < SD.worms.female[hostIndex]/SD.worms.total[hostIndex]:
-            SD.worms.female[hostIndex] -= 1
-        SD.worms.total[hostIndex] -= 1
-    else:
-        raise RuntimeError("Unknown event type")
-        
+    rand_array = np.random.uniform(size=multiplier) * sum_rates
+    events_array = np.argmax([i<cumsum_rates for i in rand_array], axis=1)
+    event_types_array = ((events_array) // n_pop) + 1
+    host_index_array = ((events_array) % n_pop)
+
+    event1_bools = event_types_array == 1
+    event2_bools = event_types_array == 2
+    event3_bools = event_types_array == 3
+    event1_hosts = np.extract(event1_bools, host_index_array)
+    event2_hosts = np.extract(event2_bools, host_index_array)
+    event3_hosts = np.extract(event3_bools, host_index_array)
+
+
+    param_v3s = np.take(param_v3, np.take(SD.sv, event1_hosts))
+    event1_total_true_bools = np.random.uniform(size=len(event1_hosts)) < param_v3s
+    event1_total_bools = np.full(len(event1_bools), False)
+    np.place(event1_total_bools, event1_bools, event1_total_true_bools)
+
+    total_array = np.where(event1_total_bools, 1, 0) + np.where(event3_bools, -1, 0)
+
+    event3_worm_ratio = np.take(SD.worms.female, event3_hosts)/np.take(SD.worms.total, event3_hosts)
+    event3_total_true_bools = np.random.uniform(size=len(event3_hosts)) < event3_worm_ratio
+    event3_total_bools =  np.full(len(event1_bools), False)
+    np.place(event3_total_bools, event3_bools, event3_total_true_bools)
+    females_array = np.where(
+        np.logical_and(
+            event1_total_bools, 
+            np.random.uniform(size=multiplier) < 0.5
+        ), 1, 0
+    ) + np.where(event3_total_bools, -1, 0)
+
+
+    #Sort event 2
+    np.put(SD.sv, event2_hosts, 0)
+    #Sort event 1 & 3
+    np.put(SD.worms.total, host_index_array, np.take(SD.worms.total, host_index_array) + total_array)
+    np.put(SD.worms.female, host_index_array, np.take(SD.worms.female, host_index_array) + females_array)
+
     return SD
     
     
@@ -1037,7 +1056,7 @@ def doFreeLive(params: Parameters, SD: SDEquilibrium, dt: float) -> SDEquilibriu
 
     return SD
 
-def doDeath(params: Parameters, SD: SDEquilibrium, t: int) -> SDEquilibrium:
+def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
 
     '''
     Death and aging function.

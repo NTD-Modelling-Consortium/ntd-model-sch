@@ -632,10 +632,10 @@ def doRealizationSurveyCoveragePickle(params: Parameters, simData: SDEquilibrium
 
    
     # start time
-    t: int = 0
+    t: float = 0
 
     # end time
-    maxTime = copy.deepcopy(params.maxTime)
+    maxTime = params.maxTime
 
     # time at which to update the freelive population
     freeliveTime = t
@@ -670,25 +670,30 @@ def doRealizationSurveyCoveragePickle(params: Parameters, simData: SDEquilibrium
     print_t_interval = 0.5
     print_t = 0
     # run stochastic algorithm
+    #do_event_calls = 0
+    #other_calls = 0
+    multiplier = 100
     while t < maxTime:
         if t > print_t:
-            print(t)
             print_t += print_t_interval
+
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
-
+        cumsumRates = np.cumsum(rates)
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
         if sumRates < 1e-4:
-            dt = 10000
+            dt = 10000*multiplier
         else:
-            dt = random.expovariate(lambd = sumRates)
+            dt = random.expovariate(lambd = sumRates)*multiplier
 
         new_t = t+dt
         if new_t < nextStep:
             t = new_t
-            simData = doEvent2(rates, params, simData)
+            simData = doEvent2(sumRates, cumsumRates, params, simData, multiplier)
+            #do_event_calls +=1
         else:
+            #other_calls +=1
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
             t = nextStep
             freeliveTime = nextStep
@@ -786,7 +791,7 @@ def doRealizationSurveyCoveragePickle(params: Parameters, simData: SDEquilibrium
 
             nextStep = min(float(nextOutTime), float(t + maxStep), float(nextChemoTime),
                        float(nextAgeTime), float(nextVaccTime))
-
+            
     # results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
     #     # ageAtChemo=np.array(simData['ageAtChemo']),
     #     # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
