@@ -5,6 +5,9 @@ import numpy as np
 from joblib import Parallel, delayed
 import pandas as pd
 from sch_simulation.helsim_FUNC_KK import (
+    Parameters,
+    SDEquilibrium,
+    Result,
     calcRates2,
     conductSurvey,
     configure,
@@ -30,11 +33,11 @@ from sch_simulation.helsim_FUNC_KK import (
     readCoverageFile
 )
 import random
-
+from typing import List, Optional
 num_cores = multiprocessing.cpu_count()
 
 
-def loadParameters(paramFileName, demogName):
+def loadParameters(paramFileName: str, demogName: str) -> Parameters:
     '''
     This function loads all the parameters from the input text
 params    files and organizes them in a dictionary.
@@ -63,7 +66,7 @@ params    files and organizes them in a dictionary.
     return params
 
 
-def doRealization(params, i):
+def doRealization(params: Parameters, i: int) -> List[Result]:
     '''
     This function generates a single simulation path.
     Parameters
@@ -85,13 +88,13 @@ def doRealization(params, i):
     t = 0
 
     # end time
-    maxTime = copy.deepcopy(params['maxTime'])
+    maxTime = copy.deepcopy(params.maxTime)
 
     # time at which to update the freelive population
     freeliveTime = t
 
     # times at which data should be recorded
-    outTimes = copy.deepcopy(params['outTimings'])
+    outTimes = copy.deepcopy(params.outTimings)
 
     # time when data should be recorded next
     nextOutIndex = np.argmin(outTimes)
@@ -103,10 +106,10 @@ def doRealization(params, i):
     maxStep = 1 / 52
 
     # time at which individuals receive next chemotherapy
-    currentchemoTiming1 = copy.deepcopy(params['chemoTimings1'])
-    currentchemoTiming2 = copy.deepcopy(params['chemoTimings2'])
+    currentchemoTiming1 = copy.deepcopy(params.chemoTimings1)
+    currentchemoTiming2 = copy.deepcopy(params.chemoTimings2)
 
-    currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
+    currentVaccineTimings = copy.deepcopy(params.VaccineTimings)
 
     nextChemoIndex1 = np.argmin(currentchemoTiming1)
     nextChemoIndex2 = np.argmin(currentchemoTiming2)
@@ -119,7 +122,7 @@ def doRealization(params, i):
     nextStep = np.min(np.array([nextOutTime, t + maxStep, nextChemoTime1,
                       nextChemoTime2, nextAgeTime, nextVaccineTime]))
 
-    results = []  # initialise empty list to store results
+    results: List[Result] = []  # initialise empty list to store results
 
     # run stochastic algorithm
     while t < maxTime:
@@ -159,7 +162,7 @@ def doRealization(params, i):
             if timeBarrier >= nextChemoTime1:
 
                 simData = doDeath(params, simData, t)
-                simData = doChemo(params, simData, t, params['coverage1'])
+                simData = doChemo(params, simData, t, params.coverage1)
 
                 currentchemoTiming1[nextChemoIndex1] = maxTime + 10
                 nextChemoIndex1 = np.argmin(currentchemoTiming1)
@@ -168,7 +171,7 @@ def doRealization(params, i):
             if timeBarrier >= nextChemoTime2:
 
                 simData = doDeath(params, simData, t)
-                simData = doChemo(params, simData, t, params['coverage2'])
+                simData = doChemo(params, simData, t, params.coverage2)
 
                 currentchemoTiming2[nextChemoIndex2] = maxTime + 10
                 nextChemoIndex2 = np.argmin(currentchemoTiming2)
@@ -177,24 +180,24 @@ def doRealization(params, i):
             if timeBarrier >= nextVaccineTime:
 
                 simData = doDeath(params, simData, t)
-                simData = doVaccine(params, simData, t, params['VaccCoverage'])
+                simData = doVaccine(params, simData, t, params.VaccCoverage)
                 currentVaccineTimings[nextVaccineIndex] = maxTime + 10
                 nextVaccineIndex = np.argmin(currentVaccineTimings)
                 nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
 
             if timeBarrier >= nextOutTime:
 
-                results.append(dict(
+                results.append(Result(
                     iteration=i,
                     time=t,
-                    worms=copy.deepcopy(simData['worms']),
-                    hosts=copy.deepcopy(simData['demography']),
-                    vaccState=copy.deepcopy(simData['sv']),
-                    freeLiving=copy.deepcopy(simData['freeLiving']),
+                    worms=copy.deepcopy(simData.worms),
+                    hosts=copy.deepcopy(simData.demography),
+                    vaccState=copy.deepcopy(simData.sv),
+                    freeLiving=copy.deepcopy(simData.freeLiving),
                     adherenceFactors=copy.deepcopy(
-                        simData['adherenceFactors']),
-                    compliers=copy.deepcopy(simData['compliers']),
-                    sex_id = copy.deepcopy(simData['sex_id'])
+                        simData.adherenceFactors),
+                    compliers=copy.deepcopy(simData.compliers),
+                    sex_id = copy.deepcopy(simData.sex_id)
                 ))
                 outTimes[nextOutIndex] = maxTime + 10
                 nextOutIndex = np.argmin(outTimes)
@@ -203,7 +206,7 @@ def doRealization(params, i):
             nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime1,
                               nextChemoTime2, nextVaccineTime, nextAgeTime])
 
-    results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
+    #results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
         # ageAtChemo=np.array(simData['ageAtChemo']),
         # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
     ))
@@ -211,7 +214,7 @@ def doRealization(params, i):
     return results
 
 
-def doRealizationSurvey(params, i):
+def doRealizationSurvey(params: Parameters, i: int) -> List[Result]:
     '''
     This function generates a single simulation path.
 
@@ -236,13 +239,13 @@ def doRealizationSurvey(params, i):
     t = 0
 
     # end time
-    maxTime = copy.deepcopy(params['maxTime'])
+    maxTime = copy.deepcopy(params.maxTime)
 
     # time at which to update the freelive population
     freeliveTime = t
 
     # times at which data should be recorded
-    outTimes = copy.deepcopy(params['outTimings'])
+    outTimes = copy.deepcopy(params.outTimings)
 
     # time when data should be recorded next
     nextOutIndex = np.argmin(outTimes)
@@ -254,10 +257,10 @@ def doRealizationSurvey(params, i):
     maxStep = 1 / 52
 
     # time at which individuals receive next chemotherapy
-    currentchemoTiming1 = copy.deepcopy(params['chemoTimings1'])
-    currentchemoTiming2 = copy.deepcopy(params['chemoTimings2'])
+    currentchemoTiming1 = copy.deepcopy(params.chemoTimings1)
+    currentchemoTiming2 = copy.deepcopy(params.chemoTimings2)
 
-    currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
+    currentVaccineTimings = copy.deepcopy(params.VaccineTimings)
 
     nextChemoIndex1 = np.argmin(currentchemoTiming1)
     nextChemoIndex2 = np.argmin(currentchemoTiming2)
@@ -323,7 +326,7 @@ def doRealizationSurvey(params, i):
             if timeBarrier >= nextChemoTime1:
 
                 simData = doDeath(params, simData, t)
-                simData = doChemo(params, simData, t, params['coverage1'])
+                simData = doChemo(params, simData, t, params.coverage1)
                 if nChemo == 0:
                     tSurvey = t + 5
                   #  tSurveyTwo = t + 9
@@ -335,7 +338,7 @@ def doRealizationSurvey(params, i):
             if timeBarrier >= nextChemoTime2:
 
                 simData = doDeath(params, simData, t)
-                simData = doChemo(params, simData, t, params['coverage2'])
+                simData = doChemo(params, simData, t, params.coverage2)
                 if nChemo == 0:
                     tSurvey = t + 5
                 nChemo += 1
@@ -346,14 +349,14 @@ def doRealizationSurvey(params, i):
             if timeBarrier >= nextVaccineTime:
 
                 simData = doDeath(params, simData, t)
-                simData = doVaccine(params, simData, t, params['VaccCoverage'])
+                simData = doVaccine(params, simData, t, params.VaccCoverage)
                 nVacc += 1
                 currentVaccineTimings[nextVaccineIndex] = maxTime + 10
                 nextVaccineIndex = np.argmin(currentVaccineTimings)
                 nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
             
             if timeBarrier >= tSurvey:
-                simData, prevOne = conductSurvey(simData, params, t, params['sampleSizeOne'], nSamples)
+                simData, prevOne = conductSurvey(simData, params, t, params.sampleSizeOne, nSamples)
                 nSurvey += 1
                 #tSurvey = maxTime + 10
                 if prevOne < 0.01:
@@ -384,16 +387,16 @@ def doRealizationSurvey(params, i):
                     
             if timeBarrier >= nextOutTime:
 
-                results.append(dict(
+                results.append(Result(
                     iteration=i,
                     time=t,
-                    worms=copy.deepcopy(simData['worms']),
-                    hosts=copy.deepcopy(simData['demography']),
-                    vaccState=copy.deepcopy(simData['sv']),
-                    freeLiving=copy.deepcopy(simData['freeLiving']),
+                    worms=copy.deepcopy(simData.worms),
+                    hosts=copy.deepcopy(simData.demography),
+                    vaccState=copy.deepcopy(simData.sv),
+                    freeLiving=copy.deepcopy(simData.freeLiving),
                     adherenceFactors=copy.deepcopy(
-                        simData['adherenceFactors']),
-                    compliers=copy.deepcopy(simData['compliers']),
+                        simData.adherenceFactors),
+                    compliers=copy.deepcopy(simData.compliers),
                     nVacc = nVacc,
                     nChemo = nChemo,
                     nSurvey = nSurvey #,
@@ -416,7 +419,7 @@ def doRealizationSurvey(params, i):
 
 
 
-def doRealizationSurveyCoverage(params, i):
+def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
     '''
     This function generates a single simulation path.
 
@@ -441,13 +444,13 @@ def doRealizationSurveyCoverage(params, i):
     t = 0
 
     # end time
-    maxTime = copy.deepcopy(params['maxTime'])
+    maxTime = copy.deepcopy(params.maxTime)
 
     # time at which to update the freelive population
     freeliveTime = t
 
     # times at which data should be recorded
-    outTimes = copy.deepcopy(params['outTimings'])
+    outTimes = copy.deepcopy(params.outTimings)
 
     # time when data should be recorded next
     nextOutIndex = np.argmin(outTimes)
@@ -473,7 +476,7 @@ def doRealizationSurveyCoverage(params, i):
     nSurvey = 0
   
     tSurvey = maxTime + 10
-    results = []  # initialise empty list to store results
+    results: List[Result] = []  # initialise empty list to store results
     print_t_interval = 0.5
     print_t = 0
     # run stochastic algorithm
@@ -521,15 +524,16 @@ def doRealizationSurveyCoverage(params, i):
             if timeBarrier >= nextChemoTime:
                 
                 simData = doDeath(params, simData, t)
+                assert params.MDA is not None
                 for i in range(len(nextMDAAge)):
-                    k = nextMDAAge[i]
+                    k = nextMDAAge[i] -1
                     index = nextChemoIndex[i]
-                    cov = params['MDA_Coverage' + str(k)][index]
-                    minAge = params['MDA_age'+str(k)][0]
-                    maxAge = params['MDA_age'+str(k)][1]
+                    cov = params.MDA[k].Coverage[index]
+                    minAge = params.MDA[k].Age[0]
+                    maxAge = params.MDA[k].Age[1]
                     simData = doChemoAgeRange(params, simData, t, minAge, maxAge, cov)
                 if nChemo == 0:
-                    tSurvey = t + params['timeToFirstSurvey']
+                    tSurvey = t + params.timeToFirstSurvey
                 nChemo += 1
                 
                 params = overWritePostMDA(params,  nextMDAAge, nextChemoIndex)
@@ -541,12 +545,13 @@ def doRealizationSurveyCoverage(params, i):
             if timeBarrier >= nextVaccTime:
 
                 simData = doDeath(params, simData, t)
+                assert params.Vacc is not None
                 for i in range(len(nextVaccAge)):
-                    k = nextVaccAge[i]
+                    k = nextVaccAge[i] -1
                     index = nextVaccIndex[i]
-                    cov = params['Vacc_Coverage' + str(k)][index]
-                    minAge = params['Vacc_age'+str(k)][0]
-                    maxAge = params['Vacc_age'+str(k)][1]
+                    cov = params.Vacc[k].Coverage[index]
+                    minAge = params.Vacc[k].Age[0]
+                    maxAge = params.Vacc[k].Age[1]
                     simData = doVaccineAgeRange(params, simData, t, minAge, maxAge, cov)
                
                 nVacc += 1
@@ -556,35 +561,34 @@ def doRealizationSurveyCoverage(params, i):
                 
             # survey
             if timeBarrier >= tSurvey:
-                simData, prevOne = conductSurvey(simData, params, t, params['sampleSizeOne'], params['nSamples'])
+                simData, prevOne = conductSurvey(simData, params, t, params.sampleSizeOne, params.nSamples)
                 nSurvey += 1
-
-                if prevOne < params['surveyThreshold']:
-                    for i in range(params['nMDAAges']):
-                        k = i + 1
-                        params['MDA_Years' + str(k)] = [maxTime + 10]
-                    for i in range(params['nVaccAges']):
-                        k = i + 1
-                        params['Vacc_Years' + str(k)] = [maxTime + 10]
+                assert params.MDA is not None
+                assert params.Vacc is not None
+                if prevOne < params.surveyThreshold:
+                    for mda in params.MDA:
+                        mda.Years = np.array([maxTime + 10])
+                    for vacc in params.Vacc:
+                        vacc.Years = np.array([maxTime + 10])
                         
                     tSurvey = maxTime + 10
                 else:
-                    tSurvey = t + params['timeToNextSurvey']
+                    tSurvey = t + params.timeToNextSurvey
                  
                 chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex = nextMDAVaccInfo(params) 
             
             if timeBarrier >= nextOutTime:
 
-                results.append(dict(
+                results.append(Result(
                     iteration=i,
                     time=t,
-                    worms=copy.deepcopy(simData['worms']),
-                    hosts=copy.deepcopy(simData['demography']),
-                    vaccState=copy.deepcopy(simData['sv']),
-                    freeLiving=copy.deepcopy(simData['freeLiving']),
+                    worms=copy.deepcopy(simData.worms),
+                    hosts=copy.deepcopy(simData.demography),
+                    vaccState=copy.deepcopy(simData.sv),
+                    freeLiving=copy.deepcopy(simData.freeLiving),
                     adherenceFactors=copy.deepcopy(
-                        simData['adherenceFactors']),
-                    compliers=copy.deepcopy(simData['compliers']),
+                        simData.adherenceFactors),
+                    compliers=copy.deepcopy(simData.compliers),
                     nVacc = nVacc,
                     nChemo = nChemo,
                     nSurvey = nSurvey
@@ -596,7 +600,7 @@ def doRealizationSurveyCoverage(params, i):
             nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime,
                        nextAgeTime, nextVaccTime])
 
-    results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
+    #results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
         # ageAtChemo=np.array(simData['ageAtChemo']),
         # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
     ))
@@ -606,7 +610,7 @@ def doRealizationSurveyCoverage(params, i):
 
 
 
-def doRealizationSurveyCoveragePickle(params, simData, i):
+def doRealizationSurveyCoveragePickle(params: Parameters, simData: SDEquilibrium, i: int) -> List[Result]:
     '''
     This function generates a single simulation path.
 
@@ -626,16 +630,16 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
 
    
     # start time
-    t = 0
+    t: int = 0
 
     # end time
-    maxTime = copy.deepcopy(params['maxTime'])
+    maxTime = copy.deepcopy(params.maxTime)
 
     # time at which to update the freelive population
     freeliveTime = t
 
     # times at which data should be recorded
-    outTimes = copy.deepcopy(params['outTimings'])
+    outTimes = copy.deepcopy(params.outTimings)
 
     # time when data should be recorded next
     nextOutIndex = np.argmin(outTimes)
@@ -698,15 +702,16 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
             if timeBarrier >= nextChemoTime:
                 
                 simData = doDeath(params, simData, t)
+                assert params.MDA is not None
                 for i in range(len(nextMDAAge)):
                     k = nextMDAAge[i]
                     index = nextChemoIndex[i]
-                    cov = params['MDA_Coverage' + str(k)][index]
-                    minAge = params['MDA_age'+str(k)][0]
-                    maxAge = params['MDA_age'+str(k)][1]
+                    cov = params.MDA[k].Coverage[index]
+                    minAge = params.MDA[k].Age[0]
+                    maxAge = params.MDA[k].Age[1]
                     simData = doChemoAgeRange(params, simData, t, minAge, maxAge, cov)
                 if nChemo == 0:
-                    tSurvey = t + params['timeToFirstSurvey']
+                    tSurvey = t + params.timeToFirstSurvey
                 nChemo += 1
                 
                 params = overWritePostMDA(params,  nextMDAAge, nextChemoIndex)
@@ -718,12 +723,13 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
             if timeBarrier >= nextVaccTime:
 
                 simData = doDeath(params, simData, t)
+                assert params.Vacc is not None
                 for i in range(len(nextVaccAge)):
                     k = nextVaccAge[i]
                     index = nextVaccIndex[i]
-                    cov = params['Vacc_Coverage' + str(k)][index]
-                    minAge = params['Vacc_age'+str(k)][0]
-                    maxAge = params['Vacc_age'+str(k)][1]
+                    cov = params.Vacc[k].Coverage[index]
+                    minAge = params.Vacc[k].Age[0]
+                    maxAge = params.Vacc[k].Age[1]
                     simData = doVaccineAgeRange(params, simData, t, minAge, maxAge, cov)
                
                 nVacc += 1
@@ -733,41 +739,41 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                 
             # survey
             if timeBarrier >= tSurvey:
-                simData, prevOne = conductSurvey(simData, params, t, params['sampleSizeOne'], params['nSamples'])
+                simData, prevOne = conductSurvey(simData, params, t, params.sampleSizeOne, params.nSamples)
                 nSurvey += 1
 
-                if prevOne < params['surveyThreshold']:
+                if prevOne < params.surveyThreshold:
                     surveyPass = 1
-                    for i in range(params['nMDAAges']):
-                        k = i + 1
-                        params['MDA_Years' + str(k)] = [maxTime + 10]
-                    for i in range(params['nVaccAges']):
-                        k = i + 1
-                        params['Vacc_Years' + str(k)] = [maxTime + 10]
+                    assert params.MDA is not None
+                    for mda in params.MDA:
+                        mda.Years = np.array([maxTime + 10])
+                    assert params.Vacc is not None
+                    for vacc in params.Vacc:
+                        vacc.Years = np.array([maxTime + 10])
                         
                     tSurvey = maxTime + 10
                 else:
-                    tSurvey = t + params['timeToNextSurvey']
+                    tSurvey = t + params.timeToNextSurvey
                  
                 chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex = nextMDAVaccInfo(params) 
             
                     
             if timeBarrier >= nextOutTime:
-                a, truePrev = conductSurvey(simData, params, t, params['N'], 2)
+                a, truePrev = conductSurvey(simData, params, t, params.N, 2)
                 trueElim = int(1 - truePrev)
-                results.append(dict(
+                results.append(Result(
                     iteration=i,
                     time=t,
-                    worms=copy.deepcopy(simData['worms']),
-                    hosts=copy.deepcopy(simData['demography']),
-                    vaccState=copy.deepcopy(simData['sv']),
-                    freeLiving=copy.deepcopy(simData['freeLiving']),
+                    worms=copy.deepcopy(simData.worms),
+                    hosts=copy.deepcopy(simData.demography),
+                    vaccState=copy.deepcopy(simData.sv),
+                    freeLiving=copy.deepcopy(simData.freeLiving),
                     adherenceFactors=copy.deepcopy(
-                        simData['adherenceFactors']),
-                    compliers=copy.deepcopy(simData['compliers']),
-                    nVacc = simData['vaccCount'],
-                    nChemo1 = simData['nChemo1'],
-                    nChemo2 = simData['nChemo2'],
+                        simData.adherenceFactors),
+                    compliers=copy.deepcopy(simData.compliers),
+                    nVacc = simData.vaccCount,
+                    nChemo1 = simData.nChemo1,
+                    nChemo2 = simData.nChemo2,
                     nSurvey = nSurvey,
                     surveyPass = surveyPass,
                     elimination = trueElim
@@ -787,7 +793,7 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
     return results
 
 
-def SCH_Simulation(paramFileName, demogName, numReps=None):
+def SCH_Simulation(paramFileName: str, demogName: str, numReps: Optional[int] = None) -> pd.DataFrame:
     '''
     This function generates multiple simulation paths.
     Parameters
@@ -809,7 +815,7 @@ def SCH_Simulation(paramFileName, demogName, numReps=None):
 
     # extract the number of simulations
     if numReps is None:
-        numReps = params['numReps']
+        numReps = params.numReps
 
     # run the simulations
     results = Parallel(n_jobs=num_cores)(
@@ -824,7 +830,7 @@ def SCH_Simulation(paramFileName, demogName, numReps=None):
     return df
 
 
-def SCH_Simulation_DALY(paramFileName, demogName, numReps=None):
+def SCH_Simulation_DALY(paramFileName: str, demogName: str, numReps: Optional[int] = None) -> pd.DataFrame:
     '''
     This function generates multiple simulation paths.
     Parameters
@@ -846,7 +852,7 @@ def SCH_Simulation_DALY(paramFileName, demogName, numReps=None):
 
     # extract the number of simulations
     if numReps is None:
-        numReps = params['numReps']
+        numReps = params.numReps
 
     # run the simulations
     results = Parallel(n_jobs=num_cores)(
@@ -862,7 +868,7 @@ def SCH_Simulation_DALY(paramFileName, demogName, numReps=None):
 
 
 
-def getCostData(results, params):
+def getCostData(results: List[Result], params: Parameters) -> pd.DataFrame:
     for i in range(len(results)):
         df = pd.DataFrame(results[i])
         if i == 0:
@@ -870,7 +876,7 @@ def getCostData(results, params):
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
                    'intensity':np.repeat('None', df.shape[0]),
-                   'species':np.repeat(params['species'], df.shape[0]),
+                   'species':np.repeat(params.species, df.shape[0]),
                    'measure':np.repeat('nChemo1', df.shape[0]),
                    'draw_1':df['nChemo1']})
         else:
@@ -878,50 +884,50 @@ def getCostData(results, params):
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
                    'intensity':np.repeat('None', df.shape[0]),
-                   'species':np.repeat(params['species'], df.shape[0]),
+                   'species':np.repeat(params.species, df.shape[0]),
                    'measure':np.repeat('nChemo', df.shape[0]),
                    'draw_1':df['nChemo']}))
         df1 = df1.append(pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
                    'intensity':np.repeat('None', df.shape[0]),
-                   'species':np.repeat(params['species'], df.shape[0]),
+                   'species':np.repeat(params.species, df.shape[0]),
                    'measure':np.repeat('nChemo2', df.shape[0]),
                    'draw_1':df['nChemo2']}))
         df1 = df1.append(pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
                    'intensity':np.repeat('None', df.shape[0]),
-                   'species':np.repeat(params['species'], df.shape[0]),
+                   'species':np.repeat(params.species, df.shape[0]),
                    'measure':np.repeat('nVacc', df.shape[0]),
                    'draw_1':df['nVacc']}))
         df1 = df1.append(pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
                    'intensity':np.repeat('None', df.shape[0]),
-                   'species':np.repeat(params['species'], df.shape[0]),
+                   'species':np.repeat(params.species, df.shape[0]),
                    'measure':np.repeat('nSurvey', df.shape[0]),
                    'draw_1':df['nSurvey']}))
         df1 = df1.append(pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
                    'intensity':np.repeat('None', df.shape[0]),
-                   'species':np.repeat(params['species'], df.shape[0]),
+                   'species':np.repeat(params.species, df.shape[0]),
                    'measure':np.repeat('surveyPass', df.shape[0]),
                    'draw_1':df['surveyPass']}))
         df1 = df1.append(pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
                    'intensity':np.repeat('None', df.shape[0]),
-                   'species':np.repeat(params['species'], df.shape[0]),
+                   'species':np.repeat(params.species, df.shape[0]),
                    'measure':np.repeat('trueElimination', df.shape[0]),
                    'draw_1':df['elimination']}))
         return df1
 
-def SCH_Simulation_DALY_Coverage(paramFileName, demogName, 
-                                 coverageFileName,
-                                 coverageTextFileStorageName,
-                                 numReps=None):
+def SCH_Simulation_DALY_Coverage(paramFileName: str, demogName: str, 
+                                 coverageFileName: str,
+                                 coverageTextFileStorageName: str,
+                                 numReps: Optional[int] = None) -> pd.DataFrame:
     '''
     This function generates multiple simulation paths.
     Parameters
@@ -944,7 +950,7 @@ def SCH_Simulation_DALY_Coverage(paramFileName, demogName,
     params = readCoverageFile(coverageTextFileStorageName, params)
     # extract the number of simulations
     if numReps is None:
-        numReps = params['numReps']
+        numReps = params.numReps
 
     # run the simulations
     results = Parallel(n_jobs=num_cores)(
@@ -960,7 +966,7 @@ def SCH_Simulation_DALY_Coverage(paramFileName, demogName,
 
 
 
-def singleSimulationDALYCoverage(params,simData,
+def singleSimulationDALYCoverage(params: Parameters, simData: SDEquilibrium,
                                  numReps=None):
     '''
     This function generates multiple simulation paths.
@@ -976,7 +982,7 @@ def singleSimulationDALYCoverage(params,simData,
    
     # extract the number of simulations
     if numReps is None:
-        numReps = params['numReps']
+        numReps = params.numReps
 
     # run the simulations
     results = Parallel(n_jobs=num_cores)(
@@ -986,7 +992,7 @@ def singleSimulationDALYCoverage(params,simData,
     output = extractHostData(results)
     
     # transform the output to data frame
-    df = getPrevalenceDALYsAll(output, params, numReps, Unfertilized= params['Unfertilized'])
+    df = getPrevalenceDALYsAll(output, params, numReps, Unfertilized= params.Unfertilized)
     numAgeGroup = outputNumberInAgeGroup(results, params)
     costData = getCostData(results, params)
     df1 = pd.concat([df,numAgeGroup],ignore_index=True)
@@ -1009,7 +1015,8 @@ def multiple_simulations(params, pickleData, simparams, indices, i):
     t = 0
     
     
-    simData = dict((key, copy.deepcopy(data[key])) for key in keys)
+    simData = SDEquilibrium(**dict((key, copy.deepcopy(data[key])) for key in keys))
+
     # Convert all layers to correct data format
 
     simData['sv'] = np.zeros(len(simData['si']) ,dtype = int)
@@ -1036,13 +1043,13 @@ def multiple_simulations(params, pickleData, simparams, indices, i):
     # update the parameters
     R0 = simparams.iloc[j, 1].tolist()
     k = simparams.iloc[j, 2].tolist()
-    parameters['R0'] = R0
-    parameters['k'] = k
+    parameters.R0 = R0
+    parameters.k = k
 
     # configure the parameters
     parameters = configure(parameters)
-    parameters['psi'] = getPsi(parameters)
-    parameters['equiData'] = getEquilibrium(parameters)
+    parameters.psi = getPsi(parameters)
+    parameters.equiData = getEquilibrium(parameters)
     #parameters['moderateIntensityCount'], parameters['highIntensityCount'] = setIntensityCount(paramFileName)
 
     # add a simulation path

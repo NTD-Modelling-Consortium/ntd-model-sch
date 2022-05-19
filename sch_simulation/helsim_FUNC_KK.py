@@ -45,11 +45,11 @@ class Parameters:
     N: int #nHosts
     R0: float # Basic reproductive number
     lambda_egg: float # Eggs per gram
-    v2: float # Fraction of eggs produced when vaccinated.
+    v2: NDArray[np.float_] # Fraction of eggs produced when vaccinated.
     gamma: float # Exponential density dependence of parasite adult stage
     k: float # Shape parameter of assumed negative binomial distribution of worms amongst host
     sigma: float # Worm death rate
-    v1: float # impact of vaccine on worm death rate KK. Assume worm death rate is v1*sigma.
+    v1: NDArray[np.float_] # impact of vaccine on worm death rate KK. Assume worm death rate is v1*sigma.
     LDecayRate: float # ReservoirDecayRate
     DrugEfficacy: float
     DrugEfficacy1: float
@@ -145,12 +145,30 @@ class SDEquilibrium:
     adherenceFactors: ndarray
     vaccinatedFactors: ndarray
     compliers: ndarray
-    attendanceRecord: List
+    attendanceRecord: List[ndarray]
     ageAtChemo: List
     adherenceFactorAtChemo: List
     vaccCount: int
     numSurvey: int
 
+@dataclass
+class Result:
+    iteration: int
+    time: float
+    worms: Worms
+    hosts: Demography
+    vaccState: ndarray
+    freeLiving: float
+    adherenceFactors: ndarray
+    compliers: ndarray
+    sex_id: Optional[ndarray] = None
+    nVacc: Optional[int] = None
+    nChemo: Optional[int] = None
+    nChemo1: Optional[int] = None
+    nChemo2: Optional[int] = None
+    nSurvey: Optional[int] = None
+    surveyPass: Optional[int] = None
+    elimination: Optional[int] = None
 
 def readParam(fileName: str):
 
@@ -509,26 +527,26 @@ def nextMDAVaccInfo(params):
         
     return chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex
 
-def overWritePostVacc(params: Parameters,  nextVaccAge, nextVaccIndex):
-    
+def overWritePostVacc(params: Parameters,  nextVaccAge: ndarray, nextVaccIndex: ndarray):
+    assert params.Vacc is not None
     for i in range(len(nextVaccAge)):
         k = nextVaccIndex[i]
         j = nextVaccAge[i]
-        params['Vacc_Years' + str(j)][k] = 10000
+        params.Vacc[j].Years[k] = 10000
         
     return params
 
-def overWritePostMDA(params,  nextMDAAge, nextChemoIndex):
-    
+def overWritePostMDA(params:Parameters,  nextMDAAge: ndarray, nextChemoIndex: ndarray):
+    assert params.MDA is not None
     for i in range(len(nextMDAAge)):
         k = nextChemoIndex[i]
         j = nextMDAAge[i]
-        params['MDA_Years' + str(j)][k] = 10000
+        params.MDA[j].Years[k] = 10000
         
     return params
 
 
-def readCoverageFile(coverageTextFileStorageName, params: Parameters):
+def readCoverageFile(coverageTextFileStorageName: str, params: Parameters) -> Parameters:
 
     coverage = readCovFile(coverageTextFileStorageName)
 
@@ -1042,17 +1060,19 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: int) -> SDEquilibrium:
 
         # assign the newly-born to either comply or not
         SD.compliers[theDead] = np.random.uniform(low=0, high=1, size=len(theDead)) > params.propNeverCompliers
-
+    assert params.contactAgeGroupBreaks is not None
     # update the contact age categories
     SD.contactAgeGroupIndices = np.digitize(t - SD.demography.birthDate, params.contactAgeGroupBreaks)-1
-
+    
+    assert params.treatmentAgeGroupBreaks is not None
+    assert params.VaccTreatmentAgeGroupBreaks is not None
     # update the treatment age categories
     SD.treatmentAgeGroupIndices = np.digitize(t - SD.demography.birthDate, params.treatmentAgeGroupBreaks)-1
     SD.VaccTreatmentAgeGroupIndices = np.digitize(t - SD.demography.birthDate, params.VaccTreatmentAgeGroupBreaks)-1
 
     return SD
 
-def doChemo(params: Parameters, SD: SDEquilibrium, t: int, coverage: ndarray) -> SDEquilibrium:
+def doChemo(params: Parameters, SD: SDEquilibrium, t: NDArray[np.int_], coverage: ndarray) -> SDEquilibrium:
 
     '''
     Chemoterapy function.
@@ -1475,7 +1495,7 @@ def getEquilibrium(params: Parameters) -> Equilibrium:
         FOIMultiplier=FOIMultiplier
     )
 
-def extractHostData(results):
+def extractHostData(results: List[Result]):
 
     '''
     This function is used for processing results the raw simulation results.
@@ -1942,7 +1962,7 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
 
     return df
 
-def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100):
+def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100) -> pd.DataFrame:
 
     '''
     This function provides the average SAC and adult prevalence at each time point,
@@ -2035,31 +2055,32 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
 
 
 
-def outputNumberInAgeGroup(results, params):
+def outputNumberInAgeGroup(results, params: Parameters):
+    assert params.maxHostAge is not None
     for i in range(len(results[0])):
         d = results[0][i]
         ages = d['time'] - d['hosts']['birthDate'] 
         ages1 = list(ages.astype(int))
         age_counts = []
-        for j in range(int(params['maxHostAge'])):
+        for j in range(int(params.maxHostAge)):
             age_counts.append(ages1.count(j))
             
         if (i == 0):
                 numEachAgeGroup = pd.DataFrame({
                         'Time': np.repeat(d['time'], len(age_counts)), 
-                       'age_start': range(int(params['maxHostAge'])), 
-                       'age_end':range(1,1+int(params['maxHostAge'])), 
+                       'age_start': range(int(params.maxHostAge)), 
+                       'age_end':range(1,1+int(params.maxHostAge)), 
                        'intensity':np.repeat('All', len(age_counts)),
-                       'species':np.repeat(params['species'], len(age_counts)),
+                       'species':np.repeat(params.species, len(age_counts)),
                        'measure':np.repeat('number', len(age_counts)),
                        'draw_1':age_counts})
         else:
                 numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({
                         'Time': np.repeat(d['time'], len(age_counts)), 
-                       'age_start': range(int(params['maxHostAge'])), 
-                       'age_end':range(1,1+int(params['maxHostAge'])), 
+                       'age_start': range(int(params.maxHostAge)), 
+                       'age_end':range(1,1+int(params.maxHostAge)), 
                        'intensity':np.repeat('All', len(age_counts)),
-                       'species':np.repeat(params['species'], len(age_counts)),
+                       'species':np.repeat(params.species, len(age_counts)),
                        'measure':np.repeat('number', len(age_counts)),
                        'draw_1':age_counts}))
     
