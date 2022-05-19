@@ -15,7 +15,7 @@ np.seterr(divide='ignore')
 import sch_simulation.ParallelFuncs as ParallelFuncs
 from numpy import ndarray
 from typing import Callable, List, Tuple, Optional
-
+from numpy.typing import NDArray
 @dataclass
 class MonogParameters:
     c_k: float
@@ -101,6 +101,14 @@ class Parameters:
     hostMu: Optional[float] = None
     monogParams: Optional[MonogParameters] = None
     equiData: Optional[Equilibrium] = None
+    hostSurvivalCurve: Optional[ndarray] = None
+    hostAgeCumulDistr: Optional[ndarray] = None
+    contactAgeGroupBreaks: Optional[ndarray] = None
+    treatmentAgeGroupBreaks: Optional[ndarray] = None
+    VaccTreatmentAgeGroupBreaks: Optional[ndarray] = None
+
+
+
 
 @dataclass
 class Coverage:
@@ -119,19 +127,28 @@ class Demography:
 
 @dataclass
 class Worms:
-    total: int
-    female: int
+    total: NDArray[np.int_]
+    female: NDArray[np.int_]
 
 @dataclass
 class SDEquilibrium:
-    si: float
+    si: NDArray[np.float_]
     sv: ndarray
     worms: Worms
     sex_id: ndarray
-    #freeLiving: 
+    freeLiving: float
     demography: Demography
-
-
+    contactAgeGroupIndices: ndarray
+    treatmentAgeGroupIndices: ndarray
+    VaccTreatmentAgeGroupIndices: ndarray
+    adherenceFactors: ndarray
+    vaccinatedFactors: ndarray
+    compliers: ndarray
+    attendanceRecord: List
+    ageAtChemo: List
+    adherenceFactorAtChemo: List
+    vaccCount: int
+    numSurvey: int
 
 
 def readParam(fileName: str):
@@ -183,7 +200,7 @@ def readParam(fileName: str):
 
 
 
-def readCovFile(fileName):
+def readCovFile(fileName: str):
 
     '''
     This function extracts the parameter values stored
@@ -231,8 +248,10 @@ def readCovFile(fileName):
     return params
 
 
-def parse_coverage_input(coverageFileName,
-                         coverageTextFileStorageName):
+def parse_coverage_input(
+    coverageFileName: str,
+    coverageTextFileStorageName: str
+) -> str:
     '''
     This function extracts the coverage data and stores in a text file
     
@@ -489,7 +508,7 @@ def nextMDAVaccInfo(params):
         
     return chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex
 
-def overWritePostVacc(params,  nextVaccAge, nextVaccIndex):
+def overWritePostVacc(params: Parameters,  nextVaccAge, nextVaccIndex):
     
     for i in range(len(nextVaccAge)):
         k = nextVaccIndex[i]
@@ -668,7 +687,7 @@ def configure(params: Parameters) -> Parameters:
         params.reproFunc = ParallelFuncs.mapper[params.reproFuncName]
 
     # max age cutoff point
-    params.maxHostAge = np.min([np.max(params.muBreaks), np.max(params.contactAgeBreaks)]))
+    params.maxHostAge = np.min([np.max(params.muBreaks), np.max(params.contactAgeBreaks)])
 
     # full range of ages
     params.muAges = np.arange(start=0, stop=np.max(params.muBreaks), step=dT) + 0.5 * dT
@@ -703,7 +722,7 @@ def configure(params: Parameters) -> Parameters:
 
 
 
-def setupSD(params: Parameters):
+def setupSD(params: Parameters) -> SDEquilibrium:
 
     '''
     This function sets up the simulation to initial conditions
@@ -733,7 +752,10 @@ def setupSD(params: Parameters):
         trialDeathDates[earlyDeath] += getLifeSpans(len(earlyDeath), params)
 
     demography = Demography(birthDate = trialBirthDates - communityBurnIn, deathDate = trialDeathDates - communityBurnIn)
-    
+    if params.contactAgeGroupBreaks is None:
+        raise ValueError("contactAgeGroupBreaks not set")
+    if params.treatmentAgeGroupBreaks is None:
+        raise ValueError("treatmentAgeGroupBreaks not set")
     contactAgeGroupIndices = np.digitize(-demography.birthDate, params.contactAgeGroupBreaks)-1
 
     treatmentAgeGroupIndices = np.digitize(-demography.birthDate, params.treatmentAgeGroupBreaks)-1
@@ -743,39 +765,42 @@ def setupSD(params: Parameters):
     meanBurdenIndex = np.digitize(-demography.birthDate, np.append(0, params.equiData.ageValues))-1
 
     wTotal = np.random.poisson(lam=si * params.equiData.stableProfile[meanBurdenIndex] * 2, size=params.N)
-
-    worms = dict(total=wTotal, female=np.random.binomial(n=wTotal, p=0.5, size=params.N))
-
+    worms = Worms(
+        total = wTotal,
+        female = np.random.binomial(n=wTotal, p=0.5, size=params.N)
+    )
     stableFreeLiving = params.equiData.L_stable * 2
-
+    if params.VaccTreatmentAgeGroupBreaks is None:
+        raise ValueError("VaccTreatmentAgeGroupBreaks not set")
     VaccTreatmentAgeGroupIndices = np.digitize(-demography.birthDate, params.VaccTreatmentAgeGroupBreaks)-1
 
 
+    SD = SDEquilibrium(
+        si = si,
+        sv = sv,
+        worms = worms,
+        sex_id = sex_id,
+        freeLiving = stableFreeLiving,
+        demography = demography,
+        contactAgeGroupIndices = contactAgeGroupIndices,
+        treatmentAgeGroupIndices = treatmentAgeGroupIndices,
+        VaccTreatmentAgeGroupIndices = VaccTreatmentAgeGroupIndices,
+        adherenceFactors = np.random.uniform(low=0, high=1, size=params.N),
+        vaccinatedFactors = np.random.uniform(low=1, high=2, size=params.N),
+        compliers = np.random.uniform(low=0, high=1, size=params.N) > params.propNeverCompliers,
+        attendanceRecord = [],
+        ageAtChemo = [],
+        adherenceFactorAtChemo = [],
+        vaccCount = 0,
+        numSurvey = 0
 
-    SD = {'si': si,
-          'sv': sv,
-          'worms': worms,
-          'sex_id': sex_id,
-          'freeLiving': stableFreeLiving,
-          'demography': demography,
-          'contactAgeGroupIndices': contactAgeGroupIndices,
-          'treatmentAgeGroupIndices': treatmentAgeGroupIndices,
-          'VaccTreatmentAgeGroupIndices':VaccTreatmentAgeGroupIndices,
-          'adherenceFactors': np.random.uniform(low=0, high=1, size=params.N),
-          'vaccinatedFactors': np.random.uniform(low=1, high=2, size=params.N),
-          'compliers': np.random.uniform(low=0, high=1, size=params.N) > params.propNeverCompliers,
-          'attendanceRecord': [],
-          'ageAtChemo': [],
-          'adherenceFactorAtChemo': [],
-          'vaccCount' :0,
-          'numSurvey':0 
-          }
+    )
 
     return SD
 
 
 
-def calcRates(params: Parameters, SD):
+def calcRates(params: Parameters, SD: SDEquilibrium):
 
     '''
     This function calculates the event rates; the events are
@@ -791,13 +816,13 @@ def calcRates(params: Parameters, SD):
     array of event rates;
     '''
 
-    hostInfRates = SD['freeLiving'] * SD['si'] * params.contactRates[SD['contactAgeGroupIndices']]
-    deathRate = params.sigma * np.sum(SD['worms']['total'] * params.v1[SD['sv']])
+    hostInfRates = SD.freeLiving * SD.si * params.contactRates[SD.contactAgeGroupIndices]
+    deathRate = params.sigma * np.sum(SD.worms.total * params.v1[SD.sv])
     hostVaccDecayRates = params.VaccDecayRate[SD['sv']]
     return np.append(hostInfRates, hostVaccDecayRates, deathRate)
 
 
-def calcRates2(params, SD):
+def calcRates2(params: Parameters, SD: SDEquilibrium):
 
     '''
     This function calculates the event rates; the events are
@@ -813,13 +838,13 @@ def calcRates2(params, SD):
     -------
     array of event rates;
     '''
-    hostInfRates = float(SD['freeLiving']) * SD['si'] * params.contactRates[SD['contactAgeGroupIndices']]
-    deathRate = params.sigma * SD['worms']['total'] * params['v1'][SD['sv']]
-    hostVaccDecayRates = params.VaccDecayRate[SD['sv']]
+    hostInfRates = float(SD.freeLiving) * SD.si * params.contactRates[SD.contactAgeGroupIndices]
+    deathRate = params.sigma * SD.worms.total * params.v1[SD.sv]
+    hostVaccDecayRates = params.VaccDecayRate[SD.sv]
     args = (hostInfRates, hostVaccDecayRates, deathRate)
     return np.concatenate(args)
 
-def doEvent(rates, params, SD):
+def doEvent(rates: NDArray[np.float_], params: Parameters, SD: SDEquilibrium) -> SDEquilibrium:
 
     '''
     This function enacts the event; the events are
@@ -841,27 +866,27 @@ def doEvent(rates, params, SD):
 
     if event == len(rates) - 1: # worm death event
 
-        deathIndex = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(SD['worms']['total'] * params['v1'][SD['sv']]) < np.cumsum(SD['worms']['total']* params['v1'][SD['sv']]))
+        deathIndex = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(SD.worms.total * params.v1[SD.sv]) < np.cumsum(SD.worms.total* params.v1[SD.sv]))
 
-        SD['worms']['total'][deathIndex] -= 1
+        SD.worms.total[deathIndex] -= 1
 
-        if np.random.uniform(low=0, high=1, size=1) < SD['worms']['female'][deathIndex] / SD['worms']['total'][deathIndex]:
-            SD['worms']['female'][deathIndex] -= 1
+        if np.random.uniform(low=0, high=1, size=1) < SD.worms.female[deathIndex] / SD.worms.total[deathIndex]:
+            SD.worms.female[deathIndex] -= 1
     
-    if event <= params['N']:
-        if np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][event]]:
-            SD['worms']['total'][event] += 1
+    if event <= params.N:
+        if np.random.uniform(low=0, high=1, size=1) < params.v3[SD.sv[event]]:
+            SD.worms.total[event] += 1
             if np.random.uniform(low=0, high=1, size=1) < 0.5:
-                SD['worms']['female'][event] += 1
-    elif event <= 2*params['N']:
-        hostIndex = event - params['N']
-        SD['sv'][hostIndex] = 0
+                SD.worms.female[event] += 1
+    elif event <= 2*params.N:
+        hostIndex = event - params.N
+        SD.sv[hostIndex] = 0
 
     return SD
 
 
 
-def doEvent2(rates: ndarray, params: Parameters, SD):
+def doEvent2(rates: NDArray[np.float_], params: Parameters, SD: SDEquilibrium) -> SDEquilibrium:
 
     '''
     This function enacts the event; the events are
@@ -885,24 +910,24 @@ def doEvent2(rates: ndarray, params: Parameters, SD):
     hostIndex = ((event) % n_pop)
     
     if eventType == 1:
-        if random.random() < param_v3[SD['sv'][hostIndex]]:
-            SD['worms']['total'][hostIndex] += 1
+        if random.random() < param_v3[SD.sv[hostIndex]]:
+            SD.worms.total[hostIndex] += 1
             if random.random() < 0.5:
-                SD['worms']['female'][hostIndex] += 1
+                SD.worms.female[hostIndex] += 1
     elif eventType == 2:
-        SD['sv'][hostIndex] = 0
+        SD.sv[hostIndex] = 0
         
     elif eventType == 3:
-        if random.random() < SD['worms']['female'][hostIndex]/SD['worms']['total'][hostIndex]:
-            SD['worms']['female'][hostIndex] -= 1
-        SD['worms']['total'][hostIndex] -= 1
+        if random.random() < SD.worms.female[hostIndex]/SD.worms.total[hostIndex]:
+            SD.worms.female[hostIndex] -= 1
+        SD.worms.total[hostIndex] -= 1
     else:
         raise RuntimeError("Unknown event type")
         
     return SD
     
     
-def doRegular(params, SD, t, dt):
+def doRegular(params: Parameters, SD: SDEquilibrium, t: int, dt: float) -> SDEquilibrium:
     '''
     This function runs processes that happen regularly.
     These processes are reincarnating whicever hosts have recently died and
@@ -930,7 +955,7 @@ def doRegular(params, SD, t, dt):
     SD = doFreeLive(params, SD, dt)
     return SD
     
-def doFreeLive(params, SD, dt):
+def doFreeLive(params: Parameters, SD: SDEquilibrium, dt: float) -> SDEquilibrium:
 
     '''
     This function updates the freeliving population deterministically.
@@ -949,24 +974,24 @@ def doFreeLive(params, SD, dt):
     '''
 
     # polygamous reproduction; female worms produce fertilised eggs only if there's at least one male worm around
-    if params['reproFuncName'] == 'epgFertility' and params['SR']:
-        productivefemaleworms = np.where(SD['worms']['total'] == SD['worms']['female'], 0, SD['worms']['female'])
+    if params.reproFuncName == 'epgFertility' and params.SR:
+        productivefemaleworms = np.where(SD.worms.total == SD.worms.female, 0, SD.worms.female)
 
-    elif params['reproFuncName'] == 'epgFertility' and not params['SR']:
-        productivefemaleworms = SD['worms']['female']
+    elif params.reproFuncName == 'epgFertility' and not params.SR:
+        productivefemaleworms = SD.worms.female
 
     # monogamous reproduction; only pairs of worms produce eggs
-    elif params['reproFuncName'] == 'epgMonog':
-        productivefemaleworms = np.minimum(SD['worms']['total'] - SD['worms']['female'], SD['worms']['female'])
+    elif params.reproFuncName == 'epgMonog':
+        productivefemaleworms = np.minimum(SD.worms.total - SD.worms.female, SD.worms.female)
 
-    eggOutputPerHost = params['lambda'] * productivefemaleworms * np.exp(-SD['worms']['total'] * params['gamma']) * params['v2'][SD['sv']] # vaccine related fecundity
-    eggsProdRate = 2 * params['psi'] * np.sum(eggOutputPerHost * params['rho'][SD['contactAgeGroupIndices']]) / params['N']
-    expFactor = np.exp(-params['LDecayRate'] * dt)
-    SD['freeLiving'] = SD['freeLiving'] * expFactor + eggsProdRate * (1 - expFactor) / params['LDecayRate']
+    eggOutputPerHost = params.lambda_egg * productivefemaleworms * np.exp(-SD.worms.total * params.gamma) * params.v2[SD.sv] # vaccine related fecundity
+    eggsProdRate = 2 * params.psi * np.sum(eggOutputPerHost * params.rho[SD.contactAgeGroupIndices]) / params.N
+    expFactor = np.exp(-params.LDecayRate * dt)
+    SD.freeLiving = SD.freeLiving * expFactor + eggsProdRate * (1 - expFactor) / params.LDecayRate
 
     return SD
 
-def doDeath(params, SD, t):
+def doDeath(params: Parameters, SD: SDEquilibrium, t: int) -> SDEquilibrium:
 
     '''
     Death and aging function.
@@ -985,37 +1010,37 @@ def doDeath(params, SD, t):
     '''
 
     # identify the indices of the dead
-    theDead = np.where(SD['demography']['deathDate'] < t)[0]
+    theDead = np.where(SD.demography.deathDate < t)[0]
 
     if len(theDead) != 0:
         # they also need new force of infections (FOIs)
-        SD['si'][theDead] = np.random.gamma(size=len(theDead), scale=1 / params['k'], shape=params['k'])
-        SD['sv'][theDead] = 0
+        SD.si[theDead] = np.random.gamma(size=len(theDead), scale=1 / params.k, shape=params.k)
+        SD.sv[theDead] = 0
         #SD['sex_id'][theDead] = np.round(np.random.uniform(low = 1, high = 2, size = len(theDead)))
         # update the birth dates and death dates
-        SD['demography']['birthDate'][theDead] = t - 0.001
-        SD['demography']['deathDate'][theDead] = t + getLifeSpans(len(theDead), params)
+        SD.demography.birthDate[theDead] = t - 0.001
+        SD.demography.deathDate[theDead] = t + getLifeSpans(len(theDead), params)
 
         # kill all their worms
-        SD['worms']['total'][theDead] = 0
-        SD['worms']['female'][theDead] = 0
+        SD.worms.total[theDead] = 0
+        SD.worms.female[theDead] = 0
 
         # update the adherence factors
-        SD['adherenceFactors'][theDead] = np.random.uniform(low=0, high=1, size=len(theDead))
+        SD.adherenceFactors[theDead] = np.random.uniform(low=0, high=1, size=len(theDead))
 
         # assign the newly-born to either comply or not
-        SD['compliers'][theDead] = np.random.uniform(low=0, high=1, size=len(theDead)) > params['propNeverCompliers']
+        SD.compliers[theDead] = np.random.uniform(low=0, high=1, size=len(theDead)) > params.propNeverCompliers
 
     # update the contact age categories
-    SD['contactAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['contactAgeGroupBreaks'])-1
+    SD.contactAgeGroupIndices = np.digitize(t - SD.demography.birthDate, params.contactAgeGroupBreaks)-1
 
     # update the treatment age categories
-    SD['treatmentAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['treatmentAgeGroupBreaks'])-1
-    SD['VaccTreatmentAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['VaccTreatmentAgeGroupBreaks'])-1
+    SD.treatmentAgeGroupIndices = np.digitize(t - SD.demography.birthDate, params.treatmentAgeGroupBreaks)-1
+    SD.VaccTreatmentAgeGroupIndices = np.digitize(t - SD.demography.birthDate, params.VaccTreatmentAgeGroupBreaks)-1
 
     return SD
 
-def doChemo(params, SD, t, coverage):
+def doChemo(params: Parameters, SD: SDEquilibrium, t: int, coverage: ndarray) -> SDEquilibrium:
 
     '''
     Chemoterapy function.
@@ -1036,30 +1061,30 @@ def doChemo(params, SD, t, coverage):
     '''
 
     # decide which individuals are treated, treatment is random
-    attendance = np.random.uniform(low=0, high=1, size=params['N']) < coverage[SD['treatmentAgeGroupIndices']]
+    attendance = np.random.uniform(low=0, high=1, size=params.N) < coverage[SD.treatmentAgeGroupIndices]
 
     # they're compliers and it's their turn
-    toTreatNow = np.logical_and(attendance, SD['compliers'])
+    toTreatNow = np.logical_and(attendance, SD.compliers)
 
     # calculate the number of dead worms
-    femaleToDie = np.random.binomial(size=np.sum(toTreatNow), n=SD['worms']['female'][toTreatNow],
-    p=params['DrugEfficacy'])
+    femaleToDie = np.random.binomial(size=np.sum(toTreatNow), n=SD.worms.female[toTreatNow],
+    p=params.DrugEfficacy)
 
-    maleToDie = np.random.binomial(size=np.sum(toTreatNow), n=SD['worms']['total'][toTreatNow] -
-    SD['worms']['female'][toTreatNow], p=params['DrugEfficacy'])
+    maleToDie = np.random.binomial(size=np.sum(toTreatNow), n=SD.worms.total[toTreatNow] -
+    SD.worms.female[toTreatNow], p=params.DrugEfficacy)
 
-    SD['worms']['female'][toTreatNow] -= femaleToDie
-    SD['worms']['total'][toTreatNow] -= (maleToDie + femaleToDie)
+    SD.worms.female[toTreatNow] -= femaleToDie
+    SD.worms.total[toTreatNow] -= (maleToDie + femaleToDie)
 
     # save actual attendance record and the age of each host when treated
-    SD['attendanceRecord'].append(toTreatNow)
-    SD['ageAtChemo'].append(t - SD['demography']['birthDate'])
-    SD['adherenceFactorAtChemo'].append(SD['adherenceFactors'])
+    SD.attendanceRecord.append(toTreatNow)
+    SD.ageAtChemo.append(t - SD.demography.birthDate)
+    SD.adherenceFactorAtChemo.append(SD.adherenceFactors)
 
     return SD
 
 
-def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
+def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: int, minAge: int, maxAge: int, coverage: ndarray) -> SDEquilibrium:
 
     '''
     Chemoterapy function.
@@ -1084,13 +1109,13 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     '''
 
     # decide which individuals are treated, treatment is random
-    attendance = np.random.uniform(low=0, high=1, size=params['N']) < coverage
+    attendance = np.random.uniform(low=0, high=1, size=params.N) < coverage
     # get age of each individual
-    ages = t - SD['demography']['birthDate']
+    ages = t - SD.demography.birthDate
     # choose individuals in correct age range
     correctAges = np.logical_and(ages <= maxAge , ages >= minAge)
     # they're compliers, in the right age group and it's their turn
-    toTreatNow = np.logical_and(attendance, SD['compliers'])
+    toTreatNow = np.logical_and(attendance, SD.compliers)
     toTreatNow = np.logical_and(toTreatNow , correctAges)
     
     # initialize the share of drug 1 and drug2 
@@ -1099,7 +1124,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     
     # get the actual share of each drug for this treatment.
     
-    if t in params['drug1Years']:
+    if t in params.drug1Years:
         i = np.where(params['drug1Years'] == t)[0][0]
         d1Share = params['drug1Split'][i]
     if t in params['drug2Years']:
@@ -1143,7 +1168,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
 
 
 
-def doVaccine(params, SD, t, VaccCoverage):
+def doVaccine(params: Parameters, SD: SDEquilibrium, t: int, VaccCoverage: ndarray):
     '''
     Vaccine function.
     Parameters
@@ -1161,19 +1186,19 @@ def doVaccine(params, SD, t, VaccCoverage):
     SD: dict
         dictionary containing the updated equilibrium parameter values;
     '''
-    temp  = ((SD['VaccTreatmentAgeGroupIndices'] + 1 ) // 2) - 1
-    vaccinate = np.random.uniform(low=0, high=1, size=params['N']) < VaccCoverage[temp]
+    temp  = ((SD.VaccTreatmentAgeGroupIndices + 1 ) // 2) - 1
+    vaccinate = np.random.uniform(low=0, high=1, size=params.N) < VaccCoverage[temp]
     
     indicesToVaccinate=[]
-    for i in range(len(params['VaccTreatmentBreaks'])):
+    for i in range(len(params.VaccTreatmentBreaks)):
         indicesToVaccinate.append(1+i*2)
     Hosts4Vaccination = []
-    for i in SD['VaccTreatmentAgeGroupIndices']:
+    for i in SD.VaccTreatmentAgeGroupIndices:
         Hosts4Vaccination.append(i in indicesToVaccinate)
     
     vaccNow = np.logical_and(Hosts4Vaccination, vaccinate)
-    SD['sv'][vaccNow] = 1
-    SD['vaccCount'] += sum(Hosts4Vaccination) + sum(vaccinate)
+    SD.sv[vaccNow] = 1
+    SD.vaccCount += sum(Hosts4Vaccination) + sum(vaccinate)
     
     return SD
     
@@ -1181,7 +1206,7 @@ def doVaccine(params, SD, t, VaccCoverage):
     
     
     
-def doVaccineAgeRange(params, SD, t, minAge, maxAge, coverage):
+def doVaccineAgeRange(params: Parameters, SD: SDEquilibrium, t: int, minAge: float, maxAge: float, coverage: ndarray) -> SDEquilibrium:
     '''
     Vaccine function.
     Parameters
@@ -1204,35 +1229,37 @@ def doVaccineAgeRange(params, SD, t, minAge, maxAge, coverage):
         dictionary containing the updated equilibrium parameter values;
     '''
 
-    vaccinate = np.random.uniform(low=0, high=1, size=params['N']) < coverage
-    ages = t - SD['demography']['birthDate']
+    vaccinate = np.random.uniform(low=0, high=1, size=params.N) < coverage
+    ages = t - SD.demography.birthDate
     correctAges = np.logical_and(ages <= maxAge , ages >= minAge)
     # they're compliers and it's their turn
-    vaccNow = np.logical_and(vaccinate, SD['compliers'])
+    vaccNow = np.logical_and(vaccinate, SD.compliers)
     vaccNow = np.logical_and(vaccNow , correctAges)
-    SD['sv'][vaccNow] = 1
-    SD['vaccCount'] += sum(vaccNow) 
+    SD.sv[vaccNow] = 1
+    SD.vaccCount += sum(vaccNow) 
     
     return SD
     
     
 
-def conductSurvey(SD, params, t, sampleSize, nSamples):
+def conductSurvey(SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int) -> Tuple[SDEquilibrium, float]:
     # get min and max age for survey
-    minAge = params['minSurveyAge']
-    maxAge = params['maxSurveyAge']
+    minAge = params.minSurveyAge
+    maxAge = params.maxSurveyAge
     #minAge = 5
     #maxAge = 15
     # get Kato-Katz eggs for each individual
-    for i in range(nSamples):
-        if i == 0:
-            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized'])
-        else:
-            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized']))
+    if nSamples < 1:
+        raise ValueError('nSamples < 1')
+    
+    eggCounts = getSetOfEggCounts(SD.worms.total, SD.worms.female, params, Unfertilized=params.Unfertilized)
+    for _ in range(nSamples -1):
+        eggCounts = np.add(eggCounts, getSetOfEggCounts(SD.worms.total, SD.worms.female, params, Unfertilized=params.Unfertilized))
+    
     eggCounts = eggCounts / nSamples
 
     # get individuals in chosen survey age group
-    ages = -(SD['demography']['birthDate'] - t)
+    ages = -(SD.demography.birthDate - t)
     surveyAged = np.logical_and(ages >= minAge, ages <= maxAge)
 
     # get egg counts for those individuals
@@ -1242,26 +1269,25 @@ def conductSurvey(SD, params, t, sampleSize, nSamples):
     KKSampleSize = min(sampleSize, sum(surveyAged)) 
 
     sampledEggs = np.random.choice(a=np.array(surveyEggs), size=int(KKSampleSize), replace=False)
-    SD['numSurvey'] += 1
+    SD.numSurvey += 1
     # return the prevalence
     return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
 
 
-def conductSurveyTwo(SD, params, t, sampleSize, nSamples):
+def conductSurveyTwo(SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int) -> Tuple[SDEquilibrium, float]:
 
     # get Kato-Katz eggs for each individual
-    for i in range(nSamples):
-        if i == 0:
-            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized'])
-        else:
-            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized']))
+    if nSamples < 1:
+        raise ValueError('nSamples < 1')
+    eggCounts = getSetOfEggCounts(SD.worms.total, SD.worms.female, params, Unfertilized=params.Unfertilized)
+    for _ in range(nSamples):
+        eggCounts = np.add(eggCounts, getSetOfEggCounts(SD.worms.total, SD.worms.female, params, Unfertilized=params.Unfertilized))
     eggCounts = eggCounts / nSamples
 
-
     # get sampled individuals
-    KKSampleSize = min(sampleSize, params['N']) 
+    KKSampleSize = min(sampleSize, params.N) 
     sampledEggs = np.random.choice(a=eggCounts, size=KKSampleSize, replace=False)
-    SD['numSurveyTwo'] += 1
+    SD.numSurveyTwo += 1
     # return the prevalence
     return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
 
@@ -1300,7 +1326,8 @@ def getPsi(params: Parameters) -> float:
     # calculate the cumulative sum of host and worm death rates from which to calculate worm survival
     # intMeanWormDeathEvents = np.cumsum(hostMu + params['sigma']) * deltaT # commented out as it is not used
 
-
+    if params.contactAgeGroupBreaks is None:
+        raise ValueError("contactAgeGroupBreaks is not set")
     modelAgeGroupCatIndex = np.digitize(modelAges, params.contactAgeGroupBreaks)-1
 
     betaAge = params.contactRates[modelAgeGroupCatIndex]
@@ -1326,7 +1353,8 @@ def getLifeSpans(nSpans: int, params: Parameters) -> float:
     -------
     array containing the lifespan drawings;
     '''
-
+    if params.hostAgeCumulDistr is None:
+        raise ValueError('hostAgeCumulDistr is not set')
     u = np.random.uniform(low=0, high=1, size=nSpans) * np.max(params.hostAgeCumulDistr)
     spans = np.array([np.argmax(u[i] < params.hostAgeCumulDistr) for i in range(nSpans)])
     if params.muAges is None:
@@ -1468,7 +1496,7 @@ def extractHostData(results):
 
     return output
 
-def getSetOfEggCounts(total: int, female: int, params: Parameters, Unfertilized: bool=False):
+def getSetOfEggCounts(total: NDArray[np.int_], female: NDArray[np.int_], params: Parameters, Unfertilized: bool=False):
 
     '''
     This function returns a set of readings of egg counts from a vector of individuals,
