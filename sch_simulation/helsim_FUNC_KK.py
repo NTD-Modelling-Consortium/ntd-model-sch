@@ -22,6 +22,17 @@ class MonogParameters:
     cosTheta: ndarray
 
 @dataclass
+class Equilibrium:
+    stableProfile: ndarray
+    ageValues: ndarray
+    L_stable: float
+    L_breakpoint: float
+    K_values: ndarray
+    L_values: ndarray
+    FOIMultiplier: float
+    hostSurvival: Optional[ndarray] = None
+
+@dataclass
 class Parameters:
     numReps: int
     maxTime: float #nYears
@@ -89,6 +100,7 @@ class Parameters:
     muAges: Optional[ndarray] = None
     hostMu: Optional[float] = None
     monogParams: Optional[MonogParameters] = None
+    equiData: Optional[Equilibrium] = None
 
 @dataclass
 class Coverage:
@@ -99,7 +111,30 @@ class Coverage:
     drug2Eff: float
     MDA_age1: float
 
-def readParam(fileName):
+
+@dataclass
+class Demography:
+    birthDate: ndarray
+    deathDate: ndarray
+
+@dataclass
+class Worms:
+    total: int
+    female: int
+
+@dataclass
+class SDEquilibrium:
+    si: float
+    sv: ndarray
+    worms: Worms
+    sex_id: ndarray
+    #freeLiving: 
+    demography: Demography
+
+
+
+
+def readParam(fileName: str):
 
     '''
     This function extracts the parameter values stored
@@ -668,7 +703,7 @@ def configure(params: Parameters) -> Parameters:
 
 
 
-def setupSD(params):
+def setupSD(params: Parameters):
 
     '''
     This function sets up the simulation to initial conditions
@@ -683,12 +718,12 @@ def setupSD(params):
         dictionary containing the equilibrium parameter settings;
     '''
 
-    si = np.random.gamma(size=params['N'], scale=1 / params['k'], shape=params['k'])
-    sv = np.zeros(params['N'], dtype=int)
-    lifeSpans = getLifeSpans(params['N'], params)
-    trialBirthDates = - lifeSpans * np.random.uniform(low=0, high=1, size=params['N'])
+    si = np.random.gamma(size=params.N, scale=1 / params.k, shape=params.k)
+    sv = np.zeros(params.N, dtype=int)
+    lifeSpans = getLifeSpans(params.N, params)
+    trialBirthDates = - lifeSpans * np.random.uniform(low=0, high=1, size=params.N)
     trialDeathDates = trialBirthDates + lifeSpans
-    sex_id = np.round(np.random.uniform(low = 1, high = 2, size = params['N']))
+    sex_id = np.round(np.random.uniform(low = 1, high = 2, size = params.N))
     communityBurnIn = 1000
 
     while np.min(trialDeathDates) < communityBurnIn:
@@ -697,22 +732,26 @@ def setupSD(params):
         trialBirthDates[earlyDeath] = trialDeathDates[earlyDeath]
         trialDeathDates[earlyDeath] += getLifeSpans(len(earlyDeath), params)
 
-    demography = {'birthDate': trialBirthDates - communityBurnIn, 'deathDate': trialDeathDates - communityBurnIn}
+    demography = Demography(birthDate = trialBirthDates - communityBurnIn, deathDate = trialDeathDates - communityBurnIn)
     
-    contactAgeGroupIndices = np.digitize(-demography['birthDate'], params['contactAgeGroupBreaks'])-1
+    contactAgeGroupIndices = np.digitize(-demography.birthDate, params.contactAgeGroupBreaks)-1
 
-    treatmentAgeGroupIndices = np.digitize(-demography['birthDate'], params['treatmentAgeGroupBreaks'])-1
-
-    meanBurdenIndex = np.digitize(-demography['birthDate'], np.append(0, params['equiData']['ageValues']))-1
-
-    wTotal = np.random.poisson(lam=si * params['equiData']['stableProfile'][meanBurdenIndex] * 2, size=params['N'])
-
-    worms = dict(total=wTotal, female=np.random.binomial(n=wTotal, p=0.5, size=params['N']))
-
-    stableFreeLiving = params['equiData']['L_stable'] * 2
-
-    VaccTreatmentAgeGroupIndices = np.digitize(-demography['birthDate'], params['VaccTreatmentAgeGroupBreaks'])-1
+    treatmentAgeGroupIndices = np.digitize(-demography.birthDate, params.treatmentAgeGroupBreaks)-1
+    if params.equiData is None:
+        raise ValueError("Equidata not set")
     
+    meanBurdenIndex = np.digitize(-demography.birthDate, np.append(0, params.equiData.ageValues))-1
+
+    wTotal = np.random.poisson(lam=si * params.equiData.stableProfile[meanBurdenIndex] * 2, size=params.N)
+
+    worms = dict(total=wTotal, female=np.random.binomial(n=wTotal, p=0.5, size=params.N))
+
+    stableFreeLiving = params.equiData.L_stable * 2
+
+    VaccTreatmentAgeGroupIndices = np.digitize(-demography.birthDate, params.VaccTreatmentAgeGroupBreaks)-1
+
+
+
     SD = {'si': si,
           'sv': sv,
           'worms': worms,
@@ -722,9 +761,9 @@ def setupSD(params):
           'contactAgeGroupIndices': contactAgeGroupIndices,
           'treatmentAgeGroupIndices': treatmentAgeGroupIndices,
           'VaccTreatmentAgeGroupIndices':VaccTreatmentAgeGroupIndices,
-          'adherenceFactors': np.random.uniform(low=0, high=1, size=params['N']),
-          'vaccinatedFactors': np.random.uniform(low=1, high=2, size=params['N']),
-          'compliers': np.random.uniform(low=0, high=1, size=params['N']) > params['propNeverCompliers'],
+          'adherenceFactors': np.random.uniform(low=0, high=1, size=params.N),
+          'vaccinatedFactors': np.random.uniform(low=1, high=2, size=params.N),
+          'compliers': np.random.uniform(low=0, high=1, size=params.N) > params.propNeverCompliers,
           'attendanceRecord': [],
           'ageAtChemo': [],
           'adherenceFactorAtChemo': [],
@@ -1228,7 +1267,7 @@ def conductSurveyTwo(SD, params, t, sampleSize, nSamples):
 
     
     
-def getPsi(params):
+def getPsi(params: Parameters) -> float:
 
     '''
     This function calculates the psi parameter.
@@ -1245,36 +1284,35 @@ def getPsi(params):
     deltaT = 0.1
 
     # inteval-centered ages for the age intervals, midpoints from 0 to maxHostAge
-    modelAges = np.arange(start=0, stop=params['maxHostAge'], step=deltaT) + 0.5 * deltaT
+    modelAges = np.arange(start=0, stop=params.maxHostAge, step=deltaT) + 0.5 * deltaT
 
 
 
 
-    inner = np.digitize(modelAges, params['muBreaks'])-1
+    inner = np.digitize(modelAges, params.muBreaks)-1
 
     # hostMu for the new age intervals
-    hostMu = params['hostMuData'][inner]
+    hostMu = params.hostMuData[inner]
 
     hostSurvivalCurve = np.exp(-np.cumsum(hostMu * deltaT))
-    MeanLifespan = np.sum(hostSurvivalCurve[:len(modelAges)]) * deltaT
+    MeanLifespan: float = np.sum(hostSurvivalCurve[:len(modelAges)]) * deltaT
 
     # calculate the cumulative sum of host and worm death rates from which to calculate worm survival
     # intMeanWormDeathEvents = np.cumsum(hostMu + params['sigma']) * deltaT # commented out as it is not used
 
 
-    modelAgeGroupCatIndex = np.digitize(modelAges, params['contactAgeGroupBreaks'])-1
+    modelAgeGroupCatIndex = np.digitize(modelAges, params.contactAgeGroupBreaks)-1
 
-    betaAge = params['contactRates'][modelAgeGroupCatIndex]
-    rhoAge = params['rho'][modelAgeGroupCatIndex]
+    betaAge = params.contactRates[modelAgeGroupCatIndex]
+    rhoAge: float = params.rho[modelAgeGroupCatIndex]
 
-    wSurvival = np.exp(-params['sigma'] * modelAges)
+    wSurvival = np.exp(-params.sigma * modelAges)
 
     B = np.array([np.sum(betaAge[: i] * np.flip(wSurvival[: i])) * deltaT for i in range(1, 1 + len(hostMu))])
 
-    return params['R0'] * MeanLifespan * params['LDecayRate'] / (params['lambda'] * params['z'] *
-    np.sum(rhoAge * hostSurvivalCurve * B) * deltaT)
+    return params.R0 * MeanLifespan * params.LDecayRate / (params.lambda_egg * params.z * np.sum(rhoAge * hostSurvivalCurve * B) * deltaT)
 
-def getLifeSpans(nSpans, params):
+def getLifeSpans(nSpans: int, params: Parameters) -> float:
 
     '''
     This function draws the lifespans from the population survival curve.
@@ -1289,12 +1327,16 @@ def getLifeSpans(nSpans, params):
     array containing the lifespan drawings;
     '''
 
-    u = np.random.uniform(low=0, high=1, size=nSpans) * np.max(params['hostAgeCumulDistr'])
-    spans = np.array([np.argmax(u[i] < params['hostAgeCumulDistr']) for i in range(nSpans)])
+    u = np.random.uniform(low=0, high=1, size=nSpans) * np.max(params.hostAgeCumulDistr)
+    spans = np.array([np.argmax(u[i] < params.hostAgeCumulDistr) for i in range(nSpans)])
+    if params.muAges is None:
+        raise ValueError('muAges not set')
+    else:
+        return params.muAges[spans]
 
-    return params['muAges'][spans]
 
-def getEquilibrium(params):
+
+def getEquilibrium(params: Parameters) -> Equilibrium:
 
     '''
     This function returns a dictionary containing the equilibrium worm burden
@@ -1313,19 +1355,19 @@ def getEquilibrium(params):
     deltaT = 0.1
 
     # inteval-centered ages for the age intervals, midpoints from 0 to maxHostAge
-    modelAges = np.arange(start=0, stop=params['maxHostAge'], step=deltaT) + 0.5 * deltaT
+    modelAges = np.arange(start=0, stop=params.maxHostAge, step=deltaT) + 0.5 * deltaT
 
     # hostMu for the new age intervals
-    hostMu = params['hostMuData'][np.digitize(modelAges, params['muBreaks'])-1]
+    hostMu = params.hostMuData[np.digitize(modelAges, params.muBreaks)-1]
 
     hostSurvivalCurve = np.exp(-np.cumsum(hostMu * deltaT))
     MeanLifespan = np.sum(hostSurvivalCurve[:len(modelAges)]) * deltaT
-    modelAgeGroupCatIndex = np.digitize(modelAges, params['contactAgeBreaks'])-1
+    modelAgeGroupCatIndex = np.digitize(modelAges, params.contactAgeBreaks)-1
 
-    betaAge = params['contactRates'][modelAgeGroupCatIndex]
-    rhoAge = params['rho'][modelAgeGroupCatIndex]
+    betaAge = params.contactRates[modelAgeGroupCatIndex]
+    rhoAge = params.rho[modelAgeGroupCatIndex]
 
-    wSurvival = np.exp(-params['sigma'] * modelAges)
+    wSurvival = np.exp(-params.sigma * modelAges)
 
     # this variable times L is the equilibrium worm burden
     Q = np.array([np.sum(betaAge[: i] * np.flip(wSurvival[: i])) * deltaT for i in range(1, 1 + len(hostMu))])
@@ -1335,9 +1377,9 @@ def getEquilibrium(params):
 
     # upper bound on L
     SRhoT = np.sum(hostSurvivalCurve * rhoAge) * deltaT
-    R_power = 1 / (params['k'] + 1)
-    L_hat = params['z'] * params['lambda'] * params['psi'] * SRhoT * params['k'] * (params['R0'] ** R_power - 1) / \
-    (params['R0'] * MeanLifespan * params['LDecayRate'] * (1 - params['z']))
+    R_power = 1 / (params.k + 1)
+    L_hat = params.z * params.lambda_egg * params.psi * SRhoT * params.k * (params.R0 ** R_power - 1) / \
+    (params.R0 * MeanLifespan * params.LDecayRate * (1 - params.z))
 
     # now evaluate the function K across a series of L values and find point near breakpoint;
     # L_minus is the value that gives an age-averaged worm burden of 1; negative growth should
@@ -1345,9 +1387,12 @@ def getEquilibrium(params):
     L_minus = MeanLifespan / np.sum(Q * hostSurvivalCurve * deltaT)
     test_L = np.append(np.linspace(start=0, stop=L_minus, num=10), np.linspace(start=L_minus, stop=L_hat, num=20))
 
-    def K_valueFunc(currentL, params):
-        repro_result = params['reproFunc'](currentL * Q, params)
-        return params['psi'] * np.sum(repro_result * rhoAge * hostSurvivalCurve * deltaT) / (MeanLifespan * params['LDecayRate']) - currentL
+    def K_valueFunc(currentL, params: Parameters):
+        if params.reproFunc is None:
+            raise ValueError('Reprofunc is not set')
+        else:
+            repro_result = params.reproFunc(currentL * Q, params)
+        return params.psi * np.sum(repro_result * rhoAge * hostSurvivalCurve * deltaT) / (MeanLifespan * params.LDecayRate) - currentL
     #K_values = np.vectorize(K_valueFunc)(currentL=test_L, params=params)
     K_values = np.array([K_valueFunc(i,params) for i in test_L])
     
@@ -1357,7 +1402,7 @@ def getEquilibrium(params):
 
     if K_values[iMax] < 0:
 
-        return dict(stableProfile=0 * Q,
+        return Equilibrium(stableProfile=0 * Q,
                     ageValues=modelAges,
                     L_stable=0,
                     L_breakpoint=np.nan,
@@ -1376,7 +1421,16 @@ def getEquilibrium(params):
 
     stableProfile = L_stable * Q
 
-    return dict(stableProfile=stableProfile, ageValues=modelAges,hostSurvival=hostSurvivalCurve,L_stable=L_stable,L_breakpoint=L_break,K_values=K_values,L_values=test_L,FOIMultiplier=FOIMultiplier)
+    return Equilibrium(
+        stableProfile=stableProfile, 
+        ageValues=modelAges,
+        hostSurvival=hostSurvivalCurve,
+        L_stable=L_stable,
+        L_breakpoint=L_break,
+        K_values=K_values,
+        L_values=test_L,
+        FOIMultiplier=FOIMultiplier
+    )
 
 def extractHostData(results):
 
@@ -1414,7 +1468,7 @@ def extractHostData(results):
 
     return output
 
-def getSetOfEggCounts(total, female, params, Unfertilized=False):
+def getSetOfEggCounts(total: int, female: int, params: Parameters, Unfertilized: bool=False):
 
     '''
     This function returns a set of readings of egg counts from a vector of individuals,
@@ -1436,16 +1490,16 @@ def getSetOfEggCounts(total, female, params, Unfertilized=False):
 
     if Unfertilized:
 
-        meanCount = female * params['lambda'] * params['z'] ** female
+        meanCount = female * params.lambda_egg * params.z ** female
 
     else:
 
         eggProducers = np.where(total == female, 0, female)
-        meanCount = eggProducers * params['lambda'] * params['z'] ** eggProducers
+        meanCount = eggProducers * params.lambda_egg * params.z ** eggProducers
 
-    return np.random.negative_binomial(size=len(meanCount), p=params['k_epg'] / (meanCount + params['k_epg']), n=params['k_epg'])
+    return np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
 
-def getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples=2, Unfertilized=False):
+def getVillageMeanCountsByHost(villageList, timeIndex: int, params: Parameters, nSamples: int = 2, Unfertilized: bool = False):
 
     '''
     This function returns the mean egg count across readings by host
@@ -1475,8 +1529,14 @@ def getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples=2, Unfer
 
     return meanEggsByHost
 
-def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
-    villageSampleSize=100):
+def getAgeCatSampledPrevByVillage(
+    villageList, 
+    timeIndex: int, 
+    ageBand: int, 
+    params: Parameters, 
+    nSamples: int = 2, 
+    Unfertilized: bool = False,
+    villageSampleSize: int = 100) -> float:
 
     '''
     This function provides sampled, age-cat worm prevalence
