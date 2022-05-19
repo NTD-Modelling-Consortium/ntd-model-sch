@@ -14,7 +14,7 @@ np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
 from numpy import ndarray
-from typing import Callable, List, Tuple, Optional
+from typing import Callable, List, Tuple, Optional, Dict
 from numpy.typing import NDArray
 @dataclass
 class MonogParameters:
@@ -136,20 +136,22 @@ class SDEquilibrium:
     si: NDArray[np.float_]
     sv: ndarray
     worms: Worms
-    sex_id: ndarray
     freeLiving: float
     demography: Demography
     contactAgeGroupIndices: ndarray
     treatmentAgeGroupIndices: ndarray
-    VaccTreatmentAgeGroupIndices: ndarray
     adherenceFactors: ndarray
-    vaccinatedFactors: ndarray
     compliers: ndarray
     attendanceRecord: List[ndarray]
     ageAtChemo: List
     adherenceFactorAtChemo: List
     vaccCount: int
     numSurvey: int
+    vaccinatedFactors: Optional[ndarray] = None
+    VaccTreatmentAgeGroupIndices: Optional[ndarray] = None
+    sex_id: Optional[ndarray] = None
+    nChemo1: Optional[int] = None
+    nChemo2: Optional[int] = None
 
 @dataclass
 class Result:
@@ -201,7 +203,7 @@ def readParam(fileName: str):
 
             try:
                 
-                line[1] = np.array([np.float(x) for x in line[1].split(' ')])
+                line[1] = np.array([float(x) for x in line[1].split(' ')])
 
                 if len(line[1]) == 1:
                     
@@ -250,7 +252,7 @@ def readCovFile(fileName: str):
 
             try:
                 
-                line[1] = np.array([np.float(x) for x in line[1].split(' ')])
+                line[1] = np.array([float(x) for x in line[1].split(' ')])
 
                 if len(line[1]) == 1:
                     
@@ -490,20 +492,32 @@ def parse_coverage_input(
 
 
 
-def nextMDAVaccInfo(params):
+def nextMDAVaccInfo(params: Parameters) -> Tuple[
+    Dict,
+    Dict,
+    int,
+    List[int],
+    List[int],
+    int,
+    List[int],
+    List[int]
+]:
     chemoTiming = {}
-    for i in range(1, params['nMDAAges']+1):
-        chemoTiming["Age{0}".format(i)] = copy.deepcopy(params['MDA_Years' + str(i)])
+    assert params.MDA is not None
+    assert params.Vacc is not None
+    
+    for i, mda in enumerate(params.MDA):
+        chemoTiming["Age{0}".format(i)] = copy.deepcopy(mda.Years)
     VaccTiming = {}
-    for i in range(1, params['nVaccAges']+1):
-        VaccTiming["Age{0}".format(i)] = copy.deepcopy(params['Vacc_Years' + str(i)])
+    for i, vacc in enumerate(params.Vacc):
+        VaccTiming["Age{0}".format(i)] = copy.deepcopy(vacc.Years)
   #  currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
   
     nextChemoTime = 10000
-    for i in range(1, params['nMDAAges']+1):
+    for i, mda in enumerate(params.MDA):
         nextChemoTime = min(nextChemoTime, min(chemoTiming["Age{0}".format(i)]))
     nextMDAAge = []
-    for i in range(1, params['nMDAAges']+1):
+    for i, mda in enumerate(params.MDA):
         if nextChemoTime == min(chemoTiming["Age{0}".format(i)]):
             nextMDAAge.append(i)
     nextChemoIndex = []
@@ -514,10 +528,10 @@ def nextMDAVaccInfo(params):
         
         
     nextVaccTime = 10000
-    for i in range(1, params['nVaccAges']+1):
+    for i, vacc in enumerate(params.Vacc):
         nextVaccTime = min(nextVaccTime, min(VaccTiming["Age{0}".format(i)]))
     nextVaccAge = []
-    for i in range(1, params['nVaccAges']+1):
+    for i, vacc in enumerate(params.Vacc):
         if nextVaccTime == min(VaccTiming["Age{0}".format(i)]):
             nextVaccAge.append(i)    
     nextVaccIndex = []
@@ -526,6 +540,8 @@ def nextMDAVaccInfo(params):
         nextVaccIndex.append(np.argmin(np.array(VaccTiming["Age{0}".format(k)])))
         
     return chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex
+
+
 
 def overWritePostVacc(params: Parameters,  nextVaccAge: ndarray, nextVaccIndex: ndarray):
     assert params.Vacc is not None
@@ -713,8 +729,8 @@ def configure(params: Parameters) -> Parameters:
     # definition of the reproduction function
     if params.reproFuncName == 'epgMonog':
         params.monogParams = monogFertilityConfig(params)
-    else:
-        params.reproFunc = ParallelFuncs.mapper[params.reproFuncName]
+
+    params.reproFunc = ParallelFuncs.mapper[params.reproFuncName]
 
     # max age cutoff point
     params.maxHostAge = np.min([np.max(params.muBreaks), np.max(params.contactAgeBreaks)])
@@ -1495,7 +1511,7 @@ def getEquilibrium(params: Parameters) -> Equilibrium:
         FOIMultiplier=FOIMultiplier
     )
 
-def extractHostData(results: List[Result]):
+def extractHostData(results: List[List[Result]]):
 
     '''
     This function is used for processing results the raw simulation results.
@@ -1514,14 +1530,14 @@ def extractHostData(results: List[Result]):
     for rep in range(len(results)):
 
         output.append(dict(
-            wormsOverTime=np.array([results[rep][i]['worms']['total'] for i in range(len(results[0]) - 1)]).T,
-            femaleWormsOverTime=np.array([results[rep][i]['worms']['female'] for i in range(len(results[0]) - 1)]).T,
+            wormsOverTime=np.array([results[rep][i].worms.total for i in range(len(results[0]) - 1)]).T,
+            femaleWormsOverTime=np.array([results[rep][i].worms.female for i in range(len(results[0]) - 1)]).T,
             # freeLiving=np.array([results[rep][i]['freeLiving'] for i in range(len(results[0]) - 1)]),
-            ages=np.array([results[rep][i]['time'] - results[rep][i]['hosts']['birthDate'] for i in range(len(results[0]) - 1)]).T,
+            ages=np.array([results[rep][i].time - results[rep][i].hosts.birthDate for i in range(len(results[0]) - 1)]).T,
             # adherenceFactors=np.array([results[rep][i]['adherenceFactors'] for i in range(len(results[0]) - 1)]).T,
             # compliers=np.array([results[rep][i]['compliers'] for i in range(len(results[0]) - 1)]).T,
             # totalPop=len(results[rep][0]['worms']['total']),
-            timePoints=np.array([np.array(results[rep][i]['time']) for i in range(len(results[0]) - 1)]),
+            timePoints=np.array([np.array(results[rep][i].time) for i in range(len(results[0]) - 1)]),
             # attendanceRecord=results[rep][-1]['attendanceRecord'],
             # ageAtChemo=results[rep][-1]['ageAtChemo'],
             # finalFreeLiving=results[rep][-2]['freeLiving'],
@@ -1687,8 +1703,8 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
             mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True)
 
         infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
-        medium = np.sum((mySample >= params['mediumThreshold']) & (mySample <= params['heavyThreshold'])) / villageSampleSize
-        heavy = np.sum(mySample > params['heavyThreshold']) / villageSampleSize
+        medium = np.sum((mySample >= params.mediumThreshold) & (mySample <= params.heavyThreshold)) / villageSampleSize
+        heavy = np.sum(mySample > params.heavyThreshold) / villageSampleSize
 
         low = infected - (medium + heavy)
 
@@ -2055,11 +2071,11 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
 
 
 
-def outputNumberInAgeGroup(results, params: Parameters):
+def outputNumberInAgeGroup(results: List[List[Result]], params: Parameters):
     assert params.maxHostAge is not None
     for i in range(len(results[0])):
         d = results[0][i]
-        ages = d['time'] - d['hosts']['birthDate'] 
+        ages = d.time - d.hosts.birthDate 
         ages1 = list(ages.astype(int))
         age_counts = []
         for j in range(int(params.maxHostAge)):
@@ -2067,7 +2083,7 @@ def outputNumberInAgeGroup(results, params: Parameters):
             
         if i == 0:
                 numEachAgeGroup = pd.DataFrame({
-                        'Time': np.repeat(d['time'], len(age_counts)), 
+                        'Time': np.repeat(d.time, len(age_counts)), 
                        'age_start': range(int(params.maxHostAge)), 
                        'age_end':range(1,1+int(params.maxHostAge)), 
                        'intensity':np.repeat('All', len(age_counts)),
@@ -2076,7 +2092,7 @@ def outputNumberInAgeGroup(results, params: Parameters):
                        'draw_1':age_counts})
         else:
                 numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({
-                        'Time': np.repeat(d['time'], len(age_counts)), 
+                        'Time': np.repeat(d.time, len(age_counts)), 
                        'age_start': range(int(params.maxHostAge)), 
                        'age_end':range(1,1+int(params.maxHostAge)), 
                        'intensity':np.repeat('All', len(age_counts)),

@@ -7,6 +7,8 @@ import pandas as pd
 from sch_simulation.helsim_FUNC_KK import (
     Parameters,
     SDEquilibrium,
+    Worms,
+    Demography,
     Result,
     calcRates2,
     conductSurvey,
@@ -985,7 +987,7 @@ def singleSimulationDALYCoverage(params: Parameters, simData: SDEquilibrium,
         numReps = params.numReps
 
     # run the simulations
-    results = Parallel(n_jobs=num_cores)(
+    results: List[List[Result]] = Parallel(n_jobs=num_cores)(
         delayed(doRealizationSurveyCoveragePickle)(params, simData, i) for i in range(numReps))
 
     # process the output
@@ -1014,21 +1016,30 @@ def multiple_simulations(params: Parameters, pickleData, simparams, indices, i):
     keys = ['si', 'worms', 'freeLiving', 'demography', 'contactAgeGroupIndices', 'treatmentAgeGroupIndices']
     t = 0
     
-    
-    simData = SDEquilibrium(**dict((key, copy.deepcopy(data[key])) for key in keys))
+    raw_data = dict((key, copy.deepcopy(data[key])) for key in keys)
+    worms = Worms(total = raw_data['worms']['total'], female = raw_data['worms']['female'])
+    demography = Demography(birthDate = raw_data['demography']['birthDate'], deathDate = raw_data['demography']['deathDate'])
+    simData = SDEquilibrium(
+        si = raw_data['si'],
+        worms = worms,
+        freeLiving = raw_data['freeLiving'],
+        demography = demography,
+        contactAgeGroupIndices = raw_data['contactAgeGroupIndices'],
+        treatmentAgeGroupIndices = raw_data['treatmentAgeGroupIndices'],
+        sv = np.zeros(len(raw_data['si']) ,dtype = int),
+        attendanceRecord = [],
+        ageAtChemo = [],
+        adherenceFactorAtChemo = [],
+        vaccCount = 0,
+        nChemo1 = 0,
+        nChemo2 = 0,
+        numSurvey = 0,
+        compliers = np.random.uniform(low=0, high=1, size=len(raw_data['si'])) > params.propNeverCompliers,
+        adherenceFactors = np.random.uniform(low=0, high=1, size=len(raw_data['si']))
+    )
 
     # Convert all layers to correct data format
 
-    simData.sv = np.zeros(len(simData.si) ,dtype = int)
-    simData.attendanceRecord = []
-    simData.ageAtChemo = []
-    simData.adherenceFactorAtChemo = []
-    simData.vaccCount = 0
-    simData.nChemo1 = 0
-    simData.nChemo2 = 0
-    simData.numSurvey = 0
-    simData.compliers = np.random.uniform(low=0, high=1, size=len(simData.si)) > params.propNeverCompliers
-    simData.adherenceFactors= np.random.uniform(low=0, high=1, size=len(simData.si))
     # extract the previous random state
     #state = data['state']
     
