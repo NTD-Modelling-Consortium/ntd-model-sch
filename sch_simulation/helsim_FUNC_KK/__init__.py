@@ -1,3 +1,8 @@
+from sch_simulation.helsim_FUNC_KK.configuration import (
+    configure,
+    getEquilibrium,
+    setupSD,
+)
 from sch_simulation.helsim_FUNC_KK.events import (
     conductSurvey,
     doChemo,
@@ -6,20 +11,22 @@ from sch_simulation.helsim_FUNC_KK.events import (
     doEvent2,
     doFreeLive,
     doVaccine,
-    doVaccineAgeRange
-)
-from sch_simulation.helsim_FUNC_KK.configuration import (
-    configure,
-    getEquilibrium,
-    setupSD,
+    doVaccineAgeRange,
 )
 from sch_simulation.helsim_FUNC_KK.file_parsing import (
     nextMDAVaccInfo,
     overWritePostMDA,
-    readParams,
     overWritePostVacc,
     parse_coverage_input,
-    readCoverageFile
+    readCoverageFile,
+    readParams,
+)
+from sch_simulation.helsim_FUNC_KK.helsim_structures import (
+    Demography,
+    Parameters,
+    Result,
+    SDEquilibrium,
+    Worms,
 )
 from sch_simulation.helsim_FUNC_KK.results_processing import (
     extractHostData,
@@ -27,14 +34,4 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
     getPrevalenceDALYsAll,
     outputNumberInAgeGroup,
 )
-from sch_simulation.helsim_FUNC_KK.helsim_structures import (
-    Parameters,
-    SDEquilibrium,
-    Worms,
-    Demography,
-    Result
-)
-from sch_simulation.helsim_FUNC_KK.utils import (
-    calcRates2,
-    getPsi
-)
+from sch_simulation.helsim_FUNC_KK.utils import calcRates2, getPsi

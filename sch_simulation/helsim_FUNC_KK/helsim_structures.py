@@ -1,20 +1,21 @@
-import numpy as np
 import warnings
 from dataclasses import dataclass
-from numpy import ndarray
 from typing import Callable, List, Optional
+
+import numpy as np
+from numpy import ndarray
 from numpy.typing import NDArray
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
-np.seterr(divide='ignore')
-
+np.seterr(divide="ignore")
 
 
 @dataclass
 class MonogParameters:
     c_k: float
     cosTheta: ndarray
+
 
 @dataclass
 class Equilibrium:
@@ -27,65 +28,69 @@ class Equilibrium:
     FOIMultiplier: float
     hostSurvival: Optional[ndarray] = None
 
+
 @dataclass
 class Coverage:
     Age: ndarray
-    Years: ndarray # 1-D array lower/upper
-    Coverage: ndarray # 1-D array
+    Years: ndarray  # 1-D array lower/upper
+    Coverage: ndarray  # 1-D array
+
 
 @dataclass
 class Parameters:
     numReps: int
-    maxTime: float #nYears
-    N: int #nHosts
-    R0: float # Basic reproductive number
-    lambda_egg: float # Eggs per gram
-    v2: NDArray[np.float_] # Fraction of eggs produced when vaccinated.
-    gamma: float # Exponential density dependence of parasite adult stage
-    k: float # Shape parameter of assumed negative binomial distribution of worms amongst host
-    sigma: float # Worm death rate
-    v1: NDArray[np.float_] # impact of vaccine on worm death rate KK. Assume worm death rate is v1*sigma.
-    LDecayRate: float # ReservoirDecayRate
+    maxTime: float  # nYears
+    N: int  # nHosts
+    R0: float  # Basic reproductive number
+    lambda_egg: float  # Eggs per gram
+    v2: NDArray[np.float_]  # Fraction of eggs produced when vaccinated.
+    gamma: float  # Exponential density dependence of parasite adult stage
+    k: float  # Shape parameter of assumed negative binomial distribution of worms amongst host
+    sigma: float  # Worm death rate
+    v1: NDArray[
+        np.float_
+    ]  # impact of vaccine on worm death rate KK. Assume worm death rate is v1*sigma.
+    LDecayRate: float  # ReservoirDecayRate
     DrugEfficacy: float
     DrugEfficacy1: float
     DrugEfficacy2: float
-    contactAgeBreaks: ndarray # 1-D array - Contact age group breaks (minus sign necessary to include zero age)
-    contactRates: ndarray # 1-D array - BetaValues: Relative contact rates
-    v3: ndarray # 1-D array, v3 beta values: impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK 
-    rho: ndarray # 1-D array, - Rho, contribution to the reservoir by contact age group. 
-    treatmentAgeBreaks: ndarray # 1-D array, treatmentBreaks Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
-    VaccTreatmentBreaks: ndarray # 1-D array, age range of vaccinated group.  ## KK: these are the lower bounds of ranges with width 1. THEY MUST BE > 1 YEAR APART!!
+    contactAgeBreaks: ndarray  # 1-D array - Contact age group breaks (minus sign necessary to include zero age)
+    contactRates: ndarray  # 1-D array - BetaValues: Relative contact rates
+    v3: ndarray  # 1-D array, v3 beta values: impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK
+    rho: ndarray  # 1-D array, - Rho, contribution to the reservoir by contact age group.
+    treatmentAgeBreaks: ndarray  # 1-D array, treatmentBreaks Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
+    VaccTreatmentBreaks: ndarray  # 1-D array, age range of vaccinated group.  ## KK: these are the lower bounds of ranges with width 1. THEY MUST BE > 1 YEAR APART!!
     coverage1: ndarray
     coverage2: ndarray
-    VaccCoverage: ndarray # Vaccine coverage of the age groups KK
-    #VaccEfficacy
-    treatInterval1: int # interval between treatments in years. 
-    treatInterval2: int # interval between treatments in years. 
+    VaccCoverage: ndarray  # Vaccine coverage of the age groups KK
+    # VaccEfficacy
+    treatInterval1: int  # interval between treatments in years.
+    treatInterval2: int  # interval between treatments in years.
     treatStart1: float
     treatStart2: float
     nRounds1: int
     nRounds2: int
-    chemoTimings1: ndarray # 1-D array
-    chemoTimings2: ndarray # 1-D array
-    VaccineTimings: ndarray # 1-D array
-    outTimings: ndarray # 1-D array, outputEvents
-    propNeverCompliers: float # neverTreated
-    highBurdenBreaks: ndarray # 1-D array Three categories here
-    highBurdenValues: ndarray # 1-D array
-    VaccDecayRate: ndarray #vacc decay rate. rate of vaccine decay = 1/duration of vaccine   A vector with value 0 in state 1 and the vacc decay rate for state 2. KK.
-    VaccTreatStart: float ##Vaccine administration year start KK 
-    nRoundsVacc: int ##number of vaccine rounds KK 
-    treatIntervalVacc: float #KK
-    heavyThreshold: int # The threshold for heavy burden of infection, egg count > heavyThreshold
-    mediumThreshold: int # The threshold of medium burden of infection, mediumThreshold <= egg count <= heavyThreshold
+    chemoTimings1: ndarray  # 1-D array
+    chemoTimings2: ndarray  # 1-D array
+    VaccineTimings: ndarray  # 1-D array
+    outTimings: ndarray  # 1-D array, outputEvents
+    propNeverCompliers: float  # neverTreated
+    highBurdenBreaks: ndarray  # 1-D array Three categories here
+    highBurdenValues: ndarray  # 1-D array
+    VaccDecayRate: ndarray  # vacc decay rate. rate of vaccine decay = 1/duration of vaccine   A vector with value 0 in state 1 and the vacc decay rate for state 2. KK.
+    VaccTreatStart: float  ##Vaccine administration year start KK
+    nRoundsVacc: int  ##number of vaccine rounds KK
+    treatIntervalVacc: float  # KK
+    heavyThreshold: int  # The threshold for heavy burden of infection, egg count > heavyThreshold
+    mediumThreshold: int  # The threshold of medium burden of infection, mediumThreshold <= egg count <= heavyThreshold
     sampleSizeOne: int
     sampleSizeTwo: int
     nSamples: int
     minSurveyAge: float
     maxSurveyAge: float
-    demogType: str # demogName: subset of demography parameters to be extracted
-    reproFuncName: str # name of function for reproduction (a string).  [Deterministic] ## epgPerPerson   epgFertility	epgMonog
-    z: float # np.exp(-'gamma'),
+    demogType: str  # demogName: subset of demography parameters to be extracted
+    reproFuncName: str  # name of function for reproduction (a string).  [Deterministic] ## epgPerPerson   epgFertility	epgMonog
+    z: float  # np.exp(-'gamma'),
     k_epg: float
     species: str
     timeToFirstSurvey: float
@@ -107,7 +112,7 @@ class Parameters:
     contactAgeGroupBreaks: Optional[ndarray] = None
     treatmentAgeGroupBreaks: Optional[ndarray] = None
     VaccTreatmentAgeGroupBreaks: Optional[ndarray] = None
-    #Coverage
+    # Coverage
     MDA: Optional[List[Coverage]] = None
     Vacc: Optional[List[Coverage]] = None
     drug1Years: Optional[ndarray] = None
@@ -121,10 +126,12 @@ class Demography:
     birthDate: ndarray
     deathDate: ndarray
 
+
 @dataclass
 class Worms:
     total: NDArray[np.int_]
     female: NDArray[np.int_]
+
 
 @dataclass
 class SDEquilibrium:
@@ -149,6 +156,7 @@ class SDEquilibrium:
     nChemo1: Optional[int] = None
     nChemo2: Optional[int] = None
 
+
 @dataclass
 class Result:
     iteration: int
@@ -167,6 +175,7 @@ class Result:
     nSurvey: Optional[int] = None
     surveyPass: Optional[int] = None
     elimination: Optional[int] = None
+
 
 @dataclass
 class ProcResult:
