@@ -691,7 +691,7 @@ def doRealizationSurveyCoveragePickle(
     # run stochastic algorithm
     #do_event_calls = 0
     #other_calls = 0
-    multiplier = 20
+    multiplier = math.floor(params.N/50) # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
     while t < maxTime:
         if t > print_t:
             print_t += print_t_interval
