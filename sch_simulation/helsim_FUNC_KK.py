@@ -1526,22 +1526,22 @@ def extractHostData(results: List[List[Result]]):
 
     output = []
 
-    for rep in range(len(results)):
+    for result in results:
 
         output.append(dict(
-            wormsOverTime=np.array([results[rep][i].worms.total for i in range(len(results[0]) - 1)]).T,
-            femaleWormsOverTime=np.array([results[rep][i].worms.female for i in range(len(results[0]) - 1)]).T,
-            # freeLiving=np.array([results[rep][i]['freeLiving'] for i in range(len(results[0]) - 1)]),
-            ages=np.array([results[rep][i].time - results[rep][i].hosts.birthDate for i in range(len(results[0]) - 1)]).T,
-            # adherenceFactors=np.array([results[rep][i]['adherenceFactors'] for i in range(len(results[0]) - 1)]).T,
-            # compliers=np.array([results[rep][i]['compliers'] for i in range(len(results[0]) - 1)]).T,
-            # totalPop=len(results[rep][0]['worms']['total']),
-            timePoints=np.array([np.array(results[rep][i].time) for i in range(len(results[0]) - 1)]),
-            # attendanceRecord=results[rep][-1]['attendanceRecord'],
-            # ageAtChemo=results[rep][-1]['ageAtChemo'],
-            # finalFreeLiving=results[rep][-2]['freeLiving'],
-            # adherenceFactorAtChemo=results[rep][-1]['adherenceFactorAtChemo']
-            #sex_id = np.array([results[rep][i]['sex_id'] for i in range(len(results[0]) - 1)]).T
+            wormsOverTime=np.array([result[i].worms.total for i in range(len(results[0]) - 1)]).T,
+            femaleWormsOverTime=np.array([result[i].worms.female for i in range(len(results[0]) - 1)]).T,
+            # freeLiving=np.array([result[i]['freeLiving'] for i in range(len(results[0]) - 1)]),
+            ages=np.array([result[i].time - result[i].hosts.birthDate for i in range(len(results[0]) - 1)]).T,
+            # adherenceFactors=np.array([result[i]['adherenceFactors'] for i in range(len(results[0]) - 1)]).T,
+            # compliers=np.array([result[i]['compliers'] for i in range(len(results[0]) - 1)]).T,
+            # totalPop=len(result[0]['worms']['total']),
+            timePoints=np.array([np.array(result[i].time) for i in range(len(results[0]) - 1)]),
+            # attendanceRecord=result[-1]['attendanceRecord'],
+            # ageAtChemo=result[-1]['ageAtChemo'],
+            # finalFreeLiving=result[-2]['freeLiving'],
+            # adherenceFactorAtChemo=result[-1]['adherenceFactorAtChemo']
+            #sex_id = np.array([result[i]['sex_id'] for i in range(len(results[0]) - 1)]).T
         ))
 
     return output
