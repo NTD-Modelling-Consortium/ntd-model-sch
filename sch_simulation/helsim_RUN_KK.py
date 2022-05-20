@@ -40,7 +40,10 @@ from typing import List, Optional
 num_cores = multiprocessing.cpu_count()
 
 
-def loadParameters(paramFileName: str, demogName: str) -> Parameters:
+def loadParameters(
+    paramFileName: str, 
+    demogName: str
+) -> Parameters:
     '''
     This function loads all the parameters from the input text
 params    files and organizes them in a dictionary.
@@ -69,7 +72,10 @@ params    files and organizes them in a dictionary.
     return params
 
 
-def doRealization(params: Parameters, i: int) -> List[Result]:
+def doRealization(
+    params: Parameters, 
+    i: int
+) -> List[Result]:
     '''
     This function generates a single simulation path.
     Parameters
@@ -218,7 +224,10 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
     return results
 
 
-def doRealizationSurvey(params: Parameters, i: int) -> List[Result]:
+def doRealizationSurvey(
+    params: Parameters, 
+    i: int
+) -> List[Result]:
     '''
     This function generates a single simulation path.
 
@@ -423,7 +432,10 @@ def doRealizationSurvey(params: Parameters, i: int) -> List[Result]:
 
 
 
-def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
+def doRealizationSurveyCoverage(
+    params: Parameters, 
+    i: int
+) -> List[Result]:
     '''
     This function generates a single simulation path.
 
@@ -609,7 +621,11 @@ def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
 
 
 
-def doRealizationSurveyCoveragePickle(params: Parameters, simData: SDEquilibrium, i: int) -> List[Result]:
+def doRealizationSurveyCoveragePickle(
+    params: Parameters, 
+    simData: SDEquilibrium, 
+    i: int
+) -> List[Result]:
     '''
     This function generates a single simulation path.
 
@@ -934,10 +950,13 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                    'draw_1':df['elimination']}))
     return df1
 
-def SCH_Simulation_DALY_Coverage(paramFileName: str, demogName: str, 
-                                 coverageFileName: str,
-                                 coverageTextFileStorageName: str,
-                                 numReps: Optional[int] = None) -> pd.DataFrame:
+def SCH_Simulation_DALY_Coverage(
+    paramFileName: str, 
+    demogName: str, 
+    coverageFileName: str,
+    coverageTextFileStorageName: str,
+    numReps: Optional[int] = None
+) -> pd.DataFrame:
     '''
     This function generates multiple simulation paths.
     Parameters
@@ -976,8 +995,11 @@ def SCH_Simulation_DALY_Coverage(paramFileName: str, demogName: str,
 
 
 
-def singleSimulationDALYCoverage(params: Parameters, simData: SDEquilibrium,
-                                 numReps=None):
+def singleSimulationDALYCoverage(
+    params: Parameters, 
+    simData: SDEquilibrium,
+    numReps: Optional[int] = None
+) -> pd.DataFrame:
     '''
     This function generates multiple simulation paths.
     Parameters
@@ -1011,7 +1033,10 @@ def singleSimulationDALYCoverage(params: Parameters, simData: SDEquilibrium,
 
 
 
-def multiple_simulations(params: Parameters, pickleData, simparams, indices, i):
+def multiple_simulations(
+    params: Parameters, 
+    pickleData, simparams, indices, i
+) -> pd.DataFrame:
     print( f"==> multiple_simulations starting sim {i}" )
     start_time = time.time()
     # copy the parameters
