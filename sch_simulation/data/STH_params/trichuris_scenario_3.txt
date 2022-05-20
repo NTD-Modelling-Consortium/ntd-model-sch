@@ -31,7 +31,7 @@ StochSR	TRUE		## Turn SR on or off in the stochastic model. 	[Stochastic]
 treatmentBreaks	0 2 5 15 80		Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
 drugEff	0.499				Drug efficacy
 drugEff1	0.499					Drug efficacy [0-1]
-drugEff2	0.499
+drugEff2	0.99
 treatInterval1	1			interval between treatments in years, pre-COVID. 
 treatInterval2	1			interval between treatments in years, post-COVID. 
 treatStart1	1					Treatment year start, pre-COVID

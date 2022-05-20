@@ -32,10 +32,10 @@ See also `sch_run.py` for an example of how to use the `SCH_Simulation()` functi
 
 ### How to run
 
-- Install [pipenv](https://drive.google.com/drive/folders/1Or6lUkymYd_p031xKGZLcnTV4GYf-oYb) according to the instructions for your OS, then `cd` to the project directory and run:
+- Install [pipenv](https://pipenv.pypa.io/en/latest/) according to the instructions for your OS (on macOS it's `brew install pipenv`), then `cd` to the project directory, check out the branch you want to use, and run:
 
 ```
-    $ pipenv install . # sets up per-project python environment ('env')
-    $ pipenv shell # starts a per-project shell using that env
-    (ntd-model-trachoma) $ python trachoma_run.py # runs the model
+$ pipenv shell # sets up/runs a per-project python environment ('virtualenv'/'venv')
+(ntd-model-sch) $ pip install . # installs python libraries & NTD model inside the venv
+(ntd-model-sch) $ python sch_run.py # or could be 'pickle_example.py' - runs the model
 ```
