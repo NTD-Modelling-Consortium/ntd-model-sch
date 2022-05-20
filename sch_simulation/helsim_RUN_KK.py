@@ -35,6 +35,7 @@ from sch_simulation.helsim_FUNC_KK import (
     readCoverageFile
 )
 import random
+import math
 from typing import List, Optional
 num_cores = multiprocessing.cpu_count()
 
@@ -672,28 +673,32 @@ def doRealizationSurveyCoveragePickle(params: Parameters, simData: SDEquilibrium
     # run stochastic algorithm
     #do_event_calls = 0
     #other_calls = 0
-    multiplier = 100
+    multiplier = 20
     while t < maxTime:
         if t > print_t:
             print_t += print_t_interval
-
+            #print("event_call_ratio", do_event_calls/other_calls)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
+        #If the nextStep is soon, take a smaller multiplier
+        new_multiplier = max(math.floor(min((nextStep-t)*sumRates, multiplier)), 1)
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
+
         if sumRates < 1e-4:
-            dt = 10000*multiplier
+            dt = 10000*new_multiplier
         else:
-            dt = random.expovariate(lambd = sumRates)*multiplier
+            dt = random.expovariate(lambd = sumRates)*new_multiplier
 
         new_t = t+dt
         if new_t < nextStep:
             t = new_t
-            simData = doEvent2(sumRates, cumsumRates, params, simData, multiplier)
+            simData = doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
             #do_event_calls +=1
         else:
             #other_calls +=1
+            
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
             t = nextStep
             freeliveTime = nextStep

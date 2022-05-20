@@ -1049,6 +1049,8 @@ def doFreeLive(params: Parameters, SD: SDEquilibrium, dt: float) -> SDEquilibriu
     elif params.reproFuncName == 'epgMonog':
         productivefemaleworms = np.minimum(SD.worms.total - SD.worms.female, SD.worms.female)
 
+    else:
+        raise ValueError(f'Unsupported reproFuncName : {params.reproFuncName}')
     eggOutputPerHost = params.lambda_egg * productivefemaleworms * np.exp(-SD.worms.total * params.gamma) * params.v2[SD.sv] # vaccine related fecundity
     eggsProdRate = 2 * params.psi * np.sum(eggOutputPerHost * params.rho[SD.contactAgeGroupIndices]) / params.N
     expFactor = np.exp(-params.LDecayRate * dt)
@@ -1218,6 +1220,7 @@ def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: int, minAge: int, 
         SD.worms.total[k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
         SD.attendanceRecord.append(k)
+        assert SD.nChemo1 is not None
         SD.nChemo1 += len(k)
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
@@ -1228,7 +1231,8 @@ def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: int, minAge: int, 
         SD.worms.female[k] -= femaleToDie
         SD.worms.total[k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
-        SD.attendanceRecord.append(k)    
+        SD.attendanceRecord.append(k)
+        assert SD.nChemo2 is not None  
         SD.nChemo2 += len(k)
     
     SD.ageAtChemo.append(t - SD.demography.birthDate)
@@ -1256,6 +1260,7 @@ def doVaccine(params: Parameters, SD: SDEquilibrium, t: int, VaccCoverage: ndarr
     SD: dict
         dictionary containing the updated equilibrium parameter values;
     '''
+    assert SD.VaccTreatmentAgeGroupIndices is not None
     temp  = ((SD.VaccTreatmentAgeGroupIndices + 1 ) // 2) - 1
     vaccinate = np.random.uniform(low=0, high=1, size=params.N) < VaccCoverage[temp]
     
@@ -2029,7 +2034,7 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
     #                     'Low Intensity Prevalence': all_low_prevalence,
     #                     'Medium Intensity Prevalence': all_medium_prevalence,
     #                     'Heavy Intensity Prevalence': all_heavy_prevalence})
-    
+    df = None
     for i in range(0,80) : #loop over yearly age bins
         
         prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized=False, villageSampleSize=100)
@@ -2048,6 +2053,7 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
                    'draw_1':low_prevalence})
         
         else:
+            assert df is not None
             df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
                    'age_end':np.repeat(age_end,len(low_prevalence)), 
@@ -2092,6 +2098,7 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
 
 def outputNumberInAgeGroup(results: List[List[Result]], params: Parameters):
     assert params.maxHostAge is not None
+    numEachAgeGroup = None
     for i in range(len(results[0])):
         d = results[0][i]
         ages = d.time - d.hosts.birthDate 
@@ -2101,22 +2108,23 @@ def outputNumberInAgeGroup(results: List[List[Result]], params: Parameters):
             age_counts.append(ages1.count(j))
             
         if i == 0:
-                numEachAgeGroup = pd.DataFrame({
-                        'Time': np.repeat(d.time, len(age_counts)), 
-                       'age_start': range(int(params.maxHostAge)), 
-                       'age_end':range(1,1+int(params.maxHostAge)), 
-                       'intensity':np.repeat('All', len(age_counts)),
-                       'species':np.repeat(params.species, len(age_counts)),
-                       'measure':np.repeat('number', len(age_counts)),
-                       'draw_1':age_counts})
+            numEachAgeGroup = pd.DataFrame({
+                    'Time': np.repeat(d.time, len(age_counts)), 
+                    'age_start': range(int(params.maxHostAge)), 
+                    'age_end':range(1,1+int(params.maxHostAge)), 
+                    'intensity':np.repeat('All', len(age_counts)),
+                    'species':np.repeat(params.species, len(age_counts)),
+                    'measure':np.repeat('number', len(age_counts)),
+                    'draw_1':age_counts})
         else:
-                numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({
-                        'Time': np.repeat(d.time, len(age_counts)), 
-                       'age_start': range(int(params.maxHostAge)), 
-                       'age_end':range(1,1+int(params.maxHostAge)), 
-                       'intensity':np.repeat('All', len(age_counts)),
-                       'species':np.repeat(params.species, len(age_counts)),
-                       'measure':np.repeat('number', len(age_counts)),
-                       'draw_1':age_counts}))
+            assert numEachAgeGroup is not None
+            numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({
+                    'Time': np.repeat(d.time, len(age_counts)), 
+                    'age_start': range(int(params.maxHostAge)), 
+                    'age_end':range(1,1+int(params.maxHostAge)), 
+                    'intensity':np.repeat('All', len(age_counts)),
+                    'species':np.repeat(params.species, len(age_counts)),
+                    'measure':np.repeat('number', len(age_counts)),
+                    'draw_1':age_counts}))
     
     return numEachAgeGroup 
