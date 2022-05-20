@@ -421,7 +421,7 @@ def readCoverageFile(coverageTextFileStorageName: str, params: Parameters) -> Pa
     params.drug2Split = np.array(coverage['drug2Split'])
     return params
 
-def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default') -> Parameters:
+def readParams(paramFileName: str, demogFileName: str = 'Demographies.txt', demogName: str ='Default') -> Parameters:
 
     '''
     This function organizes the model parameters and
@@ -436,8 +436,8 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
         subset of demography parameters to be extracted;
     Returns
     -------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     '''
 
     demographies = readParam(demogFileName)
@@ -516,7 +516,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
     return params
 
 
-def monogFertilityConfig(params: Parameters, N=30) -> MonogParameters:
+def monogFertilityConfig(params: Parameters, N: int = 30) -> MonogParameters:
 
     '''
     This function calculates the monogamous fertility
@@ -524,8 +524,8 @@ def monogFertilityConfig(params: Parameters, N=30) -> MonogParameters:
 
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
 
     N: int
         resolution for the numerical integration
@@ -544,12 +544,12 @@ def configure(params: Parameters) -> Parameters:
     This function defines a number of additional parameters.
     Parameters
     ----------
-    params: dict
-        dictionary containing the initial parameter names and values;
+    params: Parameters
+        dataclass containing the initial parameter names and values;
     Returns
     -------
-    params: dict
-        dictionary containing the updated parameter names and values;
+    params: Parameters
+        dataclass containing the updated parameter names and values;
     '''
 
     # level of discretization for the drawing of lifespans
@@ -604,12 +604,12 @@ def setupSD(params: Parameters) -> SDEquilibrium:
     based on analytical equilibria.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     Returns
     -------
-    SD: dict
-        dictionary containing the equilibrium parameter settings;
+    SD: SDEquilibrium
+        dataclass containing the equilibrium parameter settings;
     '''
 
     si = np.random.gamma(size=params.N, scale=1 / params.k, shape=params.k)
@@ -675,17 +675,17 @@ def setupSD(params: Parameters) -> SDEquilibrium:
 
 
 
-def calcRates(params: Parameters, SD: SDEquilibrium):
+def calcRates(params: Parameters, SD: SDEquilibrium) -> ndarray:
 
     '''
     This function calculates the event rates; the events are
     new worms, worms death and vaccination recovery rates.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
-    SD: dict
-        dictionary containing the equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the equilibrium parameter values;
     Returns
     -------
     array of event rates;
@@ -697,7 +697,7 @@ def calcRates(params: Parameters, SD: SDEquilibrium):
     return np.append(hostInfRates, hostVaccDecayRates, deathRate)
 
 
-def calcRates2(params: Parameters, SD: SDEquilibrium):
+def calcRates2(params: Parameters, SD: SDEquilibrium) -> NDArray[np.float_]:
 
     '''
     This function calculates the event rates; the events are
@@ -705,10 +705,10 @@ def calcRates2(params: Parameters, SD: SDEquilibrium):
     Each of these types of events happen to individual hosts.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
-    SD: dict
-        dictionary containing the equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the equilibrium parameter values;
     Returns
     -------
     array of event rates;
@@ -728,12 +728,14 @@ def doEvent(rates: NDArray[np.float_], params: Parameters, SD: SDEquilibrium) ->
     ----------
     rates: float
         array of event rates;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
 
     # determine which event takes place; if it's 1 to N, it's a new worm, otherwise it's a worm death
@@ -768,14 +770,18 @@ def doEvent2(sum_rates: float, cumsum_rates: NDArray[np.float_], params: Paramet
     new worms, worms death and vaccine recoveries
     Parameters
     ----------
-    rates: float
-        array of event rates;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
+    sum_rates: float
+        sum of array of event rates;
+    cumsum_rates: NDArray[float]
+        cumlative sum of event rates;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
     n_pop = params.N
     param_v3 = params.v3
@@ -828,10 +834,10 @@ def doRegular(params: Parameters, SD: SDEquilibrium, t: int, dt: float) -> SDEqu
     updating the free living worm population
     Parameters
     ----------
-    rates: float
-        array of event rates;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
     
     t:  int
         time point;
@@ -840,8 +846,8 @@ def doRegular(params: Parameters, SD: SDEquilibrium, t: int, dt: float) -> SDEqu
         time interval;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
     
     
@@ -855,16 +861,16 @@ def doFreeLive(params: Parameters, SD: SDEquilibrium, dt: float) -> SDEquilibriu
     This function updates the freeliving population deterministically.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
     dt: float
         time interval;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
 
     # polygamous reproduction; female worms produce fertilised eggs only if there's at least one male worm around
@@ -893,16 +899,16 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
     Death and aging function.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
     t: int
         time step;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
 
     # identify the indices of the dead
@@ -937,24 +943,29 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
 
     return SD
 
-def doChemo(params: Parameters, SD: SDEquilibrium, t: NDArray[np.int_], coverage: ndarray) -> SDEquilibrium:
+def doChemo(
+    params: Parameters, 
+    SD: SDEquilibrium, 
+    t: NDArray[np.int_], 
+    coverage: ndarray
+) -> SDEquilibrium:
 
     '''
     Chemoterapy function.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
     t: int
         time step;
     coverage: array
         coverage fractions;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
 
     # decide which individuals are treated, treatment is random
@@ -981,16 +992,23 @@ def doChemo(params: Parameters, SD: SDEquilibrium, t: NDArray[np.int_], coverage
     return SD
 
 
-def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: float, minAge: int, maxAge: int, coverage: ndarray) -> SDEquilibrium:
+def doChemoAgeRange(
+    params: Parameters, 
+    SD: SDEquilibrium, 
+    t: float, 
+    minAge: int, 
+    maxAge: int, 
+    coverage: ndarray
+) -> SDEquilibrium:
 
     '''
     Chemoterapy function.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
     t: int
         time step;
     minAge: int
@@ -1001,8 +1019,8 @@ def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: float, minAge: int
         coverage fractions;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
 
     # decide which individuals are treated, treatment is random
@@ -1075,18 +1093,18 @@ def doVaccine(params: Parameters, SD: SDEquilibrium, t: int, VaccCoverage: ndarr
     Vaccine function.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
     t: int
         time step;
     VaccCoverage: array
         coverage fractions;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
     assert SD.VaccTreatmentAgeGroupIndices is not None
     temp  = ((SD.VaccTreatmentAgeGroupIndices + 1 ) // 2) - 1
@@ -1114,11 +1132,11 @@ def doVaccineAgeRange(params: Parameters, SD: SDEquilibrium, t: float, minAge: f
     Vaccine function.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
-    SD: dict
-        dictionary containing the initial equilibrium parameter values;
-    t: int
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
+    t: float
         time step;
     minAge: float
         minimum age for targeted vaccination;
@@ -1128,8 +1146,8 @@ def doVaccineAgeRange(params: Parameters, SD: SDEquilibrium, t: float, minAge: f
         coverage of vaccination ;
     Returns
     -------
-    SD: dict
-        dictionary containing the updated equilibrium parameter values;
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
     '''
 
     vaccinate = np.random.uniform(low=0, high=1, size=params.N) < coverage
@@ -1177,7 +1195,13 @@ def conductSurvey(SD: SDEquilibrium, params: Parameters, t: float, sampleSize: i
     return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
 
 
-def conductSurveyTwo(SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int) -> Tuple[SDEquilibrium, float]:
+def conductSurveyTwo(
+    SD: SDEquilibrium, 
+    params: Parameters, 
+    t: float, 
+    sampleSize: int, 
+    nSamples: int
+) -> Tuple[SDEquilibrium, float]:
 
     # get Kato-Katz eggs for each individual
     if nSamples < 1:
@@ -1203,8 +1227,8 @@ def getPsi(params: Parameters) -> float:
     This function calculates the psi parameter.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters object
+        dataclass containing the parameter names and values;
     Returns
     -------
     value of the psi parameter;
@@ -1251,8 +1275,8 @@ def getLifeSpans(nSpans: int, params: Parameters) -> float:
     ----------
     nSpans: int
         number of drawings;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters object
+        dataclass containing the parameter names and values;
     Returns
     -------
     array containing the lifespan drawings;
@@ -1277,8 +1301,8 @@ def getEquilibrium(params: Parameters) -> Equilibrium:
     and other parameter settings.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters object
+        dataclass containing the parameter names and values;
     Returns
     -------
     dictionary containing the equilibrium parameter settings;
@@ -1371,11 +1395,11 @@ def extractHostData(results: List[List[Result]]) -> List[ProcResult]:
     This function is used for processing results the raw simulation results.
     Parameters
     ----------
-    results: list
+    results: List[List[Result]]
         raw simulation output;
     Returns
     -------
-    output: list
+    output: List[ProcResult]
         processed simulation output;
     '''
 
@@ -1417,8 +1441,8 @@ def getSetOfEggCounts(
         array of total worms;
     female: int
         array of female worms;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters object
+        dataclass containing the parameter names and values;
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
     Returns
@@ -1449,7 +1473,7 @@ def getVillageMeanCountsByHost(
     for a given time point and iteration.
     Parameters
     ----------
-    villageList: dict
+    villageList: ProcResult
         processed simulation output for a given iteration;
     timeIndex: int
         selected time point index;
@@ -1486,14 +1510,14 @@ def getAgeCatSampledPrevByVillage(
     for a given time point and iteration.
     Parameters
     ----------
-    villageList: dict
+    villageList: ProcResult
         processed simulation output for a given iteration;
     timeIndex: int
         selected time point index;
-    ageBand: int
+    ageBand: NDArray[int]
         array with age group boundaries;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     nSamples: int
         number of samples;
     Unfertilized: bool
@@ -1535,14 +1559,14 @@ def getAgeCatSampledPrevByVillageAll(
     for a given time point and iteration.
     Parameters
     ----------
-    villageList: dict
+    villageList: ProcResult
         processed simulation output for a given iteration;
     timeIndex: int
         selected time point index;
     ageBand: int
         array with age group boundaries;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     nSamples: int
         number of samples;
     Unfertilized: bool
@@ -1596,14 +1620,14 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(
     for a given time point and iteration.
     Parameters
     ----------
-    villageList: dict
+    villageList: ProcResult
         processed simulation output for a given iteration;
     timeIndex: int
         selected time point index;
-    ageBand: int
+    ageBand: NDArray[int]
         array with age group boundaries;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     nSamples: int
         number of samples;
     Unfertilized: bool
@@ -1644,14 +1668,14 @@ def getSampledDetectedPrevByVillageAll(
     at a given time point across all iterations.
     Parameters
     ----------
-    hostData: dict
+    hostData: List[ProcResult]
         processed simulation output;
     timeIndex: int
         selected time point index;
-    ageBand: int
+    ageBand: NDArray[int]
         array with age group boundaries;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     nSamples: int
         number of samples;
     Unfertilized: bool
@@ -1717,14 +1741,14 @@ def getSampledDetectedPrevByVillage(
     at a given time point across all iterations.
     Parameters
     ----------
-    hostData: dict
+    hostData: List[ProcResult]
         processed simulation output;
     timeIndex: int
         selected time point index;
     ageBand: int
         array with age group boundaries;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     nSamples: int
         number of samples;
     Unfertilized: bool
@@ -1753,14 +1777,14 @@ def getSampledDetectedPrevHeavyBurdenByVillage(
     at a given time point across all iterations.
     Parameters
     ----------
-    hostData: dict
+    hostData: List[ProcResult]
         processed simulation output;
     timeIndex: int
         selected time point index;
-    ageBand: int
+    ageBand: NDArray[int]
         array with age group boundaries;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     nSamples: int
         number of samples;
     Unfertilized: bool
@@ -1789,10 +1813,10 @@ def getPrevalence(
     where the average is calculated across all iterations.
     Parameters
     ----------
-    hostData: dict
+    hostData: List[ProcResult]
         processed simulation output;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     numReps: int
         number of simulations;
     nSamples: int
@@ -1848,10 +1872,10 @@ def getPrevalenceDALYs(
     where the average is calculated across all iterations.
     Parameters
     ----------
-    hostData: dict
+    hostData: List[ProcResult]
         processed simulation output;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     numReps: int
         number of simulations;
     nSamples: int
@@ -1909,10 +1933,10 @@ def getPrevalenceDALYsAll(
     where the average is calculated across all iterations.
     Parameters
     ----------
-    hostData: dict
+    hostData: List[ProcResult]
         processed simulation output;
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     numReps: int
         number of simulations;
     nSamples: int

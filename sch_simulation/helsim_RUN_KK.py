@@ -83,13 +83,13 @@ def doRealization(
     This function generates a single simulation path.
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
     i: int
         iteration number;
     Returns
     -------
-    results: list
+    results: List[Result]
         list with simulation results;
     '''
 
@@ -236,8 +236,8 @@ def doRealizationSurvey(
 
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
 
     i: int
         iteration number;
@@ -444,8 +444,8 @@ def doRealizationSurveyCoverage(
 
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
 
     i: int
         iteration number;
@@ -634,8 +634,11 @@ def doRealizationSurveyCoveragePickle(
 
     Parameters
     ----------
-    params: dict
-        dictionary containing the parameter names and values;
+    params: Parameters
+        dataclass containing the parameter names and values;
+
+    simData: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
 
     i: int
         iteration number;
@@ -968,8 +971,8 @@ def SCH_Simulation_DALY_Coverage(
         name of the input text file with the model parameters;
     demogName: str
         subset of demography parameters to be extracted;
-    numReps: int
-        number of simulations;
+    numReps: Optional[int]
+        number of simulations - if none is params.numReps;
     Returns
     -------
     df: data frame
@@ -1007,7 +1010,7 @@ def singleSimulationDALYCoverage(
     This function generates multiple simulation paths.
     Parameters
     ----------
-    params 
+    params : Parameters
         set of parameters for the run
     Returns
     -------
