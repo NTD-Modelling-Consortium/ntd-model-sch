@@ -1,6 +1,6 @@
 import numpy as np
 
-from sch_simulation.helsim_structures import Parameters
+from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters
 
 def epgPerPerson(x: np.ndarray, params: Parameters) -> np.ndarray:
 

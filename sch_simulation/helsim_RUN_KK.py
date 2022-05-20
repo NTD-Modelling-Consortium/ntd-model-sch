@@ -27,9 +27,7 @@ from sch_simulation.helsim_FUNC_KK import (
     getPrevalenceDALYsAll,
     outputNumberInAgeGroup,
     parse_coverage_input,
-    readCoverageFile
-)
-from sch_simulation.helsim_structures import (
+    readCoverageFile,
     Parameters,
     SDEquilibrium,
     Worms,
