@@ -689,13 +689,10 @@ def doRealizationSurveyCoveragePickle(
     print_t_interval = 0.5
     print_t = 0
     # run stochastic algorithm
-    #do_event_calls = 0
-    #other_calls = 0
     multiplier = math.floor(params.N/50) # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
     while t < maxTime:
         if t > print_t:
             print_t += print_t_interval
-            #print("event_call_ratio", do_event_calls/other_calls)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
@@ -713,10 +710,7 @@ def doRealizationSurveyCoveragePickle(
         if new_t < nextStep:
             t = new_t
             simData = doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
-            #do_event_calls +=1
-        else:
-            #other_calls +=1
-            
+        else:            
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
             t = nextStep
             freeliveTime = nextStep
