@@ -133,6 +133,7 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
             print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
+        cumsumRates = np.cumsum(rates)
 
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
@@ -144,7 +145,7 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
 
         if t + dt < nextStep:
             t += dt
-            simData = doEvent2(rates, params, simData)
+            simData = doEvent2(sumRates, cumsumRates, params, simData)
 
         else:
 
@@ -291,7 +292,7 @@ def doRealizationSurvey(params: Parameters, i: int) -> List[Result]:
 
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
-
+        cumsumRates = np.cumsum(rates)
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
         if sumRates < 1e-4:
@@ -308,7 +309,7 @@ def doRealizationSurvey(params: Parameters, i: int) -> List[Result]:
             t += dt
    
 
-            simData = doEvent2(rates, params, simData)
+            simData = doEvent2(sumRates, cumsumRates, params, simData)
 
         else:
 
@@ -359,7 +360,7 @@ def doRealizationSurvey(params: Parameters, i: int) -> List[Result]:
                 nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
             
             if timeBarrier >= tSurvey:
-                simData, prevOne = conductSurvey(simData, params, t, params.sampleSizeOne, nSamples)
+                simData, prevOne = conductSurvey(simData, params, t, params.sampleSizeOne, params.nSamples)
                 nSurvey += 1
                 #tSurvey = maxTime + 10
                 if prevOne < 0.01:
@@ -489,7 +490,7 @@ def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
             print_t += print_t_interval
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
-
+        cumsumRates = np.cumsum(rates)
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
         if sumRates < 1e-4:
@@ -497,16 +498,11 @@ def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
             dt = 10000
 
         else:
-
-
             dt = np.random.exponential(scale=1 / sumRates, size=1)[0]
 
         if t + dt < nextStep:
-
             t += dt
-   
-
-            simData = doEvent2(rates, params, simData)
+            simData = doEvent2(sumRates, cumsumRates, params, simData)
 
         else:
 
@@ -880,9 +876,10 @@ def SCH_Simulation_DALY(paramFileName: str, demogName: str, numReps: Optional[in
 
 
 
-def getCostData(results: List[Result], params: Parameters) -> pd.DataFrame:
-    for i in range(len(results)):
-        df = pd.DataFrame(results[i])
+def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame:
+    df1 = None
+    for i, list_res in enumerate(results):
+        df = pd.DataFrame(list_res)
         if i == 0:
             df1 = pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
@@ -892,6 +889,7 @@ def getCostData(results: List[Result], params: Parameters) -> pd.DataFrame:
                    'measure':np.repeat('nChemo1', df.shape[0]),
                    'draw_1':df['nChemo1']})
         else:
+            assert df1 is not None
             df1 = df1.append(pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
@@ -934,7 +932,7 @@ def getCostData(results: List[Result], params: Parameters) -> pd.DataFrame:
                    'species':np.repeat(params.species, df.shape[0]),
                    'measure':np.repeat('trueElimination', df.shape[0]),
                    'draw_1':df['elimination']}))
-        return df1
+    return df1
 
 def SCH_Simulation_DALY_Coverage(paramFileName: str, demogName: str, 
                                  coverageFileName: str,

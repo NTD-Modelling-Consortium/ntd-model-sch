@@ -14,7 +14,7 @@ np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
 from numpy import ndarray
-from typing import Callable, List, Tuple, Optional, Dict
+from typing import Callable, List, Tuple, Optional, Dict, Union, Any
 from numpy.typing import NDArray
 @dataclass
 class MonogParameters:
@@ -147,6 +147,7 @@ class SDEquilibrium:
     adherenceFactorAtChemo: List
     vaccCount: int
     numSurvey: int
+    numSurveyTwo: Optional[int] = None
     vaccinatedFactors: Optional[ndarray] = None
     VaccTreatmentAgeGroupIndices: Optional[ndarray] = None
     sex_id: Optional[ndarray] = None
@@ -172,7 +173,30 @@ class Result:
     surveyPass: Optional[int] = None
     elimination: Optional[int] = None
 
-def readParam(fileName: str):
+def params_from_contents(contents: List[str]) -> Dict[str, Any]:
+    params = {}
+    for content in contents:
+        line = content.split('\t')
+        if len(line) >= 2:
+            key = line[0]
+            try:
+                float_converted_list = [float(x) for x in line[1].split(' ')]
+            except ValueError:
+                float_converted_list = None
+            
+            if float_converted_list is None:
+                new_v = line[1]
+            elif len(float_converted_list) == 0:
+                raise ValueError(f'No values supplied in {key}')
+            elif len(float_converted_list) == 1:
+                new_v = float_converted_list[0]
+            else:
+                new_v = np.array(float_converted_list)
+            
+            params[key] = new_v
+    return params
+
+def readParam(fileName: str) -> Dict[str, Any]:
 
     '''
     This function extracts the parameter values stored
@@ -190,38 +214,13 @@ def readParam(fileName: str):
     DATA_PATH = pkg_resources.resource_filename('sch_simulation', 'data/')
 
     with open(DATA_PATH + fileName) as f:
-        
         contents = f.readlines()
 
-    params = []
-
-    for content in contents:
-
-        line = content.split('\t')
-
-        if len(line) >= 2:
-
-            try:
-                
-                line[1] = np.array([float(x) for x in line[1].split(' ')])
-
-                if len(line[1]) == 1:
-                    
-                    line[1] = line[1][0]
-
-            except:
-                
-                pass
-
-            params.append(line[:2])
-
-    params = dict(params)
-
-    return params
+    return params_from_contents(contents)
 
 
 
-def readCovFile(fileName: str):
+def readCovFile(fileName: str) -> Dict[str, Any]:
 
     '''
     This function extracts the parameter values stored
@@ -239,34 +238,9 @@ def readCovFile(fileName: str):
     '''
 
     with open(fileName) as f:
-        
         contents = f.readlines()
 
-    params = []
-
-    for content in contents:
-
-        line = content.split('\t')
-
-        if len(line) >= 2:
-
-            try:
-                
-                line[1] = np.array([float(x) for x in line[1].split(' ')])
-
-                if len(line[1]) == 1:
-                    
-                    line[1] = line[1][0]
-
-            except:
-                
-                pass
-
-            params.append(line[:2])
-
-    params = dict(params)
-
-    return params
+    return params_from_contents(contents)
 
 
 def parse_coverage_input(
@@ -543,7 +517,7 @@ def nextMDAVaccInfo(params: Parameters) -> Tuple[
 
 
 
-def overWritePostVacc(params: Parameters,  nextVaccAge: ndarray, nextVaccIndex: ndarray):
+def overWritePostVacc(params: Parameters,  nextVaccAge: Union[NDArray[np.int_], List[int]], nextVaccIndex: Union[NDArray[np.int_], List[int]]):
     assert params.Vacc is not None
     for i in range(len(nextVaccAge)):
         k = nextVaccIndex[i]
@@ -552,7 +526,7 @@ def overWritePostVacc(params: Parameters,  nextVaccAge: ndarray, nextVaccIndex: 
         
     return params
 
-def overWritePostMDA(params:Parameters,  nextMDAAge: ndarray, nextChemoIndex: ndarray):
+def overWritePostMDA(params:Parameters,  nextMDAAge: Union[NDArray[np.int_], List[int]], nextChemoIndex: Union[NDArray[np.int_], List[int]]):
     assert params.MDA is not None
     for i in range(len(nextMDAAge)):
         k = nextChemoIndex[i]
@@ -1153,7 +1127,7 @@ def doChemo(params: Parameters, SD: SDEquilibrium, t: NDArray[np.int_], coverage
     return SD
 
 
-def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: int, minAge: int, maxAge: int, coverage: ndarray) -> SDEquilibrium:
+def doChemoAgeRange(params: Parameters, SD: SDEquilibrium, t: float, minAge: int, maxAge: int, coverage: ndarray) -> SDEquilibrium:
 
     '''
     Chemoterapy function.
@@ -1281,7 +1255,7 @@ def doVaccine(params: Parameters, SD: SDEquilibrium, t: int, VaccCoverage: ndarr
     
     
     
-def doVaccineAgeRange(params: Parameters, SD: SDEquilibrium, t: int, minAge: float, maxAge: float, coverage: ndarray) -> SDEquilibrium:
+def doVaccineAgeRange(params: Parameters, SD: SDEquilibrium, t: float, minAge: float, maxAge: float, coverage: ndarray) -> SDEquilibrium:
     '''
     Vaccine function.
     Parameters
@@ -1362,6 +1336,7 @@ def conductSurveyTwo(SD: SDEquilibrium, params: Parameters, t: float, sampleSize
     # get sampled individuals
     KKSampleSize = min(sampleSize, params.N) 
     sampledEggs = np.random.choice(a=eggCounts, size=KKSampleSize, replace=False)
+    assert SD.numSurveyTwo is not None
     SD.numSurveyTwo += 1
     # return the prevalence
     return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
