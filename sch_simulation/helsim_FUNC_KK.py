@@ -907,7 +907,6 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
 
     # identify the indices of the dead
     theDead = np.where(SD.demography.deathDate < t)[0]
-
     if len(theDead) != 0:
         # they also need new force of infections (FOIs)
         SD.si[theDead] = np.random.gamma(size=len(theDead), scale=1 / params.k, shape=params.k)
@@ -1261,7 +1260,8 @@ def getLifeSpans(nSpans: int, params: Parameters) -> float:
     if params.hostAgeCumulDistr is None:
         raise ValueError('hostAgeCumulDistr is not set')
     u = np.random.uniform(low=0, high=1, size=nSpans) * np.max(params.hostAgeCumulDistr)
-    spans = np.array([np.argmax(u[i] < params.hostAgeCumulDistr) for i in range(nSpans)])
+    spans = np.array([np.argmax(v < params.hostAgeCumulDistr) for v in u])
+    #spans = np.argmax(params.hostAgeCumulDistr > u[:, None], axis=1) # Should be faster but isn't in testing?
     if params.muAges is None:
         raise ValueError('muAges not set')
     else:
