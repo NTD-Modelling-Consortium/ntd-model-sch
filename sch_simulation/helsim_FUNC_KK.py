@@ -6,7 +6,6 @@ import warnings
 import copy
 import random
 import pkg_resources
-from dataclasses import dataclass
 from scipy.special import gamma
 warnings.filterwarnings('ignore')
 
@@ -14,164 +13,20 @@ np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
 from numpy import ndarray
-from typing import Callable, List, Tuple, Optional, Dict, Union, Any
+from typing import List, Tuple, Dict, Union, Any
 from numpy.typing import NDArray
-@dataclass
-class MonogParameters:
-    c_k: float
-    cosTheta: ndarray
+from sch_simulation.helsim_structures import (
+    Parameters,
+    SDEquilibrium,
+    Coverage,
+    MonogParameters,
+    Demography,
+    Worms,
+    Equilibrium,
+    Result,
+    ProcResult
+)
 
-@dataclass
-class Equilibrium:
-    stableProfile: ndarray
-    ageValues: ndarray
-    L_stable: float
-    L_breakpoint: float
-    K_values: ndarray
-    L_values: ndarray
-    FOIMultiplier: float
-    hostSurvival: Optional[ndarray] = None
-
-@dataclass
-class Coverage:
-    Age: ndarray
-    Years: ndarray # 1-D array lower/upper
-    Coverage: ndarray # 1-D array
-
-@dataclass
-class Parameters:
-    numReps: int
-    maxTime: float #nYears
-    N: int #nHosts
-    R0: float # Basic reproductive number
-    lambda_egg: float # Eggs per gram
-    v2: NDArray[np.float_] # Fraction of eggs produced when vaccinated.
-    gamma: float # Exponential density dependence of parasite adult stage
-    k: float # Shape parameter of assumed negative binomial distribution of worms amongst host
-    sigma: float # Worm death rate
-    v1: NDArray[np.float_] # impact of vaccine on worm death rate KK. Assume worm death rate is v1*sigma.
-    LDecayRate: float # ReservoirDecayRate
-    DrugEfficacy: float
-    DrugEfficacy1: float
-    DrugEfficacy2: float
-    contactAgeBreaks: ndarray # 1-D array - Contact age group breaks (minus sign necessary to include zero age)
-    contactRates: ndarray # 1-D array - BetaValues: Relative contact rates
-    v3: ndarray # 1-D array, v3 beta values: impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK 
-    rho: ndarray # 1-D array, - Rho, contribution to the reservoir by contact age group. 
-    treatmentAgeBreaks: ndarray # 1-D array, treatmentBreaks Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
-    VaccTreatmentBreaks: ndarray # 1-D array, age range of vaccinated group.  ## KK: these are the lower bounds of ranges with width 1. THEY MUST BE > 1 YEAR APART!!
-    coverage1: ndarray
-    coverage2: ndarray
-    VaccCoverage: ndarray # Vaccine coverage of the age groups KK
-    #VaccEfficacy
-    treatInterval1: int # interval between treatments in years. 
-    treatInterval2: int # interval between treatments in years. 
-    treatStart1: float
-    treatStart2: float
-    nRounds1: int
-    nRounds2: int
-    chemoTimings1: ndarray # 1-D array
-    chemoTimings2: ndarray # 1-D array
-    VaccineTimings: ndarray # 1-D array
-    outTimings: ndarray # 1-D array, outputEvents
-    propNeverCompliers: float # neverTreated
-    highBurdenBreaks: ndarray # 1-D array Three categories here
-    highBurdenValues: ndarray # 1-D array
-    VaccDecayRate: ndarray #vacc decay rate. rate of vaccine decay = 1/duration of vaccine   A vector with value 0 in state 1 and the vacc decay rate for state 2. KK.
-    VaccTreatStart: float ##Vaccine administration year start KK 
-    nRoundsVacc: int ##number of vaccine rounds KK 
-    treatIntervalVacc: float #KK
-    heavyThreshold: int # The threshold for heavy burden of infection, egg count > heavyThreshold
-    mediumThreshold: int # The threshold of medium burden of infection, mediumThreshold <= egg count <= heavyThreshold
-    sampleSizeOne: int
-    sampleSizeTwo: int
-    nSamples: int
-    minSurveyAge: float
-    maxSurveyAge: float
-    demogType: str # demogName: subset of demography parameters to be extracted
-    reproFuncName: str # name of function for reproduction (a string).  [Deterministic] ## epgPerPerson   epgFertility	epgMonog
-    z: float # np.exp(-'gamma'),
-    k_epg: float
-    species: str
-    timeToFirstSurvey: float
-    timeToNextSurvey: float
-    surveyThreshold: float
-    Unfertilized: bool
-    hostMuData: ndarray
-    muBreaks: ndarray
-    SR: bool
-    psi: float = 1.0
-    reproFunc: Optional[Callable[[np.ndarray, "Parameters"], np.ndarray]] = None
-    maxHostAge: Optional[ndarray] = None
-    muAges: Optional[ndarray] = None
-    hostMu: Optional[float] = None
-    monogParams: Optional[MonogParameters] = None
-    equiData: Optional[Equilibrium] = None
-    hostSurvivalCurve: Optional[ndarray] = None
-    hostAgeCumulDistr: Optional[ndarray] = None
-    contactAgeGroupBreaks: Optional[ndarray] = None
-    treatmentAgeGroupBreaks: Optional[ndarray] = None
-    VaccTreatmentAgeGroupBreaks: Optional[ndarray] = None
-    #Coverage
-    MDA: Optional[List[Coverage]] = None
-    Vacc: Optional[List[Coverage]] = None
-    drug1Years: Optional[ndarray] = None
-    drug1Split: Optional[ndarray] = None
-    drug2Years: Optional[ndarray] = None
-    drug2Split: Optional[ndarray] = None
-
-
-@dataclass
-class Demography:
-    birthDate: ndarray
-    deathDate: ndarray
-
-@dataclass
-class Worms:
-    total: NDArray[np.int_]
-    female: NDArray[np.int_]
-
-@dataclass
-class SDEquilibrium:
-    si: NDArray[np.float_]
-    sv: ndarray
-    worms: Worms
-    freeLiving: float
-    demography: Demography
-    contactAgeGroupIndices: ndarray
-    treatmentAgeGroupIndices: ndarray
-    adherenceFactors: ndarray
-    compliers: ndarray
-    attendanceRecord: List[ndarray]
-    ageAtChemo: List
-    adherenceFactorAtChemo: List
-    vaccCount: int
-    numSurvey: int
-    numSurveyTwo: Optional[int] = None
-    vaccinatedFactors: Optional[ndarray] = None
-    VaccTreatmentAgeGroupIndices: Optional[ndarray] = None
-    sex_id: Optional[ndarray] = None
-    nChemo1: Optional[int] = None
-    nChemo2: Optional[int] = None
-
-@dataclass
-class Result:
-    iteration: int
-    time: float
-    worms: Worms
-    hosts: Demography
-    vaccState: ndarray
-    freeLiving: float
-    adherenceFactors: ndarray
-    compliers: ndarray
-    sex_id: Optional[ndarray] = None
-    nVacc: Optional[int] = None
-    nChemo: Optional[int] = None
-    nChemo1: Optional[int] = None
-    nChemo2: Optional[int] = None
-    nSurvey: Optional[int] = None
-    surveyPass: Optional[int] = None
-    elimination: Optional[int] = None
 
 def params_from_contents(contents: List[str]) -> Dict[str, Any]:
     params = {}
@@ -1510,7 +1365,7 @@ def getEquilibrium(params: Parameters) -> Equilibrium:
         FOIMultiplier=FOIMultiplier
     )
 
-def extractHostData(results: List[List[Result]]):
+def extractHostData(results: List[List[Result]]) -> List[ProcResult]:
 
     '''
     This function is used for processing results the raw simulation results.
@@ -1526,27 +1381,32 @@ def extractHostData(results: List[List[Result]]):
 
     output = []
 
-    for rep in range(len(results)):
+    for result in results:
 
-        output.append(dict(
-            wormsOverTime=np.array([results[rep][i].worms.total for i in range(len(results[0]) - 1)]).T,
-            femaleWormsOverTime=np.array([results[rep][i].worms.female for i in range(len(results[0]) - 1)]).T,
-            # freeLiving=np.array([results[rep][i]['freeLiving'] for i in range(len(results[0]) - 1)]),
-            ages=np.array([results[rep][i].time - results[rep][i].hosts.birthDate for i in range(len(results[0]) - 1)]).T,
-            # adherenceFactors=np.array([results[rep][i]['adherenceFactors'] for i in range(len(results[0]) - 1)]).T,
-            # compliers=np.array([results[rep][i]['compliers'] for i in range(len(results[0]) - 1)]).T,
-            # totalPop=len(results[rep][0]['worms']['total']),
-            timePoints=np.array([np.array(results[rep][i].time) for i in range(len(results[0]) - 1)]),
-            # attendanceRecord=results[rep][-1]['attendanceRecord'],
-            # ageAtChemo=results[rep][-1]['ageAtChemo'],
-            # finalFreeLiving=results[rep][-2]['freeLiving'],
-            # adherenceFactorAtChemo=results[rep][-1]['adherenceFactorAtChemo']
-            #sex_id = np.array([results[rep][i]['sex_id'] for i in range(len(results[0]) - 1)]).T
+        output.append(ProcResult(
+            wormsOverTime=np.array([result[i].worms.total for i in range(len(results[0]) - 1)]).T,
+            femaleWormsOverTime=np.array([result[i].worms.female for i in range(len(results[0]) - 1)]).T,
+            # freeLiving=np.array([result[i]['freeLiving'] for i in range(len(results[0]) - 1)]),
+            ages=np.array([result[i].time - result[i].hosts.birthDate for i in range(len(results[0]) - 1)]).T,
+            # adherenceFactors=np.array([result[i]['adherenceFactors'] for i in range(len(results[0]) - 1)]).T,
+            # compliers=np.array([result[i]['compliers'] for i in range(len(results[0]) - 1)]).T,
+            # totalPop=len(result[0]['worms']['total']),
+            timePoints=np.array([np.array(result[i].time) for i in range(len(results[0]) - 1)]),
+            # attendanceRecord=result[-1]['attendanceRecord'],
+            # ageAtChemo=result[-1]['ageAtChemo'],
+            # finalFreeLiving=result[-2]['freeLiving'],
+            # adherenceFactorAtChemo=result[-1]['adherenceFactorAtChemo']
+            #sex_id = np.array([result[i]['sex_id'] for i in range(len(results[0]) - 1)]).T
         ))
 
     return output
 
-def getSetOfEggCounts(total: NDArray[np.int_], female: NDArray[np.int_], params: Parameters, Unfertilized: bool=False):
+def getSetOfEggCounts(
+    total: NDArray[np.int_], 
+    female: NDArray[np.int_], 
+    params: Parameters, 
+    Unfertilized: bool=False
+) -> NDArray[np.int_]:
 
     '''
     This function returns a set of readings of egg counts from a vector of individuals,
@@ -1577,8 +1437,13 @@ def getSetOfEggCounts(total: NDArray[np.int_], female: NDArray[np.int_], params:
 
     return np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
 
-def getVillageMeanCountsByHost(villageList, timeIndex: int, params: Parameters, nSamples: int = 2, Unfertilized: bool = False):
-
+def getVillageMeanCountsByHost(
+    villageList: ProcResult, 
+    timeIndex: int, 
+    params: Parameters, 
+    nSamples: int = 2, 
+    Unfertilized: bool = False
+) -> NDArray[np.float_]:
     '''
     This function returns the mean egg count across readings by host
     for a given time point and iteration.
@@ -1597,20 +1462,20 @@ def getVillageMeanCountsByHost(villageList, timeIndex: int, params: Parameters, 
     array of mean egg counts;
     '''
 
-    meanEggsByHost = getSetOfEggCounts(villageList['wormsOverTime'][:, timeIndex],
-                                       villageList['femaleWormsOverTime'][:, timeIndex], params, Unfertilized) / nSamples
+    meanEggsByHost = getSetOfEggCounts(villageList.wormsOverTime[:, timeIndex],
+                                       villageList.femaleWormsOverTime[:, timeIndex], params, Unfertilized) / nSamples
 
     for i in range(1, nSamples):
 
-        meanEggsByHost += getSetOfEggCounts(villageList['wormsOverTime'][:, timeIndex],
-                                            villageList['femaleWormsOverTime'][:, timeIndex], params, Unfertilized) / nSamples
+        meanEggsByHost += getSetOfEggCounts(villageList.wormsOverTime[:, timeIndex],
+                                            villageList.femaleWormsOverTime[:, timeIndex], params, Unfertilized) / nSamples
 
     return meanEggsByHost
 
 def getAgeCatSampledPrevByVillage(
-    villageList, 
+    villageList: ProcResult, 
     timeIndex: int, 
-    ageBand: int, 
+    ageBand: NDArray[np.int_], 
     params: Parameters, 
     nSamples: int = 2, 
     Unfertilized: bool = False,
@@ -1643,7 +1508,7 @@ def getAgeCatSampledPrevByVillage(
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
 
 
-    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
+    ageGroups = np.digitize(villageList.ages[:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
 
@@ -1655,8 +1520,15 @@ def getAgeCatSampledPrevByVillage(
 
     return np.sum(nSamples * mySample > 0.9) / villageSampleSize
 
-def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
-    villageSampleSize=100):
+def getAgeCatSampledPrevByVillageAll(
+    villageList: ProcResult, 
+    timeIndex: int, 
+    ageBand: NDArray[np.int_], 
+    params: Parameters, 
+    nSamples: int = 2, 
+    Unfertilized: bool = False,
+    villageSampleSize=100
+) -> Tuple[ndarray,ndarray,ndarray,ndarray,ndarray]:
 
     '''
     This function provides sampled, age-cat worm prevalence
@@ -1683,7 +1555,7 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
     '''
 
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
-    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
+    ageGroups = np.digitize(villageList.ages[:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
     
@@ -1710,9 +1582,15 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
     return np.array(infected), np.array(low), np.array(medium), np.array(heavy), np.array(len(currentAgeGroupMeanEggCounts))
 
 
-def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
-    villageSampleSize=100):
-
+def getAgeCatSampledPrevHeavyBurdenByVillage(
+    villageList: ProcResult, 
+    timeIndex: int, 
+    ageBand: NDArray[np.int_], 
+    params: Parameters, 
+    nSamples: int = 2, 
+    Unfertilized: bool = False,
+    villageSampleSize: int = 100
+) -> float:
     '''
     This function provides sampled, age-cat worm prevalence
     for a given time point and iteration.
@@ -1738,7 +1616,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, pa
     '''
 
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
-    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
+    ageGroups = np.digitize(villageList.ages[:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
 
@@ -1751,8 +1629,15 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, pa
     return np.sum(mySample > 16) / villageSampleSize
 
 
-def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
-    villageSampleSize=100):
+def getSampledDetectedPrevByVillageAll(
+    hostData: List[ProcResult], 
+    timeIndex: int, 
+    ageBand: NDArray[np.int_], 
+    params: Parameters, 
+    nSamples: int = 2, 
+    Unfertilized: bool = False,
+    villageSampleSize: int = 100
+) -> List[Tuple[ndarray,ndarray,ndarray,ndarray,ndarray]]:
 
     '''
     This function provides sampled, age-cat worm prevalence
@@ -1781,14 +1666,22 @@ def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, nSa
     return [getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params,
     nSamples, Unfertilized, villageSampleSize) for villageList in hostData]
 
-def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=False, villageSampleSize=100):
+def getBurdens(
+    hostData: List[ProcResult], 
+    params: Parameters, 
+    numReps: int, 
+    ageBand: NDArray[np.int_], 
+    nSamples: int = 2, 
+    Unfertilized: bool = False, 
+    villageSampleSize: int = 100
+) -> Tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]]:
    
     results= np.empty((0,numReps))
     low_results = np.empty((0,numReps))
     medium_results = np.empty((0,numReps))
     heavy_results = np.empty((0,numReps))
 
-    for t in range(len(hostData[0]['timePoints'])): #loop over time points
+    for t in range(len(hostData[0].timePoints)): #loop over time points
     # calculate burdens using the same sample
         newrow = np.array(getSampledDetectedPrevByVillageAll(hostData, t, ageBand, params, nSamples, Unfertilized, villageSampleSize))
         newrowinfected = newrow[:,0]
@@ -1802,15 +1695,22 @@ def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=Fals
         heavy_results = np.vstack([heavy_results, newrowheavy])
 
     # calculate proportion across number of repetitions
-    prevalence = np.sum(results, axis = 1) / numReps
-    low_prevalence = np.sum(low_results, axis = 1) / numReps
-    medium_prevalence = np.sum(medium_results, axis = 1) / numReps
-    heavy_prevalence = np.sum(heavy_results, axis = 1) / numReps
+    prevalence: NDArray[np.float_] = np.sum(results, axis = 1) / numReps
+    low_prevalence: NDArray[np.float_] = np.sum(low_results, axis = 1) / numReps
+    medium_prevalence: NDArray[np.float_] = np.sum(medium_results, axis = 1) / numReps
+    heavy_prevalence: NDArray[np.float_] = np.sum(heavy_results, axis = 1) / numReps
 
     return prevalence,low_prevalence,medium_prevalence,heavy_prevalence
 
-def getSampledDetectedPrevByVillage(hostData, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
-    villageSampleSize=100):
+def getSampledDetectedPrevByVillage(
+    hostData: List[ProcResult], 
+    timeIndex: int,
+    ageBand: NDArray[np.int_],
+    params: Parameters, 
+    nSamples: int = 2, 
+    Unfertilized: bool = False,
+    villageSampleSize: int = 100
+) -> NDArray[np.float_]:
 
     '''
     This function provides sampled, age-cat worm prevalence
@@ -1839,9 +1739,15 @@ def getSampledDetectedPrevByVillage(hostData, timeIndex, ageBand, params, nSampl
     return np.array([getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params,
     nSamples, Unfertilized, villageSampleSize) for villageList in hostData])
 
-def getSampledDetectedPrevHeavyBurdenByVillage(hostData, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
-    villageSampleSize=100):
-
+def getSampledDetectedPrevHeavyBurdenByVillage(
+    hostData: List[ProcResult],
+    timeIndex: int,
+    ageBand: NDArray[np.int_],
+    params: Parameters, 
+    nSamples: int = 2, 
+    Unfertilized: bool = False,
+    villageSampleSize: int = 100
+) -> NDArray[np.float_]:
     '''
     This function provides sampled, age-cat worm prevalence
     at a given time point across all iterations.
@@ -1869,7 +1775,14 @@ def getSampledDetectedPrevHeavyBurdenByVillage(hostData, timeIndex, ageBand, par
     return np.array([getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params,
     nSamples, Unfertilized, villageSampleSize) for villageList in hostData])
 
-def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100):
+def getPrevalence(
+    hostData: List[ProcResult], 
+    params: Parameters,
+    numReps: int,
+    nSamples: int = 2,
+    Unfertilized: bool = False,
+    villageSampleSize: int = 100
+) -> pd.DataFrame:
 
     '''
     This function provides the average SAC and adult prevalence at each time point,
@@ -1894,16 +1807,16 @@ def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, vil
     '''
 
     sac_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([5, 15]), params, nSamples,
-    Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+    Unfertilized, villageSampleSize) for t in range(len(hostData[0].timePoints))])
 
     adult_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([16, 80]), params, nSamples,
-    Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+    Unfertilized, villageSampleSize) for t in range(len(hostData[0].timePoints))])
 
     sac_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([5, 15]), params,
-    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0].timePoints))])
 
     adult_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([16, 80]), params,
-    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0].timePoints))])
 
     sac_prevalence = np.sum(sac_results, axis=1) / numReps
     adult_prevalence = np.sum(adult_results, axis=1) / numReps
@@ -1911,7 +1824,7 @@ def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, vil
     sac_heavy_prevalence = np.sum(sac_heavy_results, axis=1) / numReps
     adult_heavy_prevalence = np.sum(adult_heavy_results, axis=1) / numReps
 
-    df = pd.DataFrame({'Time': hostData[0]['timePoints'],
+    df = pd.DataFrame({'Time': hostData[0].timePoints,
                        'SAC Prevalence': sac_prevalence,
                        'Adult Prevalence': adult_prevalence,
                        'SAC Heavy Intensity Prevalence': sac_heavy_prevalence,
@@ -1922,8 +1835,14 @@ def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, vil
 
     return df
 
-def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100):
-
+def getPrevalenceDALYs(
+    hostData: List[ProcResult], 
+    params: Parameters, 
+    numReps: int, 
+    nSamples: int = 2, 
+    Unfertilized: bool = False, 
+    villageSampleSize: int = 100
+) -> pd.DataFrame:
     '''
     This function provides the average SAC and adult prevalence at each time point,
     where the average is calculated across all iterations.
@@ -1957,7 +1876,7 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
     all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
 
 
-    df = pd.DataFrame({'Time': hostData[0]['timePoints'],
+    df = pd.DataFrame({'Time': hostData[0].timePoints,
                        'Prevalence': all_prevalence,
                         'Low Intensity Prevalence': all_low_prevalence,
                         'Medium Intensity Prevalence': all_medium_prevalence,
@@ -1977,8 +1896,14 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
 
     return df
 
-def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100) -> pd.DataFrame:
-
+def getPrevalenceDALYsAll(
+    hostData: List[ProcResult], 
+    params: Parameters, 
+    numReps: int,
+    nSamples: int = 2,
+    Unfertilized: bool = False, 
+    villageSampleSize: int = 100
+) -> pd.DataFrame:
     '''
     This function provides the average SAC and adult prevalence at each time point,
     where the average is calculated across all iterations.
@@ -2019,7 +1944,7 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
 
         if i == 0:
             df = pd.DataFrame({
-                   'Time': hostData[0]['timePoints'],
+                   'Time': hostData[0].timePoints,
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
                    'age_end':np.repeat(age_end,len(low_prevalence)), 
                    'intensity':np.repeat('light',len(low_prevalence)),
@@ -2029,7 +1954,7 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
         
         else:
             assert df is not None
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+            df = df.append(pd.DataFrame({'Time':hostData[0].timePoints, 
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
                    'age_end':np.repeat(age_end,len(low_prevalence)), 
                    'intensity':np.repeat('light',len(low_prevalence)),
@@ -2037,7 +1962,7 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
                    'measure':np.repeat('prevalence',len(low_prevalence)),
                    'draw_1':low_prevalence}))
             
-        df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+        df = df.append(pd.DataFrame({'Time':hostData[0].timePoints, 
                 'age_start': np.repeat(age_start,len(low_prevalence)), 
                 'age_end':np.repeat(age_end,len(low_prevalence)), 
                 'intensity':np.repeat('moderate',len(low_prevalence)),
@@ -2045,7 +1970,7 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
                 'measure':np.repeat('prevalence',len(low_prevalence)),
                 'draw_1':moderate_prevalence}))
         
-        df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+        df = df.append(pd.DataFrame({'Time':hostData[0].timePoints, 
                 'age_start': np.repeat(age_start,len(low_prevalence)), 
                 'age_end':np.repeat(age_end,len(low_prevalence)), 
                 'intensity':np.repeat('heavy',len(low_prevalence)),
@@ -2068,10 +1993,10 @@ def getPrevalenceDALYsAll(hostData, params: Parameters, numReps, nSamples=2, Unf
 
 
 
-
-
-
-def outputNumberInAgeGroup(results: List[List[Result]], params: Parameters):
+def outputNumberInAgeGroup(
+    results: List[List[Result]], 
+    params: Parameters
+) -> pd.DataFrame:
     assert params.maxHostAge is not None
     numEachAgeGroup = None
     for i in range(len(results[0])):
