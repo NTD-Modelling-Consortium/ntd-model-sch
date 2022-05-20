@@ -1284,8 +1284,8 @@ def getLifeSpans(nSpans: int, params: Parameters) -> float:
     if params.hostAgeCumulDistr is None:
         raise ValueError('hostAgeCumulDistr is not set')
     u = np.random.uniform(low=0, high=1, size=nSpans) * np.max(params.hostAgeCumulDistr)
-    spans = np.array([np.argmax(v < params.hostAgeCumulDistr) for v in u])
-    #spans = np.argmax(params.hostAgeCumulDistr > u[:, None], axis=1) # Should be faster but isn't in testing?
+    #spans = np.array([np.argmax(v < params.hostAgeCumulDistr) for v in u])
+    spans = np.argmax(params.hostAgeCumulDistr > u[:, None], axis=1) # Should be faster?
     if params.muAges is None:
         raise ValueError('muAges not set')
     else:
