@@ -1,13 +1,8 @@
 import numpy as np
 
+from sch_simulation.helsim_structures import Parameters
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from .helsim_FUNC_KK import Parameters
-
-
-
-def epgPerPerson(x: np.ndarray, params: "Parameters") -> np.ndarray:
+def epgPerPerson(x: np.ndarray, params: Parameters) -> np.ndarray:
 
     '''
     This function calculates the total eggs per gram as
@@ -23,7 +18,7 @@ def epgPerPerson(x: np.ndarray, params: "Parameters") -> np.ndarray:
     '''
     return params.lambda_egg * x * params.z * (1 + x * (1 - params.z) / params.k) ** (- params.k - 1)
 
-def fertilityFunc(x: np.ndarray, params: "Parameters") -> np.ndarray:
+def fertilityFunc(x: np.ndarray, params: Parameters) -> np.ndarray:
 
     '''
     This function calculates the multiplicative fertility correction factor
@@ -45,7 +40,7 @@ def fertilityFunc(x: np.ndarray, params: "Parameters") -> np.ndarray:
 
 
 
-def monogFertilityFuncApprox(x: float, params: "Parameters"):
+def monogFertilityFuncApprox(x: float, params: Parameters):
 
     '''
     This function calculates the fertility factor for monogamously mating worms.
@@ -78,7 +73,7 @@ def monogFertilityFuncApprox(x: float, params: "Parameters"):
 
         return 1 - (1 - g) ** (1 + params.k) * integral
 
-def epgMonog(x: np.ndarray, params: "Parameters") -> np.ndarray:
+def epgMonog(x: np.ndarray, params: Parameters) -> np.ndarray:
 
     '''
     This function calculates the generation of eggs with monogamous
@@ -95,7 +90,7 @@ def epgMonog(x: np.ndarray, params: "Parameters") -> np.ndarray:
     vectorized = np.array([monogFertilityFuncApprox(i, params) for i in x])
     return epgPerPerson(x, params) * vectorized
 
-def epgFertility(x: np.ndarray, params: "Parameters") -> np.ndarray:
+def epgFertility(x: np.ndarray, params: Parameters) -> np.ndarray:
 
     '''
     This function calculates the generation of eggs with

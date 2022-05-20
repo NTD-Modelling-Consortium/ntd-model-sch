@@ -5,11 +5,6 @@ import numpy as np
 from joblib import Parallel, delayed
 import pandas as pd
 from sch_simulation.helsim_FUNC_KK import (
-    Parameters,
-    SDEquilibrium,
-    Worms,
-    Demography,
-    Result,
     calcRates2,
     conductSurvey,
     configure,
@@ -34,6 +29,14 @@ from sch_simulation.helsim_FUNC_KK import (
     parse_coverage_input,
     readCoverageFile
 )
+from sch_simulation.helsim_structures import (
+    Parameters,
+    SDEquilibrium,
+    Worms,
+    Demography,
+    Result
+)
+
 import random
 import math
 from typing import List, Optional
