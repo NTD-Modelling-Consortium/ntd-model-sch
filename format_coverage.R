@@ -21,6 +21,9 @@ schisto_coverage$"Intervention Type" <- rep("Vaccine", dim(schisto_coverage)[1])
 # check new column has been added
 head(schisto_coverage)
 
+# add missing years 2018 and 2019
+schisto_coverage$X2018 <- rep(0, dim(schisto_coverage)[1])
+schisto_coverage$X2019 <- rep(0, dim(schisto_coverage)[1])
 
 # reorder and rename column names
 col_years <- colnames(schisto_coverage)[grepl(20, colnames(schisto_coverage))]
@@ -29,6 +32,5 @@ schisto_coverage<- schisto_coverage[, c("ISO", "Intervention Type", "platform", 
 
 colnames(schisto_coverage)[1:4] <- c("Country/Region", "Intervention Type",	"Platform Type",	"Platform")
 
-write.csv(schisto_coverage, file = "schisto_coverage.csv")
+write.csv(schisto_coverage, file = "schisto_coverage_formatted.csv")
 
-# then copy and paste into mansoni_coverage_scenario_1.xlsx 
