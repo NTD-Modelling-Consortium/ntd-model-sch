@@ -26,7 +26,7 @@ schisto_coverage$X2018 <- rep(0, dim(schisto_coverage)[1])
 schisto_coverage$X2019 <- rep(0, dim(schisto_coverage)[1])
 
 # reorder and rename column names
-col_years <- colnames(schisto_coverage)[grepl(20, colnames(schisto_coverage))]
+col_years <- sort(colnames(schisto_coverage)[grepl(20, colnames(schisto_coverage))])
 col_ages <- colnames(schisto_coverage)[grepl("age", colnames(schisto_coverage))]
 schisto_coverage<- schisto_coverage[, c("ISO", "Intervention Type", "platform", "platform", col_ages, col_years)]
 
