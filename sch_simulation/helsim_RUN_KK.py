@@ -645,7 +645,7 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
     # run stochastic algorithm
     while t < maxTime:
         if t > print_t:
-            print(t)
+            #print(t)
             print_t += print_t_interval
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
@@ -845,7 +845,7 @@ def SCH_Simulation_DALY(paramFileName, demogName, numReps=None):
     output = extractHostData(results)
 
     # transform the output to data frame
-    df = getPrevalenceDALYsAll(output, params, numReps)
+    df = getPrevalenceDALYsAll(output, params, numReps, params['Unfertilized'])
 
     return df
 
@@ -943,7 +943,7 @@ def SCH_Simulation_DALY_Coverage(paramFileName, demogName,
     output = extractHostData(results)
 
     # transform the output to data frame
-    df = getPrevalenceDALYsAll(output, params, numReps)
+    df = getPrevalenceDALYsAll(output, params, numReps, params['Unfertilized'])
 
     return df
 
@@ -982,8 +982,7 @@ def singleSimulationDALYCoverage(params,simData,
     df1 = pd.concat([df1, costData], ignore_index=True)
     df1 = df1.reset_index()
     df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
-    df2 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
-    return df2
+    return df1
 
 
 
