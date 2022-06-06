@@ -143,7 +143,7 @@ def parse_coverage_input(coverageFileName,
     VaccCoverages = []
     
    
-    # we want to find which is the first year specified in the coverage data, along with which 
+    # we want to find which is the first year specified in the coverage data, along with which
     # column of the data set this corresponds to
     fy = 10000
     fy_index = 10000
@@ -195,7 +195,7 @@ def parse_coverage_input(coverageFileName,
     
     # loop over MDA coverage rows
     for i in range(len(MDARows)):
-        # get row number of each MDA entry 
+        # get row number of each MDA entry
         k = MDARows[i]
         # store this row
         w = PlatCov.iloc[int(k), :]
@@ -229,7 +229,7 @@ def parse_coverage_input(coverageFileName,
         
     # loop over Vaccination coverage rows
     for i in range(len(VaccRows)):
-        # get row number of each MDA entry 
+        # get row number of each MDA entry
         k = VaccRows[i]
         # store this row
         w = PlatCov.iloc[int(k), :]
@@ -275,7 +275,7 @@ def parse_coverage_input(coverageFileName,
         else:
             MDASplit[i] = 2
             
-    # we want to find which is the first year specified in the coverage data, along with which 
+    # we want to find which is the first year specified in the coverage data, along with which
     # column of the data set this corresponds to
     fy = 10000
     fy_index = 10000
@@ -316,12 +316,12 @@ def parse_coverage_input(coverageFileName,
         MDA_txt = MDA_txt + 'drug' + str(int(drugInd)) +'Split\t'
         for k in range(len(MDAYearSplit)):
             if k == (len(MDAYearSplit)-1):
-                MDA_txt = MDA_txt + str(MDAYearSplit[k]) + '\n'                
+                MDA_txt = MDA_txt + str(MDAYearSplit[k]) + '\n'
             else:
                 MDA_txt = MDA_txt + str(MDAYearSplit[k]) + ' '
 
         
-    coverageText = MDA_txt + Vacc_txt    
+    coverageText = MDA_txt + Vacc_txt
     # store the Coverage data in a text file
     with open(coverageTextFileStorageName, 'w', encoding='utf-8') as f:
         f.write(coverageText)
@@ -359,7 +359,7 @@ def nextMDAVaccInfo(params):
     nextVaccAge = []
     for i in range(1, params['nVaccAges']+1):
         if nextVaccTime == min(VaccTiming["Age{0}".format(i)]):
-            nextVaccAge.append(i)    
+            nextVaccAge.append(i)
     nextVaccIndex = []
     for i in range(len(nextVaccAge)):
         k = nextVaccAge[i]
@@ -617,7 +617,7 @@ def setupSD(params):
           'ageAtChemo': [],
           'adherenceFactorAtChemo': [],
           'vaccCount' :0,
-          'numSurvey':0 
+          'numSurvey':0
           }
 
     return SD
@@ -942,7 +942,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     toTreatNow = np.logical_and(attendance, SD['compliers'])
     toTreatNow = np.logical_and(toTreatNow , correctAges)
     
-    # initialize the share of drug 1 and drug2 
+    # initialize the share of drug 1 and drug2
     d1Share = 0
     d2Share = 0
     
@@ -955,7 +955,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
         j = np.where(params['drug2Years'] == t)[0][0]
         d2Share = params['drug2Split'][j]
         
-    # assign which drug each person will take  
+    # assign which drug each person will take
     drug = np.ones(int(sum(toTreatNow)))
     if d2Share > 0:
         k = random.sample(range(int(sum(drug))), int(sum(drug) * d2Share))
@@ -982,7 +982,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
         SD['worms']['female'][k] -= femaleToDie
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
-        SD['attendanceRecord'].append(k)    
+        SD['attendanceRecord'].append(k)
         SD['nChemo2'] += len(k)
     
     SD['ageAtChemo'].append(t - SD['demography']['birthDate'])
@@ -1044,7 +1044,7 @@ def doVaccineAgeRange(params, SD, t, minAge, maxAge, coverage):
     minAge: float
         minimum age for targeted vaccination;
     maxAge: float
-        maximum age for targeted vaccination;    
+        maximum age for targeted vaccination;
     coverage: array
         coverage of vaccination ;
     Returns
@@ -1060,7 +1060,7 @@ def doVaccineAgeRange(params, SD, t, minAge, maxAge, coverage):
     vaccNow = np.logical_and(vaccinate, SD['compliers'])
     vaccNow = np.logical_and(vaccNow , correctAges)
     SD['sv'][vaccNow] = 1
-    SD['vaccCount'] += sum(vaccNow) 
+    SD['vaccCount'] += sum(vaccNow)
     
     return SD
     
@@ -1088,7 +1088,7 @@ def conductSurvey(SD, params, t, sampleSize, nSamples):
     surveyEggs = eggCounts[surveyAged]
 
     # get sampled individuals
-    KKSampleSize = min(sampleSize, sum(surveyAged)) 
+    KKSampleSize = min(sampleSize, sum(surveyAged))
 
     sampledEggs = np.random.choice(a=np.array(surveyEggs), size=int(KKSampleSize), replace=False)
     SD['numSurvey'] += 1
@@ -1108,7 +1108,7 @@ def conductSurveyTwo(SD, params, t, sampleSize, nSamples):
 
 
     # get sampled individuals
-    KKSampleSize = min(sampleSize, params['N']) 
+    KKSampleSize = min(sampleSize, params['N'])
     sampledEggs = np.random.choice(a=eggCounts, size=KKSampleSize, replace=False)
     SD['numSurveyTwo'] += 1
     # return the prevalence
@@ -1302,7 +1302,7 @@ def extractHostData(results):
 
     return output
 
-def getSetOfEggCounts(total, female, params, Unfertilized=False):
+def getSetOfEggCounts(total, female, params, Unfertilized):
 
     '''
     This function returns a set of readings of egg counts from a vector of individuals,
@@ -1333,7 +1333,7 @@ def getSetOfEggCounts(total, female, params, Unfertilized=False):
 
     return np.random.negative_binomial(size=len(meanCount), p=params['k_epg'] / (meanCount + params['k_epg']), n=params['k_epg'])
 
-def getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples=2, Unfertilized=False):
+def getVillageMeanCountsByHost(villageList, timeIndex, params, Unfertilized, nSamples=2):
 
     '''
     This function returns the mean egg count across readings by host
@@ -1363,7 +1363,7 @@ def getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples=2, Unfer
 
     return meanEggsByHost
 
-def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
+def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, Unfertilized, nSamples=2,
     villageSampleSize=100):
 
     '''
@@ -1390,7 +1390,7 @@ def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, nSamp
     sampled worm prevalence;
     '''
 
-    meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
+    meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, Unfertilized, nSamples)
 
 
     ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
@@ -1405,7 +1405,7 @@ def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, nSamp
 
     return np.sum(nSamples * mySample > 0.9) / villageSampleSize
 
-def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
+def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, Unfertilized, nSamples=2,
     villageSampleSize=100):
 
     '''
@@ -1432,7 +1432,7 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
     sampled worm prevalence;
     '''
 
-    meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
+    meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, Unfertilized, nSamples)
     ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
@@ -1444,7 +1444,7 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
         low = np.nan
         medium = np.nan
         heavy = np.nan
-    else: 
+    else:
         if villageSampleSize < len(currentAgeGroupMeanEggCounts):
             mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=False)
 
@@ -1460,7 +1460,7 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
     return np.array(infected), np.array(low), np.array(medium), np.array(heavy), np.array(len(currentAgeGroupMeanEggCounts))
 
 
-def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
+def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params, Unfertilized, nSamples=2,
     villageSampleSize=100):
 
     '''
@@ -1487,7 +1487,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, pa
     sampled worm prevalence;
     '''
 
-    meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
+    meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, Unfertilized, nSamples)
     ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
@@ -1501,7 +1501,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, pa
     return np.sum(mySample > 16) / villageSampleSize
 
 
-def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
+def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, Unfertilized, nSamples=2,
     villageSampleSize=100):
 
     '''
@@ -1528,10 +1528,10 @@ def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, nSa
     sampled worm prevalence;
     '''
 
-    return [getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params,
-    nSamples, Unfertilized, villageSampleSize) for villageList in hostData]
+    return [getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, Unfertilized,
+    nSamples, villageSampleSize) for villageList in hostData]
 
-def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=False, villageSampleSize=100):
+def getBurdens(hostData, params, numReps, ageBand, Unfertilized, nSamples=2, villageSampleSize=100):
    
     results= np.empty((0,numReps))
     low_results = np.empty((0,numReps))
@@ -1540,7 +1540,7 @@ def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=Fals
 
     for t in range(len(hostData[0]['timePoints'])): #loop over time points
     # calculate burdens using the same sample
-        newrow = np.array(getSampledDetectedPrevByVillageAll(hostData, t, ageBand, params, nSamples, Unfertilized, villageSampleSize))
+        newrow = np.array(getSampledDetectedPrevByVillageAll(hostData, t, ageBand, params, Unfertilized, nSamples, villageSampleSize))
         newrowinfected = newrow[:,0]
         newrowlow = newrow[:,1]
         newrowmedium = newrow[:,2]
@@ -1559,7 +1559,7 @@ def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=Fals
 
     return prevalence,low_prevalence,medium_prevalence,heavy_prevalence
 
-def getSampledDetectedPrevByVillage(hostData, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
+def getSampledDetectedPrevByVillage(hostData, timeIndex, ageBand, params, Unfertilized, nSamples=2,
     villageSampleSize=100):
 
     '''
@@ -1586,10 +1586,10 @@ def getSampledDetectedPrevByVillage(hostData, timeIndex, ageBand, params, nSampl
     sampled worm prevalence;
     '''
 
-    return np.array([getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params,
-    nSamples, Unfertilized, villageSampleSize) for villageList in hostData])
+    return np.array([getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, Unfertilized,
+    nSamples, villageSampleSize) for villageList in hostData])
 
-def getSampledDetectedPrevHeavyBurdenByVillage(hostData, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
+def getSampledDetectedPrevHeavyBurdenByVillage(hostData, timeIndex, ageBand, params, Unfertilized, nSamples=2,
     villageSampleSize=100):
 
     '''
@@ -1616,10 +1616,10 @@ def getSampledDetectedPrevHeavyBurdenByVillage(hostData, timeIndex, ageBand, par
     sampled worm prevalence;
     '''
 
-    return np.array([getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params,
-    nSamples, Unfertilized, villageSampleSize) for villageList in hostData])
+    return np.array([getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params, Unfertilized,
+    nSamples, villageSampleSize) for villageList in hostData])
 
-def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100):
+def getPrevalence(hostData, params, numReps, Unfertilized, nSamples=2, villageSampleSize=100):
 
     '''
     This function provides the average SAC and adult prevalence at each time point,
@@ -1643,17 +1643,17 @@ def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, vil
     data frame with SAC and adult prevalence at each time point;
     '''
 
-    sac_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([5, 15]), params, nSamples,
-    Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+    sac_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([5, 15]),Unfertilized, params, nSamples,
+     villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
 
-    adult_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([16, 80]), params, nSamples,
-    Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+    adult_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([16, 80]), Unfertilized, params, nSamples,
+    villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
 
-    sac_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([5, 15]), params,
-    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+    sac_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([5, 15]), params,Unfertilized,
+    nSamples,  villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
 
-    adult_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([16, 80]), params,
-    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+    adult_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([16, 80]), params,Unfertilized,
+    nSamples,  villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
 
     sac_prevalence = np.sum(sac_results, axis=1) / numReps
     adult_prevalence = np.sum(adult_results, axis=1) / numReps
@@ -1672,7 +1672,7 @@ def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, vil
 
     return df
 
-def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100):
+def getPrevalenceDALYs(hostData, params, numReps, Unfertilized, nSamples=2, villageSampleSize=100):
 
     '''
     This function provides the average SAC and adult prevalence at each time point,
@@ -1698,13 +1698,13 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
 
 
     #under 4s
-    ufour_prevalence, ufour_low_prevalence, ufour_medium_prevalence, ufour_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 4]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+    ufour_prevalence, ufour_low_prevalence, ufour_medium_prevalence, ufour_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 4]), Unfertilized, nSamples=2, villageSampleSize=100)
 
     # adults
-    adult_prevalence, adult_low_prevalence, adult_medium_prevalence, adult_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([5, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+    adult_prevalence, adult_low_prevalence, adult_medium_prevalence, adult_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([5, 80]), Unfertilized, nSamples=2, villageSampleSize=100)
 
-    #all individuals 
-    all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+    #all individuals
+    all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), Unfertilized, nSamples=2, villageSampleSize=100)
 
 
     df = pd.DataFrame({'Time': hostData[0]['timePoints'],
@@ -1727,7 +1727,7 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
 
     return df
 
-def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100):
+def getPrevalenceDALYsAll(hostData, params, numReps, Unfertilized, nSamples=2, villageSampleSize=100):
 
     '''
     This function provides the average SAC and adult prevalence at each time point,
@@ -1751,7 +1751,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
     data frame with SAC and adult prevalence at each time point;
     '''
     
-    #all individuals 
+    #all individuals
     #all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
 
     # df = pd.DataFrame({'Time': hostData[0]['timePoints'],
@@ -1762,7 +1762,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
     
     for i in range(0,80) : #loop over yearly age bins
         
-        prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+        prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), Unfertilized, nSamples=2, villageSampleSize=100)
         age_start = i
         age_end = i + 1
         #year = hostData[0]['timePoints']
@@ -1770,33 +1770,33 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
         if i == 0:
             df = pd.DataFrame({
                    'Time': hostData[0]['timePoints'],
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
+                   'age_start': np.repeat(age_start,len(low_prevalence)),
+                   'age_end':np.repeat(age_end,len(low_prevalence)),
                    'intensity':np.repeat('light',len(low_prevalence)),
                    'species':np.repeat(params['species'], len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
                    'draw_1':low_prevalence})
         
         else:
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
+            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'],
+                   'age_start': np.repeat(age_start,len(low_prevalence)),
+                   'age_end':np.repeat(age_end,len(low_prevalence)),
                    'intensity':np.repeat('light',len(low_prevalence)),
                    'species':np.repeat(params['species'],len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
                    'draw_1':low_prevalence}))
             
-        df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                'age_start': np.repeat(age_start,len(low_prevalence)), 
-                'age_end':np.repeat(age_end,len(low_prevalence)), 
+        df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'],
+                'age_start': np.repeat(age_start,len(low_prevalence)),
+                'age_end':np.repeat(age_end,len(low_prevalence)),
                 'intensity':np.repeat('moderate',len(low_prevalence)),
                 'species':np.repeat(params['species'],len(low_prevalence)),
                 'measure':np.repeat('prevalence',len(low_prevalence)),
                 'draw_1':moderate_prevalence}))
         
-        df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                'age_start': np.repeat(age_start,len(low_prevalence)), 
-                'age_end':np.repeat(age_end,len(low_prevalence)), 
+        df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'],
+                'age_start': np.repeat(age_start,len(low_prevalence)),
+                'age_end':np.repeat(age_end,len(low_prevalence)),
                 'intensity':np.repeat('heavy',len(low_prevalence)),
                 'species':np.repeat(params['species'],len(low_prevalence)),
                 'measure':np.repeat('prevalence',len(low_prevalence)),
@@ -1823,7 +1823,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
 def outputNumberInAgeGroup(results, params):
     for i in range(len(results[0])):
         d = results[0][i]
-        ages = d['time'] - d['hosts']['birthDate'] 
+        ages = d['time'] - d['hosts']['birthDate']
         ages1 = list(ages.astype(int))
         age_counts = []
         for j in range(int(params['maxHostAge'])):
@@ -1831,21 +1831,21 @@ def outputNumberInAgeGroup(results, params):
             
         if (i == 0):
                 numEachAgeGroup = pd.DataFrame({
-                        'Time': np.repeat(d['time'], len(age_counts)), 
-                       'age_start': range(int(params['maxHostAge'])), 
-                       'age_end':range(1,1+int(params['maxHostAge'])), 
+                        'Time': np.repeat(d['time'], len(age_counts)),
+                       'age_start': range(int(params['maxHostAge'])),
+                       'age_end':range(1,1+int(params['maxHostAge'])),
                        'intensity':np.repeat('All', len(age_counts)),
                        'species':np.repeat(params['species'], len(age_counts)),
                        'measure':np.repeat('number', len(age_counts)),
                        'draw_1':age_counts})
         else:
                 numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({
-                        'Time': np.repeat(d['time'], len(age_counts)), 
-                       'age_start': range(int(params['maxHostAge'])), 
-                       'age_end':range(1,1+int(params['maxHostAge'])), 
+                        'Time': np.repeat(d['time'], len(age_counts)),
+                       'age_start': range(int(params['maxHostAge'])),
+                       'age_end':range(1,1+int(params['maxHostAge'])),
                        'intensity':np.repeat('All', len(age_counts)),
                        'species':np.repeat(params['species'], len(age_counts)),
                        'measure':np.repeat('number', len(age_counts)),
                        'draw_1':age_counts}))
     
-    return numEachAgeGroup 
+    return numEachAgeGroup
