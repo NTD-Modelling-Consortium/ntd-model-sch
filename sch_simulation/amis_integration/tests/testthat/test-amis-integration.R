@@ -30,7 +30,7 @@ test_that("Running the model should give us some results", {
     # Example prevalence map, with two locations, both with prevalence of 0.5
     prevalence_map <- matrix(c(0.5, 0.5), ncol = 1)
 
-    tranmission_model <- build_transmission_model(prevalence_map, fixed_parameters)
+    tranmission_model <- build_transmission_model(prevalence_map, fixed_parameters, year_indices = c(23))
     result <- tranmission_model(c(1, 2), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
     expect_equal(result, matrix(c(0.1, 0.1), ncol = 1), tolerance = 0.5)
 })
@@ -81,7 +81,7 @@ test_that("Running the AMIS integration should complete with the error about wei
 
     expect_error(AMISforInfectiousDiseases::amis(
         prevalence_map,
-        build_transmission_model(prevalence_map, fixed_parameters),
+        build_transmission_model(prevalence_map, fixed_parameters, year_indices = c(23)),
         prior
     ), "(No weight on any particles for locations in the active set.)|(the leading minor of order 2 is not positive definite)")
 })
