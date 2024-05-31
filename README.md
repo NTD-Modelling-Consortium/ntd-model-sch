@@ -32,10 +32,11 @@ See also `sch_run.py` for an example of how to use the `SCH_Simulation()` functi
 
 ### How to run
 
-- Install [pipenv](https://drive.google.com/drive/folders/1Or6lUkymYd_p031xKGZLcnTV4GYf-oYb) according to the instructions for your OS, then `cd` to the project directory and run:
+It is higly recommended to install the package into a specific Python
+"virtual" environment, see [Install packages in a virtual environment using pip and
+venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#install-packages-in-a-virtual-environment-using-pip-and-venv).
 
 ```
-    $ pipenv install . # sets up per-project python environment ('env')
-    $ pipenv shell # starts a per-project shell using that env
-    (ntd-model-trachoma) $ python trachoma_run.py # runs the model
+    $ git clone https://github.com/NTD-Modelling-Consortium/ntd-model-sch.git
+	$ python -m pip install ntd-model-sch/
 ```
