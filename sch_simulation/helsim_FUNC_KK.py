@@ -2,11 +2,13 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import bisect
 import warnings
-import pkg_resources
+import importlib
+from pathlib import Path
 warnings.filterwarnings('ignore')
 np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
+from sch_simulation import DATA_PATH
 
 def readParam(fileName):
 
@@ -23,10 +25,9 @@ def readParam(fileName):
         dictionary containing the parameter names and values;
     '''
 
-    DATA_PATH = pkg_resources.resource_filename('sch_simulation', 'data/')
+    param_file_path = DATA_PATH / Path(fileName)
+    with open(param_file_path) as f:
 
-    with open(DATA_PATH + fileName) as f:
-        
         contents = f.readlines()
 
     params = []
