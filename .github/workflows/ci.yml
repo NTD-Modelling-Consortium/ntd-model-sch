@@ -42,6 +42,5 @@ jobs:
         working-directory: 'sch_simulation/amis_integration/'
     - name: Run R tests
       run: Rscript tests/testthat.R
-      with:
-        working-directory: 'sch_simulation/amis_integration'
+      working-directory: 'sch_simulation/amis_integration'
 
