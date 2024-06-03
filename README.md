@@ -32,6 +32,8 @@ See also `sch_run.py` for an example of how to use the `SCH_Simulation()` functi
 
 ### How to run
 
+Requires Python 3.9+
+
 - Install [pipenv](https://pipenv.pypa.io/en/latest/) according to the instructions for your OS (on macOS it's `brew install pipenv`), then `cd` to the project directory, check out the branch you want to use, and run:
 
 ```
