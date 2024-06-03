@@ -29,9 +29,10 @@ jobs:
         Rscript -e 'install.packages("renv")'
         echo installed
         Rscript -e "print(getwd())"
-        Rscript -e "renv::activate(profile = )"
+        Rscript -e "renv::init()"
         echo Activated
         Rscript -e "renv::restore()"
+        cd ../..
         Rscript tests/testthat.R
     - uses: r-lib/actions/setup-renv@v2
       with:
