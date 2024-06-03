@@ -24,19 +24,6 @@ jobs:
         pipenv install . --python ${{ matrix.python-version }} 
     - name: Run Python tests
       run: pipenv run pytest tests
-    - name: Test renv
-      run: |
-        cd sch_simulation/amis_integration
-        pwd
-        Rscript -e 'install.packages("renv")'
-        echo installed
-        Rscript -e "print(getwd())"
-        Rscript -e "renv::init()"
-        echo Activated
-        Rscript -e "renv::restore()"
-        echo Restored
-        Rscript -e "renv::status()"
-        Rscript tests/testthat.R
     - uses: r-lib/actions/setup-renv@v2
       with:
         working-directory: 'sch_simulation/amis_integration/'
