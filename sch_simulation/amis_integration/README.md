@@ -23,7 +23,7 @@ sch_simulation package (see main [README](../../README.md)).
 ## Running
 
 ```bash
-$ Rscript amis_integration.R
+$ Rscript sth_fitting.R
 ```
 
 ## Upgrading AMIS
