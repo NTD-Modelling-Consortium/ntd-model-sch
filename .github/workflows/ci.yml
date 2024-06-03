@@ -34,11 +34,14 @@ jobs:
         Rscript -e "renv::init()"
         echo Activated
         Rscript -e "renv::restore()"
-        cd ../..
+        echo Restored
+        Rscript -e "renv::status()"
         Rscript tests/testthat.R
     - uses: r-lib/actions/setup-renv@v2
       with:
         working-directory: 'sch_simulation/amis_integration/'
     - name: Run R tests
       run: Rscript tests/testthat.R
+      with:
+        working-directory: 'sch_simulation/amis_integration'
 

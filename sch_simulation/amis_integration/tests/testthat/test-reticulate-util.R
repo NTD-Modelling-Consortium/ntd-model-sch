@@ -1,6 +1,8 @@
-source("../../sch_simulation/amis_integration/reticulate_util.R")
+source("../../reticulate_util.R")
 
 test_that("Getting virtual environement from here gets virtual env path", {
+  # Leave the test directory to the directory the script should be run from
+  setwd("../..")
   venv_path <- get_venv()
   expect_match(venv_path, ".*virtualenvs/ntd-model-sch.*")
 })
