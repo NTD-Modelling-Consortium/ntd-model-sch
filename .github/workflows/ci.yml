@@ -22,6 +22,9 @@ jobs:
         pipenv install . --python ${{ matrix.python-version }} 
     - name: Run Python tests
       run: pipenv run pytest tests
+    - uses: r-lib/actions/setup-renv@v2
+      with:
+        working-directory: 'sch_simulation/amis_integration'
     - name: Run R tests
       run: Rscript tests/testthat.R
 
