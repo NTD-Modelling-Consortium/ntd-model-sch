@@ -10,6 +10,6 @@ setuptools.setup(
     long_description='Individual-based model in Medley 1989 thesis and Anderson&Medley 1985.',
     packages=setuptools.find_packages(),
     python_requires='>=3.9',
-    install_requires=['numpy', 'scipy', 'pandas', 'joblib', 'matplotlib', 'openpyxl'],
+    install_requires=['numpy', 'scipy', 'pandas', 'joblib', 'matplotlib', 'openpyxl', 'pytest'],
     include_package_data=True
 )
