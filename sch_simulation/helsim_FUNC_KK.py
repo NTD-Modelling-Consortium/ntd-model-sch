@@ -78,14 +78,14 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
     parameters = readParam(paramFileName)
 
     chemoTimings1 = np.array([parameters['treatStart1'] + x * parameters['treatInterval1']
-    for x in range(np.int(parameters['nRounds1']))])
+    for x in range(int(parameters['nRounds1']))])
 
     chemoTimings2 = np.array([parameters['treatStart2'] + x * parameters['treatInterval2']
-    for x in range(np.int(parameters['nRounds2']))])
+    for x in range(int(parameters['nRounds2']))])
 
-    params = {'numReps': np.int(parameters['repNum']),
+    params = {'numReps': int(parameters['repNum']),
               'maxTime': parameters['nYears'],
-              'N': np.int(parameters['nHosts']),
+              'N': int(parameters['nHosts']),
               'R0': parameters['R0'],
               'lambda': parameters['lambda'],
               'gamma': parameters['gamma'],
@@ -103,8 +103,8 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'treatInterval2': parameters['treatInterval2'],
               'treatStart1': parameters['treatStart1'],
               'treatStart2': parameters['treatStart2'],
-              'nRounds1': np.int(parameters['nRounds1']),
-              'nRounds2': np.int(parameters['nRounds2']),
+              'nRounds1': int(parameters['nRounds1']),
+              'nRounds2': int(parameters['nRounds2']),
               'chemoTimings1': chemoTimings1,
               'chemoTimings2': chemoTimings2,
               'outTimings': parameters['outputEvents'],
