@@ -9,7 +9,7 @@ build_transmission_model <- function(prevalence_map, fixed_parameters, year_indi
   sch_simulation <- get_amis_integration_package()
   transmission_model <- function(seeds, params, n_tims = 2) {
     output <- sch_simulation$run_model_with_parameters(
-      seeds, params, fixed_parameters, year_indices
+      seeds, params, fixed_parameters, as.array(year_indices)
     )
     print("Output:")
     print(output)
