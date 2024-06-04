@@ -27,6 +27,7 @@ jobs:
     - uses: r-lib/actions/setup-renv@v2
       with:
         working-directory: 'sch_simulation/amis_integration/'
+        cache-version: 2 # Stored an incomplete cache by downloading to the wrong path
     - name: Run R tests
       run: Rscript tests/testthat.R
       working-directory: 'sch_simulation/amis_integration'
