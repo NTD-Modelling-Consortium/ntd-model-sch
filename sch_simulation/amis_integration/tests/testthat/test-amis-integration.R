@@ -3,8 +3,6 @@ setwd("../..")
 source("amis_integration.R")
 
 test_that("Running the model should give us some results", {
-    print(getwd())
-
     sch_simulation <- get_amis_integration_package()
 
     fixed_parameters <- sch_simulation$FixedParameters(
