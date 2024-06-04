@@ -8,6 +8,11 @@ test_that("Getting virtual environement from here gets virtual env path", {
 })
 
 test_that("Getting a virtual env from outside this project gets null", {
+  # TODO: #39
+  skip(
+    message =
+      "Failing due to test-amis-integration activating a python virtual env"
+  )
   setwd("/") # leave the project so no appropriate virtual environement
   # The command generates a warning since
   # the command exits with non-zero exit status
