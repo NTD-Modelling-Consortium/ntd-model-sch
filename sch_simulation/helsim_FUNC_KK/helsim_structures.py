@@ -164,6 +164,7 @@ class SDEquilibrium:
     vaccCount: int
     numSurvey: int
     id: ndarray
+    treatProbability: ndarray
     n_treatments: Optional[dict[str, np.ndarray[np.float_]]]
     n_treatments_population: Optional[dict[str, np.ndarray[np.float_]]] 
     n_surveys: Optional[dict[str, np.ndarray[np.float_]]] 
@@ -174,6 +175,7 @@ class SDEquilibrium:
     sex_id: Optional[ndarray] = None
     nChemo1: Optional[int] = None
     nChemo2: Optional[int] = None
+    
     
 
 @dataclass
