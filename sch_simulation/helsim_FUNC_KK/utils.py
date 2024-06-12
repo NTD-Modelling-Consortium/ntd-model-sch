@@ -419,3 +419,14 @@ def getPsi(params: Parameters) -> float:
             * deltaT
         )
     )
+
+def initializeTreatmentProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
+
+    if(snc > 0):
+        alpha = cov * (1-snc)/snc
+        beta = (1-cov)*(1-snc)/snc
+        SD.treatProbability = np.random.beta(alpha, beta, len(SDEquilibrium.id))
+    else:  # if snc = 0, then there is no variation between people in terms of probability of coverage
+        SD.treatProbability = np.ones(len(SDEquilibrium.id)) * cov
+
+    return SD

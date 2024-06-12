@@ -46,6 +46,7 @@ from sch_simulation.helsim_FUNC_KK import (
     readCoverageFile,
     readParams,
     setupSD,
+    initializeTreatmentProbability
 )
 
 num_cores = multiprocessing.cpu_count()
@@ -542,7 +543,14 @@ def doRealizationSurveyCoveragePickle(
                 
             # chemotherapy
             if timeBarrier >= nextChemoTime:
-                #print("MDA, time = ", t)           
+                
+                if nChemo == 0: # if this is the first MDA, then we need to initialize everyone's probability of treatment
+                    cov = params.MDA[0].Coverage[0]
+                    snc = params.snc
+                    simData = initializeTreatmentProbability(simData, cov, snc)
+                    prevCov = cov # save the coverage used, so that we can check if we need to update the treatment probabilities
+                    prevSNC = snc
+                
                 simData = doDeath(params, simData, t)
                 assert params.MDA is not None
                 for i in range(len(nextMDAAge)):
