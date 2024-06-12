@@ -452,6 +452,9 @@ def doRealizationSurveyCoveragePickle(
                                               params.Unfertilized, params.nSamples, surveyType)
                 # get approximate prevalence of the population
                 prev = len(np.where(eggCounts > 0)[0])/len(eggCounts)
+                # we have to check if this is the first time that the output is being done in order
+                # to get the incidence in this time step, as if there are no previous results
+                # then there is nothing to compare the currently infected people against
                 if len(results) > 0:
                     l = len(results)
                     # get ids of people who had 0 eggs last time step
@@ -1014,6 +1017,7 @@ def multiple_simulations(
         deathDate=raw_data["demography"]["deathDate"],
     )
     ids = np.arange(len(raw_data["si"]))
+    treatProbability = np.ones(len(raw_data["si"])) *(-1)
     simData = SDEquilibrium(
         si=raw_data["si"],
         worms=worms,
@@ -1036,7 +1040,8 @@ def multiple_simulations(
         compliers=np.random.uniform(low=0, high=1, size=len(raw_data["si"]))
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data["si"])),
-        id = ids
+        id = ids,
+        treatProbability= treatProbability
     )
     pickleNumIndivs = len(simData.si)
     #print("starting  j =",j)
@@ -1097,7 +1102,8 @@ def multiple_simulations(
         compliers=np.random.uniform(low=0, high=1, size=wantedPopSize)
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=wantedPopSize),
-        id = ids
+        id = ids,
+        treatProbability=  np.ones(wantedPopSize) *(-1)
         )
         simData = copy.deepcopy(SD)
         
@@ -1186,7 +1192,8 @@ def multiple_simulations_after_burnin(
         compliers=np.random.uniform(low=0, high=1, size=len(raw_data.si))
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data.si)),
-        id = np.arange(len(raw_data.si))
+        id = np.arange(len(raw_data.si)),
+        treatProbability = np.ones(len(raw_data.si)) *(-1)
     )
     
     # Convert all layers to correct data format
