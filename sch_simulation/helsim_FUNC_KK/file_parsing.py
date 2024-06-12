@@ -619,6 +619,7 @@ def readParams(
         contactRates=parameters["betaValues"],
         v3=parameters["v3betaValues"],
         rho=parameters["rhoValues"],
+        snc = parameters["snc"],
         treatmentAgeBreaks=parameters["treatmentBreaks"],
         VaccTreatmentBreaks=parameters["VaccTreatmentBreaks"],
         coverage1=parameters["coverage1"],
