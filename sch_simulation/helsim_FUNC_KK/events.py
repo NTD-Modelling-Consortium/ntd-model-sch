@@ -323,13 +323,14 @@ def doChemo(
     """
 
     # decide which individuals are treated, treatment is random
-    attendance = (
-        np.random.uniform(low=0, high=1, size=params.N)
-        < coverage[SD.treatmentAgeGroupIndices]
-    )
+    # attendance = (
+    #     np.random.uniform(low=0, high=1, size=params.N)
+    #     < coverage[SD.treatmentAgeGroupIndices]
+    # )
+    toTreatNow = np.random.uniform(low=0, high=1, size=params.N) < SD.treatProbability
 
     # they're compliers and it's their turn
-    toTreatNow = np.logical_and(attendance, SD.compliers)
+    #toTreatNow = np.logical_and(attendance, SD.compliers)
 
     # calculate the number of dead worms
     femaleToDie = np.random.binomial(
@@ -390,14 +391,19 @@ def doChemoAgeRange(
     numChemo1 = 0
     numChemo2 = 0
     # decide which individuals are treated, treatment is random
-    attendance = np.random.uniform(low=0, high=1, size=params.N) < coverage
+    
+    #attendance = np.random.uniform(low=0, high=1, size=params.N) < coverage
+    attendance = np.random.uniform(low=0, high=1, size=params.N) < SD.treatProbability
+
     # get age of each individual
     ages = t - SD.demography.birthDate
     # choose individuals in correct age range
     correctAges = np.logical_and(ages < maxAge, ages >= minAge)
     # they're compliers, in the right age group and it's their turn
-    toTreatNow = np.logical_and(attendance, SD.compliers)
-    toTreatNow = np.logical_and(toTreatNow, correctAges)
+    # toTreatNow = np.logical_and(attendance, SD.compliers)
+    # toTreatNow = np.logical_and(toTreatNow, correctAges)
+
+    toTreatNow = np.logical_and(attendance, correctAges)
 
     # initialize the share of drug 1 and drug2
     # we allow 2 different types of drug to be given within the same MDA.
