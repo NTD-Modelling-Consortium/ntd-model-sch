@@ -430,3 +430,43 @@ def initializeTreatmentProbability(SD: SDEquilibrium, cov: float, snc: float) ->
         SD.treatProbability = np.ones(len(SDEquilibrium.id)) * cov
 
     return SD
+
+
+def checkForZeroTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
+    # if there are any people with value -1 for treatment probability they need to get values for this 
+    notInitTreatmentProb = np.where(SD.treatProbability == -1) 
+    if len(notInitTreatmentProb) > 0:
+        if(snc > 0):
+            alpha = cov * (1-snc)/snc
+            beta = (1-cov)*(1-snc)/snc
+            SD.treatProbability[notInitTreatmentProb] = np.random.beta(alpha, beta, len(notInitTreatmentProb))
+        else:
+            SD.treatProbability[notInitTreatmentProb] = np.ones(len(notInitTreatmentProb)) * cov           
+    return SD
+
+
+
+def editTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
+     
+    if snc > 0:
+        # Define the parameters for the probability of treatment
+        alpha = cov * (1 - snc) / snc
+        beta = (1 - cov) * (1 - snc) / snc
+
+        # Draw probabilities from the beta distribution
+        treatProbabilities = np.random.beta(alpha, beta, len(SDEquilibrium.id))
+        # Sort these values so that they are in ascending order
+        treatProbabilities.sort()
+
+        # Store the current value of the treatProbability in an array
+        oldTreatProbabilities = SD.treatProbability
+
+        # Sort the indices array based on the values in oldTreatProbabilities
+        indices = np.argsort(oldTreatProbabilities)
+        # Assign the newly drawn treatment probabilities to the appropriate individuals
+        for i, index in enumerate(indices):
+            SD[index].treatProbability = treatProbabilities[i]
+    else:
+        SD.treatProbability = np.ones(len(SDEquilibrium.id)) * cov
+
+    return SD

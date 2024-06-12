@@ -46,7 +46,9 @@ from sch_simulation.helsim_FUNC_KK import (
     readCoverageFile,
     readParams,
     setupSD,
-    initializeTreatmentProbability
+    initializeTreatmentProbability,
+    checkForZeroTreatProbability,
+    editTreatProbability
 )
 
 num_cores = multiprocessing.cpu_count()
@@ -557,6 +559,15 @@ def doRealizationSurveyCoveragePickle(
                     k = nextMDAAge[i]
                     index = nextChemoIndex[i]
                     cov = params.MDA[k].Coverage[index]
+                    snc = params.snc
+                    if (cov != prevCov) | (snc != prevSNC):
+                        simData = checkForZeroTreatProbability(simData, prevCov, prevRho)
+                        simData = editTreatProbability(simData, cov, snc)
+                        prevCov = cov
+                        prevRho = snc
+
+                    simData = checkForZeroTreatProbability(simData, cov, snc)
+                    
                     minAge = params.MDA[k].Age[0]
                     maxAge = params.MDA[k].Age[1]
                     label = params.MDA[k].Label
