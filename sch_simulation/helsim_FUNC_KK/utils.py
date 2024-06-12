@@ -437,8 +437,10 @@ def checkForZeroTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> S
     notInitTreatmentProb = np.where(SD.treatProbability == -1) 
     if len(notInitTreatmentProb) > 0:
         if(snc > 0):
+            # Define the parameters for the beta random number generator to get probability of treatment
             alpha = cov * (1-snc)/snc
             beta = (1-cov)*(1-snc)/snc
+            # Draw probabilities from the beta distribution for each persons probability of being traeted
             SD.treatProbability[notInitTreatmentProb] = np.random.beta(alpha, beta, len(notInitTreatmentProb))
         else:
             SD.treatProbability[notInitTreatmentProb] = np.ones(len(notInitTreatmentProb)) * cov           
@@ -447,18 +449,20 @@ def checkForZeroTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> S
 
 
 def editTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
-     
+    # we want to choose new values for treatment probability when the coverage or snc change
+    # this is done here, where we keep the rank of each individuals probability of treatment
+    # i.e. if previously you were the most likely person to get treated, you still will be after this
     if snc > 0:
-        # Define the parameters for the probability of treatment
+        # Define the parameters for the beta random number generator to get probability of treatment
         alpha = cov * (1 - snc) / snc
         beta = (1 - cov) * (1 - snc) / snc
 
         # Draw probabilities from the beta distribution
         treatProbabilities = np.random.beta(alpha, beta, len(SDEquilibrium.id))
-        # Sort these values so that they are in ascending order
+        # Sort these values so that they are in ascending order so they can later be matched with people
         treatProbabilities.sort()
 
-        # Store the current value of the treatProbability in an array
+        # Store the current value of the treatProbability 
         oldTreatProbabilities = SD.treatProbability
 
         # Sort the indices array based on the values in oldTreatProbabilities
