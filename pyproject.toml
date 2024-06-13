@@ -29,3 +29,6 @@ Homepage = "https://github.com/NTD-Modelling-Consortium/ntd-model-sch"
 
 [tool.setuptools]
 packages = ["sch_simulation"]
+
+[tool.setuptools.package-data]
+sch_simulation = ["data/**/*.txt", "data/**/*.xslx"]
