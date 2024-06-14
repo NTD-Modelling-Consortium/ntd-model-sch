@@ -421,8 +421,11 @@ def getPsi(params: Parameters) -> float:
     )
 
 def initializeTreatmentProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
-
+    
     if(snc > 0):
+        # Define the parameters for the beta random number generator to get probability of treatment
+        # use scheme explained in section 1.5.3 of the suppplement of this paper
+        # https://www.sciencedirect.com/science/article/pii/S1755436516300810?via%3Dihub#sec0110
         alpha = cov * (1-snc)/snc
         beta = (1-cov)*(1-snc)/snc
         SD.treatProbability = np.random.beta(alpha, beta, len(SDEquilibrium.id))
@@ -438,6 +441,8 @@ def checkForZeroTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> S
     if len(notInitTreatmentProb) > 0:
         if(snc > 0):
             # Define the parameters for the beta random number generator to get probability of treatment
+            # use scheme explained in section 1.5.3 of the suppplement of this paper
+            # https://www.sciencedirect.com/science/article/pii/S1755436516300810?via%3Dihub#sec0110
             alpha = cov * (1-snc)/snc
             beta = (1-cov)*(1-snc)/snc
             # Draw probabilities from the beta distribution for each persons probability of being traeted
