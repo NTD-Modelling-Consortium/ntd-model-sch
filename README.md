@@ -32,6 +32,8 @@ See also `sch_run.py` for an example of how to use the `SCH_Simulation()` functi
 
 ### Installation
 
+Required: Python 3.9 or higher.
+
 It is recommended to install the package into a specific Python
 "virtual" environment, see [Install packages in a virtual environment using pip and
 venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#install-packages-in-a-virtual-environment-using-pip-and-venv).
