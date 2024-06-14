@@ -1035,7 +1035,7 @@ def multiple_simulations(
         deathDate=raw_data["demography"]["deathDate"],
     )
     ids = np.arange(len(raw_data["si"]))
-    treatProbability = np.ones(len(raw_data["si"])) *(-1)
+    treatProbability = np.full(shape=len(raw_data["si"]), fill_value=np.NaN, dtype=float)
     simData = SDEquilibrium(
         si=raw_data["si"],
         worms=worms,
@@ -1121,7 +1121,7 @@ def multiple_simulations(
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=wantedPopSize),
         id = ids,
-        treatProbability=  np.ones(wantedPopSize) *(-1)
+        treatProbability= np.full(shape=wantedPopSize, fill_value=np.NaN, dtype=float) 
         )
         simData = copy.deepcopy(SD)
         
