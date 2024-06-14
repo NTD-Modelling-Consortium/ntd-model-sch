@@ -202,7 +202,7 @@ def setupSD(params: Parameters) -> SDEquilibrium:
         nChemo1 = 0,
         nChemo2 = 0, 
         id = ids,
-        treatProbability = np.ones(params.N, dtype=float) * (-1)
+        treatProbability = np.full(shape=params.N, fill_value=np.NaN, dtype=float)
     )
 
 
