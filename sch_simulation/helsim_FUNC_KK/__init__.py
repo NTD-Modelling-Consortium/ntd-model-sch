@@ -50,6 +50,8 @@ from sch_simulation.helsim_FUNC_KK.utils import (
     KKsampleGammaGammaPois,
     POC_CCA_test,
     PCR_test,
-    getSetOfEggCounts
+    getSetOfEggCounts,
+    checkForNaNTreatProbability,
+    editTreatProbability
 )
 
