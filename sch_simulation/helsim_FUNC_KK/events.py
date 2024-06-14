@@ -322,15 +322,9 @@ def doChemo(
         dataclass containing the updated equilibrium parameter values;
     """
 
-    # decide which individuals are treated, treatment is random
-    # attendance = (
-    #     np.random.uniform(low=0, high=1, size=params.N)
-    #     < coverage[SD.treatmentAgeGroupIndices]
-    # )
+    # decide which individuals are treated
     toTreatNow = np.random.uniform(low=0, high=1, size=params.N) < SD.treatProbability
 
-    # they're compliers and it's their turn
-    #toTreatNow = np.logical_and(attendance, SD.compliers)
 
     # calculate the number of dead worms
     femaleToDie = np.random.binomial(
@@ -390,18 +384,13 @@ def doChemoAgeRange(
     mda_t = t + label * 0.0001
     numChemo1 = 0
     numChemo2 = 0
-    # decide which individuals are treated, treatment is random
-    
-    #attendance = np.random.uniform(low=0, high=1, size=params.N) < coverage
+    # decide which individuals are treated
     attendance = np.random.uniform(low=0, high=1, size=params.N) < SD.treatProbability
 
     # get age of each individual
     ages = t - SD.demography.birthDate
     # choose individuals in correct age range
     correctAges = np.logical_and(ages < maxAge, ages >= minAge)
-    # they're compliers, in the right age group and it's their turn
-    # toTreatNow = np.logical_and(attendance, SD.compliers)
-    # toTreatNow = np.logical_and(toTreatNow, correctAges)
 
     toTreatNow = np.logical_and(attendance, correctAges)
 
@@ -433,11 +422,11 @@ def doChemoAgeRange(
             d1Share = 1
     # assign which drug each person will take
     drug = np.ones(int(sum(toTreatNow)))
-
+    # we want to make sure that if we are using drug 2, then the correct number of people are assigned this drug
     if d2Share > 0:
         k = random.sample(range(int(sum(drug))), int(sum(drug) * d2Share))
         drug[k] = 2
-# calculate the number of dead worms
+    # calculate the number of dead worms
     ll = np.where(toTreatNow==1)[0]
     # if drug 1 share is > 0, then treat the appropriate individuals with drug 1
     if d1Share > 0:
@@ -476,6 +465,7 @@ def doChemoAgeRange(
             #str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName1 + ")"
         ] = n_people_by_age
+        
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params.DrugEfficacy2
