@@ -24,6 +24,8 @@ dependencies = [
   "matplotlib==3.9.*",
   "openpyxl==3.1.*",
 ]
+[project.optional-dependencies]
+test = ["pytest"]
 
 [project.urls]
 Homepage = "https://github.com/NTD-Modelling-Consortium/ntd-model-sch"
