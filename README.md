@@ -30,17 +30,25 @@ The output data frame can be exported in several different formats; see `sch_res
 
 See also `sch_run.py` for an example of how to use the `SCH_Simulation()` function.
 
-### How to run
+### Installation
 
-Requires Python 3.9-3.10.
+It is recommended to install the package into a specific Python
+"virtual" environment, see [Install packages in a virtual environment using pip and
+venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#install-packages-in-a-virtual-environment-using-pip-and-venv).
 
-- Install [pipenv](https://pipenv.pypa.io/en/latest/) according to the instructions for your OS (on macOS it's `brew install pipenv`), then `cd` to the project directory, check out the branch you want to use, and run:
-
+```shell
+$ git clone https://github.com/NTD-Modelling-Consortium/ntd-model-sch.git
+$ python -m pip install ntd-model-sch/
 ```
-$ pipenv shell # sets up/runs a per-project python environment ('virtualenv'/'venv')
-(ntd-model-sch) $ pip install . # installs python libraries & NTD model inside the venv
-(ntd-model-sch) $ python sch_run.py # or could be 'pickle_example.py' - runs the model
+
+Developers can install the package in "editable" mode, in order to make changes
+to the source code available in the environment right away:
+
+```shell
+$ python -m pip install --editable ntd-model-sch/
 ```
+
+See [Development Mode (a.k.a. “Editable Installs”)](https://setuptools.pypa.io/en/latest/userguide/development_mode.html).
 
 ## Endgame inputs
 
