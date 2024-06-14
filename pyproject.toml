@@ -38,4 +38,4 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-sch_simulation = ["data/**/*.txt", "data/**/*.xslx"]
+sch_simulation = ["data/**/*.txt", "data/**/*.xlsx"]
