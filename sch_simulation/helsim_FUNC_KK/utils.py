@@ -420,50 +420,50 @@ def getPsi(params: Parameters) -> float:
         )
     )
 
-def initializeTreatmentProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
-    
+
+def drawTreatmentProbabilities(n:int, cov:float, snc:float):
+
+    """
+    Draw the treatment probabilities for the value of coverage and snc given.
+    This uses the scheme explained in section 1.5.3 of the suppplement to this paper
+    https://www.sciencedirect.com/science/article/pii/S1755436516300810?via%3Dihub#sec0110
+    """
+
     if(snc > 0):
-        # Define the parameters for the beta random number generator to get probability of treatment
-        # use scheme explained in section 1.5.3 of the suppplement of this paper
-        # https://www.sciencedirect.com/science/article/pii/S1755436516300810?via%3Dihub#sec0110
+        
         alpha = cov * (1-snc)/snc
         beta = (1-cov)*(1-snc)/snc
-        SD.treatProbability = np.random.beta(alpha, beta, len(SDEquilibrium.id))
-    else:  # if snc = 0, then there is no variation between people in terms of probability of coverage
-        SD.treatProbability = np.ones(len(SDEquilibrium.id)) * cov
+        treatmentProb = np.random.beta(alpha, beta, n)
+    else:
+        treatmentProb = np.ones(n) * cov 
+    return treatmentProb
 
-    return SD
 
+def checkForNaNTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
 
-def checkForZeroTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
-    # if there are any people with value -1 for treatment probability they need to get values for this 
-    notInitTreatmentProb = np.where(SD.treatProbability == -1) 
+    """
+    If there are any people with NaN for treatment probability they need to get a value for this 
+    """
+
+    notInitTreatmentProb = np.where(np.isnan(SD.treatProbability)) 
     if len(notInitTreatmentProb) > 0:
-        if(snc > 0):
-            # Define the parameters for the beta random number generator to get probability of treatment
-            # use scheme explained in section 1.5.3 of the suppplement of this paper
-            # https://www.sciencedirect.com/science/article/pii/S1755436516300810?via%3Dihub#sec0110
-            alpha = cov * (1-snc)/snc
-            beta = (1-cov)*(1-snc)/snc
-            # Draw probabilities from the beta distribution for each persons probability of being traeted
-            SD.treatProbability[notInitTreatmentProb] = np.random.beta(alpha, beta, len(notInitTreatmentProb))
-        else:
-            SD.treatProbability[notInitTreatmentProb] = np.ones(len(notInitTreatmentProb)) * cov           
+        SD.treatProbability[notInitTreatmentProb] = drawTreatmentProbabilities(len(notInitTreatmentProb), cov, snc)
     return SD
 
 
 
 def editTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
-    # we want to choose new values for treatment probability when the coverage or snc change
-    # this is done here, where we keep the rank of each individuals probability of treatment
-    # i.e. if previously you were the most likely person to get treated, you still will be after this
-    if snc > 0:
-        # Define the parameters for the beta random number generator to get probability of treatment
-        alpha = cov * (1 - snc) / snc
-        beta = (1 - cov) * (1 - snc) / snc
 
+    """
+    Choose new values for treatment probability (e.g. for when coverage or snc change)
+
+    The rank of each individuals probability of treatement is retained
+    I.e. if previously you were the most likely person to get treated, you still will be after this
+    """
+
+    if snc > 0:
         # Draw probabilities from the beta distribution
-        treatProbabilities = np.random.beta(alpha, beta, len(SDEquilibrium.id))
+        treatProbabilities = drawTreatmentProbabilities(len(SD.treatProbability), cov, snc)
         # Sort these values so that they are in ascending order so they can later be matched with people
         treatProbabilities.sort()
 
