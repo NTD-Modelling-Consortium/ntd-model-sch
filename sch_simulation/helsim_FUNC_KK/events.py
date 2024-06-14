@@ -280,7 +280,7 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
         maxID = max(SD.id)
         new_ids = np.arange(maxID + 1, maxID + len(theDead) + 1)
         SD.id[theDead] = new_ids
-        SD.treatProbability[theDead] = np.ones(len(theDead)) * (-1)
+        SD.treatProbability[theDead] = np.NaN
     assert params.contactAgeGroupBreaks is not None
     # update the contact age categories
     SD.contactAgeGroupIndices = (
