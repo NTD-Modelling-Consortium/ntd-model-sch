@@ -29,7 +29,11 @@ dependencies = [
 Homepage = "https://github.com/NTD-Modelling-Consortium/ntd-model-sch"
 
 [tool.setuptools]
-packages = ["sch_simulation"]
+packages = [
+  "sch_simulation",
+  "sch_simulation.helsim_FUNC_KK",
+  "sch_simulation.amis_integration",
+]
 
 [tool.setuptools.package-data]
 sch_simulation = ["data/**/*.txt", "data/**/*.xslx"]
