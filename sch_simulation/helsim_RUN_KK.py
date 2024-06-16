@@ -10,42 +10,13 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
-from sch_simulation.helsim_FUNC_KK import (
-    Demography,
-    Parameters,
-    Result,
-    SDEquilibrium,
-    Worms,
-    calcRates2,
-    conductSurvey,
-    configure,
-    doChemo,
-    doChemoAgeRange,
-    doDeath,
-    doEvent2,
-    doFreeLive,
-    doVaccine,
-    doVaccineAgeRange,
-    doVectorControl,
-    extractHostData,
-    getEquilibrium,
-    getPrevalence,
-    getPrevalenceDALYsAll,
-    getPsi,
-    nextMDAVaccInfo,
-    outputNumberInAgeGroup,
-    outputNumberSurveyedAgeGroup,
-    outputNumberTreatmentAgeGroup,
-    overWritePostMDA,
-    overWritePostVacc,
-    overWritePostVecControl,
-    getSetOfEggCounts,
-    getPrevalenceWholePop,
-    getIncidence,
-    parse_coverage_input,
-    readCoverageFile,
-    readParams,
-    setupSD,
+from .helsim_FUNC_KK import (
+    configuration,
+    events,
+    file_parsing,
+    helsim_structures,
+    results_processing,
+    utils
 )
 
 num_cores = multiprocessing.cpu_count()
