@@ -22,11 +22,11 @@ from .helsim_FUNC_KK import (
 num_cores = multiprocessing.cpu_count()
 
 
-def loadParameters(paramFileName: str, demogName: str) -> Parameters:
+def loadParameters(paramFileName: str, demogName: str) -> helsim_structures.Parameters:
     """
         This function loads all the parameters from the input text
     params    files and organizes them in a dictionary.
-        Parameters
+        helsim_structures.Parameters
         ----------
         paramFileName: str
             name of the input text file with the model parameters;
@@ -39,14 +39,14 @@ def loadParameters(paramFileName: str, demogName: str) -> Parameters:
     """
 
     # load the parameters
-    params = readParams(paramFileName=paramFileName, demogName=demogName)
+    params = file_parsing.readParams(paramFileName=paramFileName, demogName=demogName)
 
     # configure the parameters
-    params = configure(params)
+    params = configuration.configure(params)
 
     # update the parameters
-    params.psi = getPsi(params)
-    params.equiData = getEquilibrium(params)
+    params.psi = utils.getPsi(params)
+    params.equiData = configuration.getEquilibrium(params)
 
     return params
 
@@ -54,22 +54,22 @@ def loadParameters(paramFileName: str, demogName: str) -> Parameters:
 def doRealization(params, i, mult):
     """
     This function generates a single simulation path.
-    Parameters
+    helsim_structures.Parameters
     ----------
-    params: Parameters
+    params: helsim_structures.Parameters
         dataclass containing the parameter names and values;
     i: int
         iteration number;
     Returns
     -------
-    results: List[Result]
+    results: List[helsim_structures.Result]
         list with simulation results;
     """
     #np.random.seed(i) 
     #random.seed(i)
-    params.equiData = getEquilibrium(params)
+    params.equiData = configuration.getEquilibrium(params)
     # setup simulation data
-    simData = setupSD(params)
+    simData = configuration.setupSD(params)
 
     # start time
     t = 0
@@ -119,7 +119,7 @@ def doRealization(params, i, mult):
         )
     )
 
-    results: List[Result] = []  # initialise empty list to store results
+    results: List[helsim_structures.Result] = []  # initialise empty list to store results
     multiplier = math.floor(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
@@ -131,7 +131,7 @@ def doRealization(params, i, mult):
         # if t > print_t:
         #     print_t += print_t_interval
         #     print(t)
-        rates = calcRates2(params, simData)
+        rates = utils.calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
         new_multiplier = min(math.ceil(min((1/365) * sumRates, multiplier)), mult)
@@ -164,12 +164,12 @@ def doRealization(params, i, mult):
                     
         if t + dt < nextStep:
             t += dt
-            simData = doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
-            #simData = doFreeLive(params, simData, dt)
+            simData = events.doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
+            #simData = events.doFreeLive(params, simData, dt)
             #freeliveTime = t
         else:
 
-            simData = doFreeLive(params, simData, nextStep - freeliveTime)
+            simData = events.doFreeLive(params, simData, nextStep - freeliveTime)
 
             t = nextStep
             freeliveTime = nextStep
@@ -178,15 +178,15 @@ def doRealization(params, i, mult):
             # ageing and death
             if timeBarrier >= nextAgeTime:
 
-                simData = doDeath(params, simData, t)
+                simData = events.doDeath(params, simData, t)
 
                 nextAgeTime += ageingInt
 
             # chemotherapy
             if timeBarrier >= nextChemoTime1:
 
-                simData = doDeath(params, simData, t)
-                simData = doChemo(params, simData, t, params.coverage1)
+                simData = events.doDeath(params, simData, t)
+                simData = events.doChemo(params, simData, t, params.coverage1)
 
                 currentchemoTiming1[nextChemoIndex1] = maxTime + 10
                 nextChemoIndex1 = np.argmin(currentchemoTiming1)
@@ -194,8 +194,8 @@ def doRealization(params, i, mult):
 
             if timeBarrier >= nextChemoTime2:
 
-                simData = doDeath(params, simData, t)
-                simData = doChemo(params, simData, t, params.coverage2)
+                simData = events.doDeath(params, simData, t)
+                simData = events.doChemo(params, simData, t, params.coverage2)
 
                 currentchemoTiming2[nextChemoIndex2] = maxTime + 10
                 nextChemoIndex2 = np.argmin(currentchemoTiming2)
@@ -203,20 +203,20 @@ def doRealization(params, i, mult):
 
             if timeBarrier >= nextVaccineTime:
 
-                simData = doDeath(params, simData, t)
-                simData = doVaccine(params, simData, t, params.VaccCoverage)
+                simData = events.doDeath(params, simData, t)
+                simData = events.doVaccine(params, simData, t, params.VaccCoverage)
                 currentVaccineTimings[nextVaccineIndex] = maxTime + 10
                 nextVaccineIndex = np.argmin(currentVaccineTimings)
                 nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
 
             if timeBarrier >= nextOutTime:
                 SD = copy.deepcopy(simData)
-                eggCounts = getSetOfEggCounts(SD.worms.total, SD.worms.female, SD.sv, params,  
+                eggCounts = utils.getSetOfEggCounts(SD.worms.total, SD.worms.female, SD.sv, params,  
                                               params.Unfertilized, params.nSamples, "KK2")
                 # get approximate prevalence of the population
                 prev = len(np.where(eggCounts > 0)[0])/len(eggCounts)
                 results.append(
-                    Result(
+                    helsim_structures.Result(
                         iteration=1,
                         time=t,
                         worms=copy.deepcopy(simData.worms),
@@ -268,15 +268,15 @@ def doRealization(params, i, mult):
 
 
 def doRealizationSurveyCoveragePickle(
-    params: Parameters, surveyType: str,  simData: Optional[SDEquilibrium] = None, mult: int = 5
-) -> List[Result]:
+    params: helsim_structures.Parameters, surveyType: str,  simData: Optional[helsim_structures.SDEquilibrium] = None, mult: int = 5
+) -> List[helsim_structures.Result]:
     """
     This function generates a single simulation path.
-    Parameters
+    helsim_structures.Parameters
     ----------
-    params: Parameters
+    params: helsim_structures.Parameters
         dataclass containing the parameter names and values;
-    simData: SDEquilibrium
+    simData: helsim_structures.SDEquilibrium
         dataclass containing the initial equilibrium parameter values;
     i: int
         iteration number;
@@ -286,7 +286,7 @@ def doRealizationSurveyCoveragePickle(
         list with simulation results;
     """
     if simData is None:
-        simData = setupSD(params)
+        simData = configuration.setupSD(params)
 
     # start time
     t: float = 0
@@ -321,7 +321,7 @@ def doRealizationSurveyCoveragePickle(
         nextVaccIndex,
         nextVecControlTime,
         nextVecControlIndex,
-    ) = nextMDAVaccInfo(params)
+    ) = file_parsing.nextMDAVaccInfo(params)
 
     # next event
     
@@ -361,7 +361,7 @@ def doRealizationSurveyCoveragePickle(
         # if t > print_t:
         #     print_t += print_t_interval
         #     print(t)
-        rates = calcRates2(params, simData)
+        rates = utils.calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
         
@@ -395,31 +395,31 @@ def doRealizationSurveyCoveragePickle(
         new_t = t + dt
         if new_t < nextStep:
             t = new_t
-            simData = doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
-            #simData = doFreeLive(params, simData, dt)
+            simData = events.doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
+            #simData = events.doFreeLive(params, simData, dt)
             #freeliveTime = nextStep
         else:
-            simData = doFreeLive(params, simData, nextStep - freeliveTime)
+            simData = events.doFreeLive(params, simData, nextStep - freeliveTime)
             t = nextStep
             freeliveTime = nextStep
             timeBarrier = nextStep
             # ageing and death
             if timeBarrier >= nextAgeTime:
 
-                simData = doDeath(params, simData, t)
+                simData = events.doDeath(params, simData, t)
 
                 nextAgeTime += ageingInt
             if timeBarrier >= nextOutTime:
 
 
-                simData, _ = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType, False)
+                simData, _ = events.conductSurvey(simData, params, t, params.N, params.nSamples, surveyType, False)
                 SD = copy.deepcopy(simData)
                 wormsTotal = sum(simData.worms.total) 
                 if wormsTotal == 0:
                     trueElim = 1
                 else:
                     trueElim = 0
-                eggCounts = getSetOfEggCounts(SD.worms.total, SD.worms.female, SD.sv, params,  
+                eggCounts = utils.getSetOfEggCounts(SD.worms.total, SD.worms.female, SD.sv, params,  
                                               params.Unfertilized, params.nSamples, surveyType)
                 # get approximate prevalence of the population
                 prev = len(np.where(eggCounts > 0)[0])/len(eggCounts)
@@ -436,7 +436,7 @@ def doRealizationSurveyCoveragePickle(
                 else:
                     incidenceAges = []
                 results.append(
-                    Result(
+                    helsim_structures.Result(
                         iteration=1,
                         time=t,
                         worms=copy.deepcopy(simData.worms),
@@ -472,7 +472,7 @@ def doRealizationSurveyCoveragePickle(
             # survey
             if timeBarrier >= tSurvey:
                 #print("Survey, time = ", t)
-                simData, prevOne = conductSurvey(
+                simData, prevOne = events.conductSurvey(
                     simData, params, t, params.sampleSizeOne, params.nSamples, surveyType, True
                 )
                 if params.sampleSizeOne > 0:
@@ -506,12 +506,12 @@ def doRealizationSurveyCoveragePickle(
                     nextVaccIndex,
                     nextVecControlTime,
                     nextVecControlIndex,
-                ) = nextMDAVaccInfo(params)
+                ) = file_parsing.nextMDAVaccInfo(params)
                 
             # chemotherapy
             if timeBarrier >= nextChemoTime:
                 #print("MDA, time = ", t)           
-                simData = doDeath(params, simData, t)
+                simData = events.doDeath(params, simData, t)
                 assert params.MDA is not None
                 for i in range(len(nextMDAAge)):
                     k = nextMDAAge[i]
@@ -520,7 +520,7 @@ def doRealizationSurveyCoveragePickle(
                     minAge = params.MDA[k].Age[0]
                     maxAge = params.MDA[k].Age[1]
                     label = params.MDA[k].Label
-                    simData, propTreated1, propTreated2 = doChemoAgeRange(params, simData, t, minAge, maxAge, cov, label)
+                    simData, propTreated1, propTreated2 = events.doChemoAgeRange(params, simData, t, minAge, maxAge, cov, label)
                     if propTreated1 > 0:
                         propChemo1.append([t, minAge, maxAge, "C1", round(propTreated1,4)])
                     if propTreated2 > 0:
@@ -532,7 +532,7 @@ def doRealizationSurveyCoveragePickle(
                     tSurvey = maxTime + 10
                 nChemo += 1
 
-                params = overWritePostMDA(params, nextMDAAge, nextChemoIndex)
+                params = file_parsing.overWritePostMDA(params, nextMDAAge, nextChemoIndex)
 
                 (
                     chemoTiming,
@@ -545,12 +545,12 @@ def doRealizationSurveyCoveragePickle(
                     nextVaccIndex,
                     nextVecControlTime,
                     nextVecControlIndex,
-                ) = nextMDAVaccInfo(params)
+                ) = file_parsing.nextMDAVaccInfo(params)
 
             # vaccination
             if timeBarrier >= nextVaccTime:
            #     break
-                simData = doDeath(params, simData, t)
+                simData = events.doDeath(params, simData, t)
                 assert params.Vacc is not None
                 for i in range(len(nextVaccAge)):
                     k = nextVaccAge[i]
@@ -559,11 +559,11 @@ def doRealizationSurveyCoveragePickle(
                     minAge = params.Vacc[k].Age[0]
                     maxAge = params.Vacc[k].Age[1]
                     label = params.Vacc[k].Label
-                    simData, pVacc = doVaccineAgeRange(params, simData, t, minAge, maxAge, cov, label)
+                    simData, pVacc = events.doVaccineAgeRange(params, simData, t, minAge, maxAge, cov, label)
                     propVacc.append([t, minAge, maxAge, round(pVacc,4)])
                     
                 nVacc += 1
-                params = overWritePostVacc(params, nextVaccAge, nextVaccIndex)
+                params = file_parsing.overWritePostVacc(params, nextVaccAge, nextVaccIndex)
 
                 (
                     chemoTiming,
@@ -576,13 +576,13 @@ def doRealizationSurveyCoveragePickle(
                     nextVaccIndex,
                     nextVecControlTime,
                     nextVecControlIndex,
-                ) = nextMDAVaccInfo(params)
+                ) = file_parsing.nextMDAVaccInfo(params)
             
             
             if timeBarrier >= nextVecControlTime:
                 cov = params.VecControl[0].Coverage[nextVecControlIndex]
-                simData = doVectorControl(params, simData, cov)
-                params = overWritePostVecControl(params, nextVecControlIndex)
+                simData = events.doVectorControl(params, simData, cov)
+                params = file_parsing.overWritePostVecControl(params, nextVecControlIndex)
                 
                 (
                     chemoTiming,
@@ -595,7 +595,7 @@ def doRealizationSurveyCoveragePickle(
                     nextVaccIndex,
                     nextVecControlTime,
                     nextVecControlIndex,
-                ) = nextMDAVaccInfo(params)
+                ) = file_parsing.nextMDAVaccInfo(params)
             
 
             
@@ -618,7 +618,7 @@ def doRealizationSurveyCoveragePickle(
 
 
 
-def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes)-> pd.DataFrame:
+def getActualCoverages(results: List[List[helsim_structures.Result]], params: helsim_structures.Parameters, allTimes)-> pd.DataFrame:
     
     ind = 0
     p = copy.deepcopy(params.MDA)
@@ -718,7 +718,7 @@ def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes
             
     return df1
         
-def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame:
+def getCostData(results: List[List[helsim_structures.Result]], params: helsim_structures.Parameters) -> pd.DataFrame:
     df1 = None
     for i, list_res in enumerate(results):
         df = pd.DataFrame(list_res)
@@ -830,13 +830,13 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
 
 
 def singleSimulationDALYCoverage(
-    params: Parameters, simData: SDEquilibrium, surveyType: str, numReps: Optional[int] = None
+    params: helsim_structures.Parameters, simData: helsim_structures.SDEquilibrium, surveyType: str, numReps: Optional[int] = None
 ) -> pd.DataFrame:
     """
     This function generates multiple simulation paths.
-    Parameters
+    helsim_structures.Parameters
     ----------
-    params : Parameters
+    params : helsim_structures.Parameters
         set of parameters for the run
     Returns
     -------
@@ -854,21 +854,21 @@ def singleSimulationDALYCoverage(
  
     results = [results]
     # process the output
-    output = extractHostData(results)
+    output = results_processing.extractHostData(results)
 
     # transform the output to data frame
-    df = getPrevalenceDALYsAll(
+    df = results_processing.getPrevalenceDALYsAll(
         output, params, numReps, params.Unfertilized,  'KK1', 1
     )
          
-    # wholePopPrev = getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
-    numAgeGroup = outputNumberInAgeGroup(results, params)
-    incidence = getIncidence(results, params)
+    # wholePopPrev = results_processing.getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
+    numAgeGroup = results_processing.outputNumberInAgeGroup(results, params)
+    incidence = results_processing.getIncidence(results, params)
     costData = getCostData(results, params)
     allTimes = np.unique(numAgeGroup.Time)
     trueCoverageData = getActualCoverages(results, params, allTimes)
-    surveyData = outputNumberSurveyedAgeGroup(SD, params)
-    treatmentData = outputNumberTreatmentAgeGroup(SD, params)
+    surveyData = results_processing.outputNumberSurveyedAgeGroup(SD, params)
+    treatmentData = results_processing.outputNumberTreatmentAgeGroup(SD, params)
 
     # df1 = pd.concat([wholePopPrev, df], ignore_index= True)
     df1 = pd.concat([df, numAgeGroup], ignore_index=True)
@@ -953,7 +953,7 @@ def selectIndividuals(chosenAges,  groupAges, numIndivsToChoose):
 
 
 def multiple_simulations(
-    params: Parameters, pickleData, simparams, indices, i, surveyType, wantedPopSize = 3000,
+    params: helsim_structures.Parameters, pickleData, simparams, indices, i, surveyType, wantedPopSize = 3000,
     ageGroups = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100]
 ) -> pd.DataFrame:
     print(f"==> multiple_simulations starting sim {i}")
@@ -979,13 +979,13 @@ def multiple_simulations(
     times = data["times"]
     raw_data["demography"]["birthDate"] = raw_data["demography"]["birthDate"] - times["maxTime"]
     raw_data["demography"]["deathDate"] = raw_data["demography"]["deathDate"]- times["maxTime"]
-    worms = Worms(total=raw_data["worms"]["total"], female=raw_data["worms"]["female"])
-    demography = Demography(
+    worms = helsim_structures.Worms(total=raw_data["worms"]["total"], female=raw_data["worms"]["female"])
+    demography = helsim_structures.Demography(
         birthDate=raw_data["demography"]["birthDate"],
         deathDate=raw_data["demography"]["deathDate"],
     )
     ids = np.arange(len(raw_data["si"]))
-    simData = SDEquilibrium(
+    simData = helsim_structures.SDEquilibrium(
         si=raw_data["si"],
         worms=worms,
         freeLiving=raw_data["freeLiving"],
@@ -1040,13 +1040,13 @@ def multiple_simulations(
             wormsF.append(simData.worms.female[l])
             contactAgeGroupIndices.append(simData.contactAgeGroupIndices[l])
             treatmentAgeGroupIndices.append(simData.treatmentAgeGroupIndices[l])
-        demography = Demography(
+        demography = helsim_structures.Demography(
         birthDate=np.array(birthDate),
         deathDate=np.array(deathDate),
         )
-        worms = Worms(total=np.array(wormsT), female=np.array(wormsF))
+        worms = helsim_structures.Worms(total=np.array(wormsT), female=np.array(wormsF))
         ids = np.arange(wantedPopSize)
-        SD = SDEquilibrium(
+        SD = helsim_structures.SDEquilibrium(
         si=np.array(si),
         worms=worms,
         freeLiving=raw_data["freeLiving"],
@@ -1093,15 +1093,15 @@ def multiple_simulations(
     parameters.R0 = R0
     parameters.k = k
 
-    # configure the parameters
-    parameters = configure(parameters)
-    parameters.psi = getPsi(parameters)
-    parameters.equiData = getEquilibrium(parameters)
+    # configuration.configure the parameters
+    parameters = configuration.configure(parameters)
+    parameters.psi = utils.getPsi(parameters)
+    parameters.equiData = configuration.getEquilibrium(parameters)
     # parameters['moderateIntensityCount'], parameters['highIntensityCount'] = setIntensityCount(paramFileName)
 
     # add a simulation path
     # results = doRealizationSurveyCoveragePickle(params, simData, 1)
-    # output = extractHostData(results)
+    # output = results_processing.extractHostData(results)
 
     # transform the output to data frame
     df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
@@ -1113,7 +1113,7 @@ def multiple_simulations(
 
 
 def multiple_simulations_after_burnin(
-    params: Parameters, pickleData, simparams, indices, i, burnInTime, surveyType
+    params: helsim_structures.Parameters, pickleData, simparams, indices, i, burnInTime, surveyType
 ) -> pd.DataFrame:
     print(f"==> after burn in starting sim {i}")
     start_time = time.time()
@@ -1130,12 +1130,12 @@ def multiple_simulations_after_burnin(
     raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime 
 
     
-    worms = Worms(total=raw_data.worms.total, female=raw_data.worms.female)
-    demography = Demography(
+    worms = helsim_structures.Worms(total=raw_data.worms.total, female=raw_data.worms.female)
+    demography = helsim_structures.Demography(
         birthDate=raw_data.demography.birthDate,
         deathDate=raw_data.demography.deathDate,
     )
-    simData = SDEquilibrium(
+    simData = helsim_structures.SDEquilibrium(
         si=raw_data.si,
         worms=worms,
         freeLiving=raw_data.freeLiving,
@@ -1181,15 +1181,15 @@ def multiple_simulations_after_burnin(
     parameters.R0 = R0
     parameters.k = k
 
-    # configure the parameters
-    parameters = configure(parameters)
-    parameters.psi = getPsi(parameters)
-    parameters.equiData = getEquilibrium(parameters)
+    # configuration.configure the parameters
+    parameters = configuration.configure(parameters)
+    parameters.psi = utils.getPsi(parameters)
+    parameters.equiData = configuration.getEquilibrium(parameters)
     # parameters['moderateIntensityCount'], parameters['highIntensityCount'] = setIntensityCount(paramFileName)
 
     # add a simulation path
     # results = doRealizationSurveyCoveragePickle(params, simData, 1)
-    # output = extractHostData(results)
+    # output = results_processing.extractHostData(results)
 
     # transform the output to data frame
     df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
@@ -1202,7 +1202,7 @@ def multiple_simulations_after_burnin(
 
 
 def BurnInSimulations(
-    params: Parameters, simparams, i, surveyType
+    params: helsim_structures.Parameters, simparams, i, surveyType
 ) -> pd.DataFrame:
     print(f"==> burn in starting sim {i}")
     start_time = time.time()
@@ -1215,13 +1215,13 @@ def BurnInSimulations(
     
     parameters.R0 = R0
     parameters.k = k
-    # configure the parameters
-    parameters = configure(parameters)
-    parameters.psi = getPsi(parameters)
-    parameters.equiData = getEquilibrium(parameters)
+    # configuration.configure the parameters
+    parameters = configuration.configure(parameters)
+    parameters.psi = utils.getPsi(parameters)
+    parameters.equiData = configuration.getEquilibrium(parameters)
     
     # setup starting point form simulation
-    simData = setupSD(parameters)
+    simData = configuration.setupSD(parameters)
     simData.vaccCount=0
     simData.nChemo1=0
     simData.nChemo2=0
@@ -1235,15 +1235,15 @@ def BurnInSimulations(
     return df, simData
 
 
-def getLifeSpans(nSpans: int, params: Parameters) -> float:
+def getLifeSpans(nSpans: int, params: helsim_structures.Parameters) -> float:
 
     """
     This function draws the lifespans from the population survival curve.
-    Parameters
+    helsim_structures.Parameters
     ----------
     nSpans: int
         number of drawings;
-    params: Parameters object
+    params: helsim_structures.Parameters object
         dataclass containing the parameter names and values;
     Returns
     -------
