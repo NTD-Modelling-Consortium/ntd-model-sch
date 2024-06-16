@@ -424,9 +424,8 @@ def doRealizationSurveyCoveragePickle(
                 # get approximate prevalence of the population
                 prev = len(np.where(eggCounts > 0)[0])/len(eggCounts)
                 if len(results) > 0:
-                    l = len(results)
                     # get ids of people who had 0 eggs last time step
-                    previousZeros = results[l-1].id[np.where(results[l-1].eggCounts == 0)]
+                    previousZeros = results[-1].id[np.where(results[-1].eggCounts == 0)]
                     # get ids of people who have non-zero eggs this time step
                     nonZeros = SD.id[np.where(eggCounts > 0)]
                     # get the intersection of these ids, as this is the incidence in this timestep
@@ -1034,12 +1033,11 @@ def multiple_simulations(
         contactAgeGroupIndices = []
         treatmentAgeGroupIndices = []
         for k in range(len(chosenIndivs)):
-            l = chosenIndivs[k]
-            si.append(simData.si[l])
-            wormsT.append(simData.worms.total[l])
-            wormsF.append(simData.worms.female[l])
-            contactAgeGroupIndices.append(simData.contactAgeGroupIndices[l])
-            treatmentAgeGroupIndices.append(simData.treatmentAgeGroupIndices[l])
+            si.append(simData.si[chosenIndivs[k]])
+            wormsT.append(simData.worms.total[chosenIndivs[k]])
+            wormsF.append(simData.worms.female[chosenIndivs[k]])
+            contactAgeGroupIndices.append(simData.contactAgeGroupIndices[chosenIndivs[k]])
+            treatmentAgeGroupIndices.append(simData.treatmentAgeGroupIndices[chosenIndivs[k]])
         demography = helsim_structures.Demography(
         birthDate=np.array(birthDate),
         deathDate=np.array(deathDate),
