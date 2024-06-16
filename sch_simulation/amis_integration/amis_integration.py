@@ -46,7 +46,9 @@ class FixedParameters:
 
 @cache
 def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
-    cov = parse_coverage_input(
+    # Run `parse_coverage_input` for side-effect of writing coverage
+    # text file.
+    parse_coverage_input(
         fixed_parameters.coverage_file_name,
         fixed_parameters.coverage_text_file_storage_name,
     )
