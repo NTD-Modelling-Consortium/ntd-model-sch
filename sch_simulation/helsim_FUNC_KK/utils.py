@@ -14,13 +14,12 @@ np.seterr(divide="ignore")
 def getSetOfEggCounts(
     total: NDArray[np.int_],
     female: NDArray[np.int_],
-    vaccState:NDArray[np.int_],
+    vaccState: NDArray[np.int_],
     params: Parameters,
     Unfertilized: bool,
     nSamples: int = 2,
-    surveyType: str = 'KK2'
+    surveyType: str = "KK2",
 ) -> NDArray[np.int_]:
-
     """
     This function returns a set of readings of egg counts from a vector of individuals,
     according to their reproductive biology.
@@ -39,49 +38,50 @@ def getSetOfEggCounts(
     random set of egg count readings from a single sample;
     """
 
-    
     # if Unfertilized:
 
     #     meanCount = female * params.lambda_egg * params.z**female * params.v2[vaccState]
 
     # else:
     if params.reproFuncName == "epgFertility" and params.SR:
-            productivefemaleworms = np.where(
-                total == female, 0, female
-            )
+        productivefemaleworms = np.where(total == female, 0, female)
 
     elif params.reproFuncName == "epgFertility" and not params.SR:
-            productivefemaleworms = female
+        productivefemaleworms = female
 
-        # monogamous reproduction; only pairs of worms produce eggs
+    # monogamous reproduction; only pairs of worms produce eggs
     elif params.reproFuncName == "epgMonog":
-            productivefemaleworms = np.minimum(
-                total - female, female
-            )
-        #eggProducers = np.where(total == female, 0, female)
-        #meanCount = eggProducers * params.lambda_egg * params.z**eggProducers * params.v2[vaccState]
-    meanCount = productivefemaleworms * params.lambda_egg * params.z**productivefemaleworms * params.v2[vaccState]
-    eggs = np.random.negative_binomial(size=len(meanCount), 
-                                           p=params.k_epg / (meanCount + params.k_epg), 
-                                           n=params.k_epg)
-        
+        productivefemaleworms = np.minimum(total - female, female)
+    # eggProducers = np.where(total == female, 0, female)
+    # meanCount = eggProducers * params.lambda_egg * params.z**eggProducers * params.v2[vaccState]
+    meanCount = (
+        productivefemaleworms
+        * params.lambda_egg
+        * params.z**productivefemaleworms
+        * params.v2[vaccState]
+    )
+    eggs = np.random.negative_binomial(
+        size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
+    )
+
     if surveyType == "KK2":
-        eggs +=  np.random.negative_binomial(size=len(meanCount), 
-                                             p=params.k_epg / (meanCount + params.k_epg), 
-                                             n=params.k_epg)
+        eggs += np.random.negative_binomial(
+            size=len(meanCount),
+            p=params.k_epg / (meanCount + params.k_epg),
+            n=params.k_epg,
+        )
     return eggs
-        
-        
+
+
 def getSetOfEggCountsv2(
     total: NDArray[np.int_],
     female: NDArray[np.int_],
-    vaccState:NDArray[np.int_],
+    vaccState: NDArray[np.int_],
     params: Parameters,
     Unfertilized: bool,
     nSamples: int = 2,
-    surveyType: str = 'KK2'
+    surveyType: str = "KK2",
 ) -> NDArray[np.int_]:
-
     """
     This function returns a set of readings of egg counts from a vector of individuals,
     according to their reproductive biology.
@@ -100,58 +100,61 @@ def getSetOfEggCountsv2(
     random set of egg count readings from a single sample;
     """
 
-    
     # if Unfertilized:
 
     #     meanCount = female * params.lambda_egg * params.z**female * params.v2[vaccState]
 
     # else:
     if params.reproFuncName == "epgFertility" and params.SR:
-            productivefemaleworms = np.where(
-                total == female, 0, female
-            )
+        productivefemaleworms = np.where(total == female, 0, female)
 
     elif params.reproFuncName == "epgFertility" and not params.SR:
-            productivefemaleworms = female
+        productivefemaleworms = female
 
-        # monogamous reproduction; only pairs of worms produce eggs
+    # monogamous reproduction; only pairs of worms produce eggs
     elif params.reproFuncName == "epgMonog":
-            productivefemaleworms = np.minimum(
-                total - female, female
-            )
-        #eggProducers = np.where(total == female, 0, female)
-        #meanCount = eggProducers * params.lambda_egg * params.z**eggProducers * params.v2[vaccState]
-    meanCount = productivefemaleworms * params.lambda_egg * params.z**productivefemaleworms * params.v2[vaccState]
-        
+        productivefemaleworms = np.minimum(total - female, female)
+    # eggProducers = np.where(total == female, 0, female)
+    # meanCount = eggProducers * params.lambda_egg * params.z**eggProducers * params.v2[vaccState]
+    meanCount = (
+        productivefemaleworms
+        * params.lambda_egg
+        * params.z**productivefemaleworms
+        * params.v2[vaccState]
+    )
+
     if surveyType == "KK1":
         # eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
         # for i in range(nSamples):
         #     eggs +=  np.random.negative_binomial(
         #         size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
         #         )
-        mu_id = np.random.gamma(params.k_within, 
-                                scale= meanCount/ params.k_within, 
-                                size=len(female))
-        mu_ids = np.random.gamma(params.k_slide * params.weight_sample / 0.025,
-                                  scale= mu_id/params.k_slide, 
-                                  size=len(female))
+        mu_id = np.random.gamma(
+            params.k_within, scale=meanCount / params.k_within, size=len(female)
+        )
+        mu_ids = np.random.gamma(
+            params.k_slide * params.weight_sample / 0.025,
+            scale=mu_id / params.k_slide,
+            size=len(female),
+        )
         count_ids = np.zeros(len(mu_ids))
-        
+
         count_ids += np.random.poisson(mu_ids)
         return count_ids / params.weight_sample
         # return eggs
     if surveyType == "KK2":
-        mu_id = np.random.gamma(params.k_within, 
-                                scale= meanCount/ params.k_within, 
-                                size=len(female))
-        mu_ids = np.random.gamma(params.k_slide * params.weight_sample / 0.025,
-                                  scale= mu_id/params.k_slide, 
-                                  size=len(female))
+        mu_id = np.random.gamma(
+            params.k_within, scale=meanCount / params.k_within, size=len(female)
+        )
+        mu_ids = np.random.gamma(
+            params.k_slide * params.weight_sample / 0.025,
+            scale=mu_id / params.k_slide,
+            size=len(female),
+        )
         count_ids = np.zeros(len(mu_ids))
         for i in range(nSamples):
             count_ids += np.random.poisson(mu_ids)
-            
-        
+
         return count_ids / params.weight_sample
         # eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
         # for i in range(nSamples):
@@ -160,15 +163,15 @@ def getSetOfEggCountsv2(
         #         )
         # return eggs
 
+
 def KKsampleGammaGammaPois(
     total: NDArray[np.int_],
     female: NDArray[np.int_],
-    vaccState:NDArray[np.int_],
+    vaccState: NDArray[np.int_],
     params: Parameters,
-    Unfertilized: bool ,
-    nSamples: int
+    Unfertilized: bool,
+    nSamples: int,
 ) -> NDArray[np.int_]:
-
     """
     This function returns a set of readings of egg counts from a vector of individuals,
     according to their reproductive biology.
@@ -187,49 +190,44 @@ def KKsampleGammaGammaPois(
     random set of egg count readings from a single sample;
     """
 
-    
     # if Unfertilized:
 
     #     meanCount = female * params.lambda_egg * params.z**female * params.v2[vaccState]
 
     # else:
     if params.reproFuncName == "epgFertility" and params.SR:
-            productivefemaleworms = np.where(
-                total == female, 0, female
-            )
+        productivefemaleworms = np.where(total == female, 0, female)
 
     elif params.reproFuncName == "epgFertility" and not params.SR:
-            productivefemaleworms = female
+        productivefemaleworms = female
 
-        # monogamous reproduction; only pairs of worms produce eggs
+    # monogamous reproduction; only pairs of worms produce eggs
     elif params.reproFuncName == "epgMonog":
-            productivefemaleworms = np.minimum(
-                total - female, female
-            )
-        #eggProducers = np.where(total == female, 0, female)
-        #meanCount = eggProducers * params.lambda_egg * params.z**eggProducers * params.v2[vaccState]
-    meanCount = productivefemaleworms * params.lambda_egg * params.z**productivefemaleworms * params.v2[vaccState]
-        
-        
-    mu_id = np.random.gamma(params.k_within, 
-                            scale= meanCount/ params.k_within, 
-                            size=len(female))
-    mu_ids = np.random.gamma(params.k_slide * params.weight_sample / 0.025,
-                             scale= mu_id/params.k_slide, 
-                             size=len(female))
+        productivefemaleworms = np.minimum(total - female, female)
+    # eggProducers = np.where(total == female, 0, female)
+    # meanCount = eggProducers * params.lambda_egg * params.z**eggProducers * params.v2[vaccState]
+    meanCount = (
+        productivefemaleworms
+        * params.lambda_egg
+        * params.z**productivefemaleworms
+        * params.v2[vaccState]
+    )
+
+    mu_id = np.random.gamma(
+        params.k_within, scale=meanCount / params.k_within, size=len(female)
+    )
+    mu_ids = np.random.gamma(
+        params.k_slide * params.weight_sample / 0.025,
+        scale=mu_id / params.k_slide,
+        size=len(female),
+    )
     count_ids = 0
     for i in range(nSamples):
         count_ids += np.random.poisson(mu_ids)
     return count_ids / params.weight_sample
-    
-    
-    
-    
-def POC_CCA_test(
-    total: NDArray[np.int_],
-    params: Parameters
-) -> NDArray[np.int_]:
 
+
+def POC_CCA_test(total: NDArray[np.int_], params: Parameters) -> NDArray[np.int_]:
     """
     This function returns a set of readings of egg counts from a vector of individuals,
     according to their reproductive biology.
@@ -244,21 +242,19 @@ def POC_CCA_test(
     positive of negative for each person;
     """
 
-    antigen_test = 1*(np.random.uniform(size = len(total)) < (1 - np.power((1-params.testSensitivity), total)))
+    antigen_test = 1 * (
+        np.random.uniform(size=len(total))
+        < (1 - np.power((1 - params.testSensitivity), total))
+    )
     x = np.where(total == 0)
-    antigen_test[x[0]] = 1*np.random.uniform(size = len(x[0])) > params.testSpecificity
-    
+    antigen_test[x[0]] = 1 * np.random.uniform(size=len(x[0])) > params.testSpecificity
+
     return antigen_test
-    
 
 
-    
 def PCR_test(
-    total: NDArray[np.int_],
-    female : NDArray[np.int_],
-    params: Parameters
+    total: NDArray[np.int_], female: NDArray[np.int_], params: Parameters
 ) -> NDArray[np.int_]:
-
     """
     This function returns a set of readings of egg counts from a vector of individuals,
     according to their reproductive biology.
@@ -275,19 +271,19 @@ def PCR_test(
     positive or negative for each person;
     """
 
-    worm_pairs = np.minimum(
-        total - female, female
+    worm_pairs = np.minimum(total - female, female)
+
+    antigen_test = 1 * (
+        np.random.uniform(size=len(worm_pairs))
+        < (1 - np.power((1 - params.testSensitivity), worm_pairs))
     )
-    
-    antigen_test = 1*(np.random.uniform(size = len(worm_pairs)) < (1 - np.power((1-params.testSensitivity),worm_pairs)))
     x = np.where(worm_pairs == 0)
-    antigen_test[x[0]] = 1*np.random.uniform(size = len(x[0])) > params.testSpecificity
-    
+    antigen_test[x[0]] = 1 * np.random.uniform(size=len(x[0])) > params.testSpecificity
+
     return antigen_test
 
 
 def calcRates(params: Parameters, SD: SDEquilibrium) -> ndarray:
-
     """
     This function calculates the event rates; the events are
     new worms, worms death and vaccination recovery rates.
@@ -311,7 +307,6 @@ def calcRates(params: Parameters, SD: SDEquilibrium) -> ndarray:
 
 
 def calcRates2(params: Parameters, SD: SDEquilibrium) -> NDArray[np.float_]:
-
     """
     This function calculates the event rates; the events are
     new worms, worms death and vaccination recovery rates.
@@ -336,7 +331,6 @@ def calcRates2(params: Parameters, SD: SDEquilibrium) -> NDArray[np.float_]:
 
 
 def getLifeSpans(nSpans: int, params: Parameters) -> float:
-
     """
     This function draws the lifespans from the population survival curve.
     Parameters
@@ -363,7 +357,6 @@ def getLifeSpans(nSpans: int, params: Parameters) -> float:
 
 
 def getPsi(params: Parameters) -> float:
-
     """
     This function calculates the psi parameter.
     Parameters

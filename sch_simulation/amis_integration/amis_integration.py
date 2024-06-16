@@ -15,6 +15,7 @@ import sch_simulation.helsim_RUN_KK
 
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
 
+
 @dataclass(eq=True, frozen=True)
 class FixedParameters:
     number_hosts: int
