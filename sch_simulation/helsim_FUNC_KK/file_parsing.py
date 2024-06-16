@@ -458,7 +458,7 @@ def nextMDAVaccInfo(
         VaccTiming["Age{0}".format(i)] = copy.deepcopy(np.array(vacc.Years))
     VecControlTiming = {}
     for i, vecControl in enumerate(params.VecControl):
-        VecControlTiming["Time".format(i)] = copy.deepcopy(vecControl.Years)    
+        VecControlTiming["Time"] = copy.deepcopy(vecControl.Years)
     #  currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
 
     nextChemoTime = 10000
@@ -487,7 +487,7 @@ def nextMDAVaccInfo(
       
     nextVecControlTime = 10000
     for i, vecControl in enumerate(params.VecControl):
-        nextVecControlTime = min(nextVecControlTime, min(VecControlTiming ["Time".format(i)]))
+        nextVecControlTime = min(nextVecControlTime, min(VecControlTiming ["Time"]))
     nextVecControlIndex = []
     for i in range(len(VecControlTiming['Time'])):
         k = copy.deepcopy(VecControlTiming['Time'][i])
