@@ -115,7 +115,6 @@ def parse_coverage_input(
     MDAAges = np.zeros([len(MDARows), 2])
     MDAYears = []
     MDACoverages = []
-    MDADrugs = []
     VaccAges = np.zeros([len(VaccRows), 2])
     VaccYears = []
     VaccCoverages = []

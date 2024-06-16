@@ -12,7 +12,7 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     Result,
     SDEquilibrium,
 )
-from sch_simulation.helsim_FUNC_KK.utils import getSetOfEggCounts, getSetOfEggCountsv2, POC_CCA_test, PCR_test
+from sch_simulation.helsim_FUNC_KK.utils import getSetOfEggCounts, getSetOfEggCountsv2, POC_CCA_test
 
 warnings.filterwarnings("ignore")
 

@@ -8,7 +8,6 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from .helsim_FUNC_KK import (
     configuration,
@@ -123,14 +122,8 @@ def doRealization(params, i, mult):
     multiplier = math.floor(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
-    print_t_interval = 0.5
-    print_t = 0
     # run stochastic algorithm
     while t < maxTime:
-       # if (t * 1000 % 10) == 0:
-        # if t > print_t:
-        #     print_t += print_t_interval
-        #     print(t)
         rates = utils.calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
@@ -346,21 +339,12 @@ def doRealizationSurveyCoveragePickle(
     surveyPass = 0
     tSurvey = maxTime + 10
     results = []  # initialise empty list to store results
-    print_t_interval = 0.5
-    print_t = 0
-  
-    #tSurvey = 0.9
-      
 
     # run stochastic algorithm
     multiplier = math.floor(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
     while t < maxTime:
-
-        # if t > print_t:
-        #     print_t += print_t_interval
-        #     print(t)
         rates = utils.calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
@@ -619,7 +603,6 @@ def doRealizationSurveyCoveragePickle(
 
 def getActualCoverages(results: List[List[helsim_structures.Result]], params: helsim_structures.Parameters, allTimes)-> pd.DataFrame:
     
-    ind = 0
     p = copy.deepcopy(params.MDA)
     for i in range(len(p)):
         a1 = p[i].Age[0]
@@ -941,7 +924,6 @@ def findNumberOfPeopleEachAgeGroup(chosenAges, groupAges):
 def selectIndividuals(chosenAges,  groupAges, numIndivsToChoose):
     chosenIndivs = np.zeros(sum(numIndivsToChoose) ,dtype = int)
     startPoint = 0
-    totalPeople = 0
     for i in range(len(numIndivsToChoose)):
         n1 = numIndivsToChoose[i]
         indivs = np.array(groupAges[i]['indices'])

@@ -7,7 +7,7 @@ from numpy import ndarray
 from numpy.typing import NDArray
 
 from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters, SDEquilibrium
-from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, KKsampleGammaGammaPois,POC_CCA_test, PCR_test
+from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, POC_CCA_test, PCR_test
 
 warnings.filterwarnings("ignore")
 
@@ -683,9 +683,6 @@ def conductKKSurvey(
     # get individuals in chosen survey age group
     ages = -(SD.demography.birthDate - t)
     surveyAged = np.logical_and(ages >= minAge, ages <= maxAge)
-
-    # get egg counts for those individuals
-    surveyEggs = eggCounts[surveyAged]
 
     # get number of samples to take
     KKSampleSize = min(sampleSize, sum(surveyAged))
