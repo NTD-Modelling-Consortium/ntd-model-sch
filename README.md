@@ -40,17 +40,11 @@ venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-vir
 
 ```shell
 $ git clone https://github.com/NTD-Modelling-Consortium/ntd-model-sch.git
-$ python -m pip install ntd-model-sch/
+$ pip install ntd-model-sch/
 ```
 
-Developers can install the package in "editable" mode, in order to make changes
-to the source code available in the environment right away:
-
-```shell
-$ python -m pip install --editable ntd-model-sch/
-```
-
-See [Development Mode (a.k.a. “Editable Installs”)](https://setuptools.pypa.io/en/latest/userguide/development_mode.html).
+See the [Contributing](#Developer-install) section for instructions on
+installing the model package for developers.
 
 ## Endgame inputs
 
@@ -165,3 +159,50 @@ Example row:
 | DRC| MDA |Old Product B (SOC) | 1 | 1 | 0.5 | |  |
 
 The columns “Country/Region” and “Platform” are currently optional.
+
+### Contributing
+
+#### Developer install
+
+Developers wiching to contribute can install the package in "editable"
+mode, in order to make changes to the source code available in the
+environment right away:
+
+```shell
+$ pip install --editable ntd-model-sch/[dev]
+```
+
+See [Development Mode (a.k.a. “Editable
+Installs”)](https://setuptools.pypa.io/en/latest/userguide/development_mode.html).
+
+The suffix `[dev]` enables installation of the developement
+utilities `pytest` and `ruff`.
+
+#### Running the tests and linter
+
+Before committing, and even more importantly before pushing new commits
+to the repository, please ensure that the automatic tests pass and that the `ruff` linter raises no errors. You can do so with
+
+```shell
+# From the project's root directory
+$ pytest tests/
+$ ruff check sch_simulation/
+```
+
+#### Code formatting
+
+Code pushed to the repository is expected to be formatted according to
+the rules enforced by the `ruff format` tool, version 0.4.* with
+default settings. To automatically format the files your changed by
+running
+
+```shell
+ruff format sch_simulation/path/to/file1 /sch_simulation/path/to/file2 ...
+```
+
+or simply
+
+```shell
+# Format all *.py files in sch_simulation directory
+ruff format sch_simulation
+```
