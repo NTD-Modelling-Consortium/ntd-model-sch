@@ -125,7 +125,7 @@ def parse_coverage_input(
     fy = 10000
     fy_index = 10000
     for i in range(len(PlatCov.columns)):
-        if type(PlatCov.columns[i]) == int:
+        if isinstance(PlatCov.columns[i], int):
             fy = min(fy, PlatCov.columns[i])
             fy_index = min(fy_index, i)
 
@@ -280,7 +280,7 @@ def parse_coverage_input(
     fy = 10000
     fy_index = 10000
     for i in range(len(MarketShare.columns)):
-        if type(MarketShare.columns[i]) == int:
+        if isinstance(MarketShare.columns[i], int):
             fy = min(fy, MarketShare.columns[i])
             fy_index = min(fy_index, i)
 
@@ -361,7 +361,7 @@ def parse_vector_control_input(
         fy = 10000
         fy_index = 10000
         for i in range(len(PlatCov.columns)):
-            if type(PlatCov.columns[i]) == int:
+            if isinstance(PlatCov.columns[i],  int):
                 fy = min(fy, PlatCov.columns[i])
                 fy_index = min(fy_index, i)
             
@@ -433,7 +433,7 @@ def nextMDAVaccInfo(
     
     for i in range(len(params.Vacc)):
         k = copy.deepcopy(params.Vacc[i])
-        if type(k.Years) == float:
+        if isinstance(k.Years, float):
             y1 = k.Years
             c1 = k.Coverage
             k.Years = [y1,1000]
@@ -444,7 +444,7 @@ def nextMDAVaccInfo(
     
     for i in range(len(params.MDA)):
         k = copy.deepcopy(params.MDA[i])
-        if type(k.Years) == float:
+        if isinstance(k.Years, float):
             y1 = k.Years
             c1 = k.Coverage
             k.Years = [y1,1000]
