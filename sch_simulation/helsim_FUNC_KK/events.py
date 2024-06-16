@@ -697,7 +697,7 @@ def conductKKSurvey(
     sampledEggs = eggCounts[sample_indices]
     # get the number of people of each age that are surveyed
     surveys, _ = np.histogram(ages[sample_indices], bins=np.arange(params.maxHostAge + 1))
-    if writeSurvey == True:
+    if writeSurvey:
         # add this to the SD n surveys dict
         SD.n_surveys[
                 str(t) + "," + str("surveys")
@@ -748,7 +748,7 @@ def conductPOCCCASurvey(
     samples = surveyPOC_CCA[sample_indices]
     # get the number of people of each age that are surveyed
     surveys, _ = np.histogram(ages[sample_indices], bins=np.arange(params.maxHostAge + 1))
-    if writeSurvey == True:
+    if writeSurvey:
     # add this to the SD n surveys dict
         SD.n_surveys[
                 str(t) + "," + str("surveys")
