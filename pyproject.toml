@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sch_simulation"
-version = "0.0.1"
+dynamic = ["version"]
 authors = [
   {name = "NTD Modelling Consortium"},
 ]
@@ -39,3 +39,6 @@ packages = [
 
 [tool.setuptools.package-data]
 sch_simulation = ["data/**/*.txt", "data/**/*.xlsx"]
+
+[tool.setuptools.dynamic]
+version = {attr = "sch_simulation.__version__"}
