@@ -176,7 +176,9 @@ class SDEquilibrium:
     sex_id: Optional[ndarray] = None
     nChemo1: Optional[int] = None
     nChemo2: Optional[int] = None
-    
+    MDA_coverage: Optional[float] = None
+    MDA_systematic_non_compliance: Optional[float] = None
+
 
 @dataclass
 class Result:
