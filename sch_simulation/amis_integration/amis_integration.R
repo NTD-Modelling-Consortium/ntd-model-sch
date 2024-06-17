@@ -7,7 +7,7 @@ get_amis_integration_package <- function() {
 
 build_transmission_model <- function(prevalence_map, fixed_parameters, year_indices) {
   sch_simulation <- get_amis_integration_package()
-  transmission_model <- function(seeds, params, n_tims = 2) {
+  transmission_model <- function(seeds, params, n_tims) {
     output <- sch_simulation$run_model_with_parameters(
       # If year indices in just a single element, without as.array it will
       # automatically be converted into a scalar
