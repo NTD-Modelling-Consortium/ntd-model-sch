@@ -1,3 +1,4 @@
+
 import copy
 import math
 import multiprocessing
@@ -80,7 +81,6 @@ def loadParameters(paramFileName: str, demogName: str) -> Parameters:
 
 
 def doRealization(params, i, mult):
-
     """
     This function generates a single simulation path.
     Parameters
@@ -301,18 +301,14 @@ def doRealizationSurveyCoveragePickle(
 ) -> List[Result]:
     """
     This function generates a single simulation path.
-
     Parameters
     ----------
     params: Parameters
         dataclass containing the parameter names and values;
-
     simData: SDEquilibrium
         dataclass containing the initial equilibrium parameter values;
-
     i: int
         iteration number;
-
     Returns
     -------
     results: list
