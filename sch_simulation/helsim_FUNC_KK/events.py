@@ -7,7 +7,7 @@ from numpy import ndarray
 from numpy.typing import NDArray
 
 from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters, SDEquilibrium
-from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, KKsampleGammaGammaPois,POC_CCA_test, PCR_test
+from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, KKsampleGammaGammaPois,POC_CCA_test, PCR_test, drawTreatmentProbabilities
 
 warnings.filterwarnings("ignore")
 
@@ -280,7 +280,7 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
         maxID = max(SD.id)
         new_ids = np.arange(maxID + 1, maxID + len(theDead) + 1)
         SD.id[theDead] = new_ids
-        SD.treatProbability[theDead] = np.NaN
+        SD.treatProbability[theDead] = drawTreatmentProbabilities(len(theDead), SD.MDA_coverage, params.systematic_non_compliance)
     assert params.contactAgeGroupBreaks is not None
     # update the contact age categories
     SD.contactAgeGroupIndices = (
