@@ -54,6 +54,7 @@ class Parameters:
     gamma: float  # Exponential density dependence of parasite adult stage
     k: float  # Shape parameter of assumed negative binomial distribution of worms amongst host
     sigma: float  # Worm death rate
+    systematic_non_compliance: float # systematic non compliance for MDA
     v1: NDArray[
         np.float_
     ]  # impact of vaccine on worm death rate KK. Assume worm death rate is v1*sigma.
@@ -175,7 +176,6 @@ class SDEquilibrium:
     sex_id: Optional[ndarray] = None
     nChemo1: Optional[int] = None
     nChemo2: Optional[int] = None
-    
     
 
 @dataclass
