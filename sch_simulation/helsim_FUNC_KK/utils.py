@@ -439,19 +439,6 @@ def drawTreatmentProbabilities(n:int, cov:float, snc:float):
     return treatmentProb
 
 
-def checkForNaNTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
-
-    """
-    If there are any people with NaN for treatment probability they need to get a value for this 
-    """
-
-    notInitTreatmentProb = np.where(np.isnan(SD.treatProbability)) 
-    if len(notInitTreatmentProb) > 0:
-        SD.treatProbability[notInitTreatmentProb] = drawTreatmentProbabilities(len(notInitTreatmentProb), cov, snc)
-    return SD
-
-
-
 def editTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
 
     """

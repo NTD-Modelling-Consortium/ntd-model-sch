@@ -51,7 +51,6 @@ from sch_simulation.helsim_FUNC_KK.utils import (
     POC_CCA_test,
     PCR_test,
     getSetOfEggCounts,
-    checkForNaNTreatProbability,
     editTreatProbability
 )
 

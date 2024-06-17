@@ -46,7 +46,6 @@ from sch_simulation.helsim_FUNC_KK import (
     readCoverageFile,
     readParams,
     setupSD,
-    checkForNaNTreatProbability,
     editTreatProbability
 )
 
@@ -545,28 +544,17 @@ def doRealizationSurveyCoveragePickle(
             # chemotherapy
             if timeBarrier >= nextChemoTime:
                 
-                if nChemo == 0: # if this is the first MDA, then we need to initialize everyone's probability of treatment
-                    cov = params.MDA[0].Coverage[0]
-                    snc = params.systematic_non_compliance
-                    simData = checkForNaNTreatProbability(simData, cov, snc)
-                    prevCov = cov # save the coverage used, so that we can check if we need to update the treatment probabilities
-                    prevSNC = snc
-                
                 simData = doDeath(params, simData, t)
                 assert params.MDA is not None
                 for i in range(len(nextMDAAge)):
                     k = nextMDAAge[i]
                     index = nextChemoIndex[i]
                     cov = params.MDA[k].Coverage[index]
-                    snc = params.systematic_non_compliance
-                    if (cov != prevCov) | (snc != prevSNC):
-                        simData = checkForNaNTreatProbability(simData, prevCov, prevSNC)
-                        simData = editTreatProbability(simData, cov, snc)
-                        prevCov = cov
-                        prevSNC = snc
-                    else:
-                        simData = checkForNaNTreatProbability(simData, cov, snc)
-                    
+                    systematic_non_compliance = params.systematic_non_compliance
+                    if (cov != simData.MDA_coverage) | (systematic_non_compliance != simData.MDA_systematic_non_compliance):
+                        simData = editTreatProbability(simData, cov, systematic_non_compliance)
+                        simData.MDA_coverage = cov
+                        simData.MDA_systematic_non_compliance = systematic_non_compliance
                     minAge = params.MDA[k].Age[0]
                     maxAge = params.MDA[k].Age[1]
                     label = params.MDA[k].Label
@@ -658,11 +646,6 @@ def doRealizationSurveyCoveragePickle(
                 float(nextVaccTime),
                 float(nextVecControlTime),
             )
-  
-    # results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
-    #     # ageAtChemo=np.array(simData['ageAtChemo']),
-    #     # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
-    # ))
   
     return results, simData
 
