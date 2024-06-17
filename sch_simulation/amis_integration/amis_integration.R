@@ -6,6 +6,19 @@ get_amis_integration_package <- function() {
 }
 
 build_transmission_model <- function(prevalence_map, fixed_parameters, year_indices) {
+  if(is.list(prevalence_map)) {
+    if(length(prevalence_map) != length(year_indices)) {
+      error_string <- sprintf("Length of prevalance map (%i) must match the number of years provided in year_indices (%i)", length(prevalence_map), length(year_indices))
+      stop(error_string)
+    }
+  }
+  else {
+    if(length(year_indices) != 1) {
+      error_string <- sprintf("Single time point prevalance map provided so should only request one year but %i provided", length(year_indices))
+      stop(error_string)
+    }
+  }
+
   sch_simulation <- get_amis_integration_package()
   transmission_model <- function(seeds, params, n_tims) {
     output <- sch_simulation$run_model_with_parameters(
