@@ -547,7 +547,7 @@ def doRealizationSurveyCoveragePickle(
                 
                 if nChemo == 0: # if this is the first MDA, then we need to initialize everyone's probability of treatment
                     cov = params.MDA[0].Coverage[0]
-                    snc = params.snc
+                    snc = params.systematic_non_compliance
                     simData = checkForNaNTreatProbability(simData, cov, snc)
                     prevCov = cov # save the coverage used, so that we can check if we need to update the treatment probabilities
                     prevSNC = snc
@@ -558,14 +558,14 @@ def doRealizationSurveyCoveragePickle(
                     k = nextMDAAge[i]
                     index = nextChemoIndex[i]
                     cov = params.MDA[k].Coverage[index]
-                    snc = params.snc
+                    snc = params.systematic_non_compliance
                     if (cov != prevCov) | (snc != prevSNC):
-                        simData = checkForNaNTreatProbability(simData, prevCov, prevRho)
+                        simData = checkForNaNTreatProbability(simData, prevCov, prevSNC)
                         simData = editTreatProbability(simData, cov, snc)
                         prevCov = cov
-                        prevRho = snc
-
-                    simData = checkForNaNTreatProbability(simData, cov, snc)
+                        prevSNC = snc
+                    else:
+                        simData = checkForNaNTreatProbability(simData, cov, snc)
                     
                     minAge = params.MDA[k].Age[0]
                     maxAge = params.MDA[k].Age[1]
