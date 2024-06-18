@@ -11,6 +11,8 @@ from sch_simulation.helsim_FUNC_KK.file_parsing import (
     readCoverageFile,
 )
 
+from joblib import Parallel, delayed
+
 import sch_simulation.helsim_RUN_KK
 
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
@@ -124,9 +126,9 @@ def run_model_with_parameters(
 
     num_runs = len(seeds)
 
-    final_prevalence_for_each_run = [
-        run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices) 
-        for seed, parameter_set in zip(seeds, parameters)]
+    final_prevalence_for_each_run = Parallel(n_jobs=2)(delayed(run_and_extract_results)
+        (parameter_set, seed, fixed_parameters, year_indices) 
+        for seed, parameter_set in zip(seeds, parameters))
 
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
         num_runs, len(year_indices)
