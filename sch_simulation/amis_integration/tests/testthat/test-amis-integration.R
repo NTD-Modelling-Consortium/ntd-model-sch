@@ -30,7 +30,7 @@ test_that("Running the model should give us some results", {
     prevalence_map <- matrix(c(0.5, 0.5), ncol = 1)
 
     tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices = c(23))
-    result <- tranmission_model(c(1, 2), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
+    result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
     expect_equal(result, matrix(c(0.1, 0.1), ncol = 1), tolerance = 0.5)
 })
 
@@ -44,7 +44,7 @@ test_that("Running the simulation on multiple time points gives multiple points 
     year_indices <- c(0L, 23L)
 
     tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices)
-    result <- tranmission_model(c(1, 2), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
+    result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
     expect_equal(result, matrix(c(0.1, 0.1, 0.1, 0.1), ncol = 2), tolerance = 0.5)
 })
 
