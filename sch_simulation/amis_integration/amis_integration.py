@@ -117,7 +117,8 @@ def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices)
     return extract_relevant_results(results, year_indices)
 
 def run_model_with_parameters(
-    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int]
+    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int],
+    num_parallel_jobs = -2 # default to all but one process to keep computers responsive
 ):
     if len(seeds) != len(parameters):
         raise ValueError(
@@ -126,7 +127,7 @@ def run_model_with_parameters(
 
     num_runs = len(seeds)
 
-    final_prevalence_for_each_run = Parallel(n_jobs=2)(delayed(run_and_extract_results)
+    final_prevalence_for_each_run = Parallel(n_jobs=num_parallel_jobs)(delayed(run_and_extract_results)
         (parameter_set, seed, fixed_parameters, year_indices) 
         for seed, parameter_set in zip(seeds, parameters))
 
