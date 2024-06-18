@@ -461,7 +461,7 @@ def editTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilib
         indices = np.argsort(oldTreatProbabilities)
         # Assign the newly drawn treatment probabilities to the appropriate individuals
         for i, index in enumerate(indices):
-            SD[index].treatProbability = treatProbabilities[i]
+            SD.treatProbability[index] = treatProbabilities[i]
     else:
         SD.treatProbability = np.ones(len(SDEquilibrium.id)) * cov
 
