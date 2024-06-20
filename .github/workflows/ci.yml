@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10"] # Test oldest and newest supported Python
+        # Test oldest and newest supported Python
+        python-version: ["3.9", "3.12"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -19,15 +20,14 @@ jobs:
         r-version: '4.1.2'
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install pipenv
-        pipenv install . --python ${{ matrix.python-version }} 
+        pip install --upgrade pip
+        pip install .[dev]
     - name: Run Python tests
-      run: pipenv run pytest tests
+      run: |
+        pytest tests
     - uses: r-lib/actions/setup-renv@v2
       with:
         working-directory: 'sch_simulation/amis_integration/'
     - name: Run R tests
       run: Rscript tests/testthat.R
       working-directory: 'sch_simulation/amis_integration'
-
