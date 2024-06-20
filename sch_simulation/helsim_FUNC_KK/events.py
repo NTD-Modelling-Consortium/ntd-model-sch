@@ -491,7 +491,6 @@ def doChemoAgeRange(
         SD.nChemo2 += len(k)
         numChemo2 += len(k)
         SD.n_treatments[
-            #str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName2 + ")"
             
         ] = counts2
@@ -501,7 +500,6 @@ def doChemoAgeRange(
             bins=np.arange(0, params.maxHostAge + 1),
         )
         SD.n_treatments_population[
-            #str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName2 + ")"
         ] = n_people_by_age
 
@@ -556,7 +554,6 @@ def doVaccine(
     ages = t - SD.demography.birthDate
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
     SD.n_treatments[
-            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = vaccs
         
@@ -565,7 +562,6 @@ def doVaccine(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     SD.n_treatments_population[
-            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = n_people_by_age
     return SD
@@ -613,7 +609,6 @@ def doVaccineAgeRange(
     propVacc = sum(vaccNow)/sum(correctAges)
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
     SD.n_treatments[
-            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = vaccs
         
@@ -622,7 +617,6 @@ def doVaccineAgeRange(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     SD.n_treatments_population[
-            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = n_people_by_age
     return SD, propVacc
@@ -771,10 +765,8 @@ def conductPCRSurvey(
 ) -> Tuple[SDEquilibrium, float]:
     minAge = params.minSurveyAge
     maxAge = params.maxSurveyAge
-    # minAge = 5
-    # maxAge = 15
+
     # get Kato-Katz eggs for each individual
-    
     
     PCR_antigen = PCR_test( SD.worms.total, SD.worms.female, params)
             
