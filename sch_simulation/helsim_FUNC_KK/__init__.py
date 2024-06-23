@@ -4,7 +4,7 @@ from . import (
     file_parsing,
     helsim_structures,
     results_processing,
-    utils
+    utils,
 )
 
 __all__ = [
