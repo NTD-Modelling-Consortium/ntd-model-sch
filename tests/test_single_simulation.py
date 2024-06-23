@@ -47,16 +47,6 @@ def setup_parameters():
     return params
 
 
-def check_prevalence_values(values: np.ndarray) -> int:
-    REF_FILEPATH = "tests/data/prevalence_reference.txt"
-    reference_values = np.loadtxt(REF_FILEPATH)
-    try:
-        np.testing.assert_allclose(values, reference_values)
-    except AssertionError:
-        return 1
-    return 0
-
-
 def test_single_simulation(update_reference=False):
     np.random.seed(seed=SEED)
     params = setup_parameters()
