@@ -2,7 +2,6 @@
 import copy
 import math
 import multiprocessing
-import random
 import time
 from typing import List, Optional
 
@@ -174,7 +173,7 @@ def doRealization(params, i, mult):
             dt = 10000 * multiplier
 
         else:
-            dt = random.expovariate(lambd=sumRates) * new_multiplier
+            dt = np.random.exponential(scale=(1. / sumRates)) * new_multiplier
         
         if mult > 1:
             if t + dt >= nextStep:
@@ -404,7 +403,7 @@ def doRealizationSurveyCoveragePickle(
             dt = 10000 * multiplier
 
         else:
-            dt = random.expovariate(lambd=sumRates) * new_multiplier
+            dt = np.random.exponential(scale=(1. / sumRates)) * new_multiplier
         
         if mult > 1:
             if t + dt >= nextStep:
