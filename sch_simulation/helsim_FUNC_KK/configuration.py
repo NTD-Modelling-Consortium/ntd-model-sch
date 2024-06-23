@@ -14,7 +14,7 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     SDEquilibrium,
     Worms,
 )
-from sch_simulation.helsim_FUNC_KK.utils import (getLifeSpans, getPsi)
+from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getPsi
 
 warnings.filterwarnings("ignore")
 
@@ -22,7 +22,6 @@ np.seterr(divide="ignore")
 
 
 def monogFertilityConfig(params: Parameters, N: int = 30) -> MonogParameters:
-
     """
     This function calculates the monogamous fertility
     function parameters.
@@ -42,7 +41,6 @@ def monogFertilityConfig(params: Parameters, N: int = 30) -> MonogParameters:
 
 
 def configure(params: Parameters) -> Parameters:
-
     """
     This function defines a number of additional parameters.
     Parameters
@@ -109,7 +107,6 @@ def configure(params: Parameters) -> Parameters:
 
 
 def setupSD(params: Parameters) -> SDEquilibrium:
-
     """
     This function sets up the simulation to initial conditions
     based on analytical equilibria.
@@ -136,7 +133,6 @@ def setupSD(params: Parameters) -> SDEquilibrium:
     communityBurnIn = 1000
     ids = np.arange(params.N)
     while np.min(trialDeathDates) < communityBurnIn:
-
         earlyDeath = np.where(trialDeathDates < communityBurnIn)[0]
         trialBirthDates[earlyDeath] = trialDeathDates[earlyDeath]
         trialDeathDates[earlyDeath] += getLifeSpans(len(earlyDeath), params)
@@ -193,23 +189,21 @@ def setupSD(params: Parameters) -> SDEquilibrium:
         attendanceRecord=[],
         ageAtChemo=[],
         adherenceFactorAtChemo=[],
-        n_treatments = {},
-        n_treatments_population = {},
-        n_surveys = {},
-        n_surveys_population = {},
+        n_treatments={},
+        n_treatments_population={},
+        n_surveys={},
+        n_surveys_population={},
         vaccCount=0,
         numSurvey=0,
-        nChemo1 = 0,
-        nChemo2 = 0, 
-        id = ids
+        nChemo1=0,
+        nChemo2=0,
+        id=ids,
     )
-
 
     return SD
 
 
 def getEquilibrium(params: Parameters) -> Equilibrium:
-
     """
     This function returns a dictionary containing the equilibrium worm burden
     with age and the reservoir value as well as the breakpoint reservoir value
@@ -264,7 +258,7 @@ def getEquilibrium(params: Parameters) -> Equilibrium:
         * (params.R0**R_power - 1)
         / (params.R0 * MeanLifespan * params.LDecayRate * (1 - params.z))
     )
- 
+
     # now evaluate the function K across a series of L values and find point near breakpoint;
     # L_minus is the value that gives an age-averaged worm burden of 1; negative growth should
     # exist somewhere below this
@@ -294,7 +288,6 @@ def getEquilibrium(params: Parameters) -> Equilibrium:
     mid_L = test_L[iMax]
 
     if K_values[iMax] < 0:
-
         return Equilibrium(
             stableProfile=0 * Q,
             ageValues=modelAges,

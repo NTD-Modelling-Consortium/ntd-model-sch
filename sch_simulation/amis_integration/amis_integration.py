@@ -15,6 +15,7 @@ import sch_simulation.helsim_RUN_KK
 
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
 
+
 @dataclass(eq=True, frozen=True)
 class FixedParameters:
     number_hosts: int
@@ -46,7 +47,9 @@ class FixedParameters:
 
 @cache
 def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
-    cov = parse_coverage_input(
+    # Run `parse_coverage_input` for side-effect of writing coverage
+    # text file.
+    parse_coverage_input(
         fixed_parameters.coverage_file_name,
         fixed_parameters.coverage_text_file_storage_name,
     )

@@ -35,13 +35,13 @@ class Coverage:
     Years: ndarray  # 1-D array lower/upper
     Coverage: ndarray  # 1-D array
     Label: ndarray  # 1-D array
-    
+
 
 @dataclass
 class VecControl:
     Years: ndarray  # 1-D array lower/upper
     Coverage: ndarray  # 1-D array
-    
+
 
 @dataclass
 class Parameters:
@@ -66,7 +66,9 @@ class Parameters:
     contactAgeBreaks: ndarray  # 1-D array - Contact age group breaks (minus sign necessary to include zero age)
     contactRates: ndarray  # 1-D array - BetaValues: Relative contact rates
     v3: ndarray  # 1-D array, v3 beta values: impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK
-    rho: ndarray  # 1-D array, - Rho, contribution to the reservoir by contact age group.
+    rho: (
+        ndarray  # 1-D array, - Rho, contribution to the reservoir by contact age group.
+    )
     treatmentAgeBreaks: ndarray  # 1-D array, treatmentBreaks Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
     VaccTreatmentBreaks: ndarray  # 1-D array, age range of vaccinated group.  ## KK: these are the lower bounds of ranges with width 1. THEY MUST BE > 1 YEAR APART!!
     coverage1: ndarray
@@ -90,7 +92,9 @@ class Parameters:
     VaccTreatStart: float  ##Vaccine administration year start KK
     nRoundsVacc: int  ##number of vaccine rounds KK
     treatIntervalVacc: float  # KK
-    heavyThreshold: int  # The threshold for heavy burden of infection, egg count > heavyThreshold
+    heavyThreshold: (
+        int  # The threshold for heavy burden of infection, egg count > heavyThreshold
+    )
     mediumThreshold: int  # The threshold of medium burden of infection, mediumThreshold <= egg count <= heavyThreshold
     sampleSizeOne: int
     sampleSizeTwo: int
@@ -165,16 +169,16 @@ class SDEquilibrium:
     numSurvey: int
     id: ndarray
     n_treatments: Optional[dict[str, np.ndarray[np.float_]]]
-    n_treatments_population: Optional[dict[str, np.ndarray[np.float_]]] 
-    n_surveys: Optional[dict[str, np.ndarray[np.float_]]] 
-    n_surveys_population: Optional[dict[str, np.ndarray[np.float_]]] 
+    n_treatments_population: Optional[dict[str, np.ndarray[np.float_]]]
+    n_surveys: Optional[dict[str, np.ndarray[np.float_]]]
+    n_surveys_population: Optional[dict[str, np.ndarray[np.float_]]]
     numSurveyTwo: Optional[int] = None
     vaccinatedFactors: Optional[ndarray] = None
     VaccTreatmentAgeGroupIndices: Optional[ndarray] = None
     sex_id: Optional[ndarray] = None
     nChemo1: Optional[int] = None
     nChemo2: Optional[int] = None
-    
+
 
 @dataclass
 class Result:
@@ -203,11 +207,7 @@ class Result:
     propChemo1: Optional[ndarray] = None
     propChemo2: Optional[ndarray] = None
     propVacc: Optional[ndarray] = None
-    
-    
-    
-    
-    
+
 
 @dataclass
 class ProcResult:
@@ -217,4 +217,3 @@ class ProcResult:
     ages: ndarray
     timePoints: ndarray
     prevalence: ndarray
-    
