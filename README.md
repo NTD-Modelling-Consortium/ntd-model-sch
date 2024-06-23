@@ -42,6 +42,21 @@ $ pipenv shell # sets up/runs a per-project python environment ('virtualenv'/'ve
 (ntd-model-sch) $ python sch_run.py # or could be 'pickle_example.py' - runs the model
 ```
 
+### Automatic tests
+
+```
+$ pipenv run pytest tests
+```
+
+The file `tests/test_single_simulation.py` runs a single SCH
+simulation over 24 years.  The resulting yearly prevalence values are compared to reference values stored in `tests/data/prevalence_reference.txt`.
+
+Reference prevalence data can be automatically updated by running:
+
+```
+pipenv run tests/test_single_simulation --update-ref
+```
+
 ## Endgame inputs
 
 There are two input files required to run endgame simulations :
