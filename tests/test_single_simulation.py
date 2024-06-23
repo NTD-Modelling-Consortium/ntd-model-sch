@@ -57,16 +57,15 @@ def check_prevalence_values(values: np.ndarray) -> int:
     return 0
 
 
-if __name__ == "__main__":
-    args = get_parser().parse_args(sys.argv[1:])
-
+def test_single_simulation(update_reference=False):
     np.random.seed(seed=SEED)
     params = setup_parameters()
     results, _ = doRealizationSurveyCoveragePickle(
         params=params, surveyType="KK2", simData=setupSD(params), mult=5,
     )
     values = np.array([res.prevalence for res in results])
-    if args.update_ref:
+    REF_FILEPATH = "tests/data/prevalence_reference.txt"
+    if update_reference:
         o = subprocess.run(
             ["git", "rev-parse", "HEAD"], capture_output=True,
             encoding="ASCII",
@@ -77,11 +76,16 @@ if __name__ == "__main__":
             f"seed = {SEED}"
         )
         np.savetxt(
-            "tests/data/prevalence_reference.txt",
+            REF_FILEPATH,
             values,
             fmt="%5.3f",
             header=header,
         )
     else:
-        errcode = check_prevalence_values(values)
-        sys.exit(errcode)
+        reference_values = np.loadtxt(REF_FILEPATH)
+        np.testing.assert_allclose(values, reference_values)
+
+
+if __name__ == "__main__":
+    args = get_parser().parse_args(sys.argv[1:])
+    test_single_simulation(update_reference=args.update_ref)
