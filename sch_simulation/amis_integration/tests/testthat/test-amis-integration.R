@@ -25,13 +25,13 @@ example_parameters <- sch_simulation$FixedParameters(
         min_multiplier = 5L
     )
 
-test_that("Running the model should give us some results", {
+test_that("Running the model should give us consistent results", {
     # Example prevalence map, with two locations, both with prevalence of 0.5
     prevalence_map <- matrix(c(0.5, 0.5), ncol = 1)
 
     tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices = c(23))
-    result <- tranmission_model(c(1, 2), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
-    expect_equal(result, matrix(c(0.1, 0.1), ncol = 1), tolerance = 0.5)
+    result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.3, 0.3), ncol = 2), 1)
+    expect_equal(result, matrix(c(0.0, 0.8), ncol = 1), tolerance = 0.0)
 })
 
 test_that("Running the simulation on multiple time points gives multiple points back", {
@@ -44,7 +44,7 @@ test_that("Running the simulation on multiple time points gives multiple points 
     year_indices <- c(0L, 23L)
 
     tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices)
-    result <- tranmission_model(c(1, 2), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
+    result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
     expect_equal(result, matrix(c(0.1, 0.1, 0.1, 0.1), ncol = 2), tolerance = 0.5)
 })
 
@@ -93,11 +93,14 @@ test_that("Running the AMIS integration on multiple time points should complete 
 
     prior <- list("dprior" = density_function, "rprior" = rnd_function)
 
+    amis_params <- AMISforInfectiousDiseases::default_amis_params()
+    amis_params$n_samples <- 2
 
     expect_error(AMISforInfectiousDiseases::amis(
         prevalence_map,
         build_transmission_model(prevalence_map, example_parameters, year_indices),
-        prior
+        prior,
+        amis_params
     ), "(No weight on any particles for locations in the active set.)|(the leading minor of order 2 is not positive definite)")
 })
 
@@ -120,10 +123,13 @@ test_that("Running the AMIS integration should complete with the error about wei
 
     prior <- list("dprior" = density_function, "rprior" = rnd_function)
 
+    amis_params <- AMISforInfectiousDiseases::default_amis_params()
+    amis_params$n_samples <- 2
 
     expect_error(AMISforInfectiousDiseases::amis(
         prevalence_map,
         build_transmission_model(prevalence_map, example_parameters, year_indices = c(23)),
-        prior
+        prior,
+        amis_params
     ), "(No weight on any particles for locations in the active set.)|(the leading minor of order 2 is not positive definite)")
 })
