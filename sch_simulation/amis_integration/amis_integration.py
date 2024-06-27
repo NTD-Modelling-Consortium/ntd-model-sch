@@ -50,7 +50,6 @@ def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameter
         fixed_parameters.coverage_text_file_storage_name,
     )
 
-    random.seed(seed)
     np.random.seed(seed)
     # initialize the parameters
     params = sch_simulation.helsim_RUN_KK.loadParameters(
