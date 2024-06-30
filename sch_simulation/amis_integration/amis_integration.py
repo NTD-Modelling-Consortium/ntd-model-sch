@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import random
 from typing import Literal
 import pandas as pd
 import sch_simulation
