@@ -24,8 +24,11 @@ fixed_parameters <- sch_simulation$FixedParameters(
     min_multiplier = 5L
 )
 
-# Example prevalence map, with two locations, both with prevalence of 0.5
-prevalence_map <- matrix(c(0.5, 0.5), ncol = 1)
+# Example prevalence map, with two locations, fitting to two time times
+# Both locations start at 0.031, and the second time point is 0.021
+prevalence_map <- vector("list", 2)
+prevalence_map[[1]]$data <- matrix(c(0.031, 0.031))
+prevalence_map[[2]]$data <- matrix(c(0.021, 0.021))
 
 #' the "dprior" function
 #' Note the second parameter _must_ be called log
@@ -42,10 +45,11 @@ rnd_function <- function(num_samples) {
 
 prior <- list("dprior" = density_function, "rprior" = rnd_function)
 
+year_indices <- c(0L, 23L)
 
 amis_output <- AMISforInfectiousDiseases::amis(
     prevalence_map,
-    build_transmission_model(prevalence_map, fixed_parameters),
+    build_transmission_model(prevalence_map, fixed_parameters, year_indices),
     prior
 )
 

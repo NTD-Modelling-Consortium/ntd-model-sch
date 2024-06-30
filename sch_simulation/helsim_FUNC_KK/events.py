@@ -1,4 +1,3 @@
-import random
 import warnings
 from typing import Tuple
 
@@ -425,7 +424,9 @@ def doChemoAgeRange(
     drug = np.ones(int(sum(toTreatNow)))
 
     if d2Share > 0:
-        k = random.sample(range(int(sum(drug))), int(sum(drug) * d2Share))
+        k = np.random.choice(
+            range(int(sum(drug))), int(sum(drug) * d2Share), replace=False,
+        )
         drug[k] = 2
     # calculate the number of dead worms
     ll = np.where(toTreatNow == 1)[0]

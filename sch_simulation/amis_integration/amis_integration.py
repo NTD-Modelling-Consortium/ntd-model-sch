@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from functools import cache
+import random
 from typing import Literal
-import pandas
+import pandas as pd
 import sch_simulation
 import numpy as np
 from sch_simulation.helsim_FUNC_KK.configuration import setupSD
@@ -45,14 +45,15 @@ class FixedParameters:
     A higher number will result in faster but less accurate simulation."""
 
 
-@cache
-def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
+def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameters):
     # Run `parse_coverage_input` for side-effect of writing coverage
     # text file.
     parse_coverage_input(
         fixed_parameters.coverage_file_name,
         fixed_parameters.coverage_text_file_storage_name,
     )
+
+    np.random.seed(seed)
     # initialize the parameters
     params = sch_simulation.helsim_RUN_KK.loadParameters(
         fixed_parameters.parameter_file_name, fixed_parameters.demography_name
@@ -90,13 +91,27 @@ def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
     return PrevalenceEstimate
 
 
-def extract_relevant_results(results: pandas.DataFrame) -> float:
-    num_years = len(results)
-    # TODO: for now we assume we are interested in fitting the last year
-    return results[results_processing.OUTPUT_COLUMN_NAME][num_years - 1]
+def extract_relevant_results(
+    results: pd.DataFrame, relevant_years: list[float]
+) -> float:
+
+    relevant_rows = results["Time"].isin(relevant_years)
+    prevalence_for_relevant_years = pd.Series(
+        data=results[relevant_rows][results_processing.OUTPUT_COLUMN_NAME],
+        index=relevant_years,
+        name="Prevalence",
+    )
+    if relevant_rows.sum() < len(relevant_years):
+        raise ValueError(
+            f"Missing data for requested years: \n{prevalence_for_relevant_years}"
+        )
+
+    return prevalence_for_relevant_years
 
 
-def run_model_with_parameters(seeds, parameters, fixed_parameters: FixedParameters):
+def run_model_with_parameters(
+    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int]
+):
     if len(seeds) != len(parameters):
         raise ValueError(
             f"Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}"
@@ -110,10 +125,14 @@ def run_model_with_parameters(seeds, parameters, fixed_parameters: FixedParamete
         R0 = parameter_set[0]
         k = parameter_set[1]
 
-        results = returnYearlyPrevalenceEstimate(R0, k, fixed_parameters)
+        results = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
 
-        prevalence = extract_relevant_results(results)
+        prevalence = extract_relevant_results(
+            results, year_indices
+        )
         final_prevalence_for_each_run.append(prevalence)
 
-    results_np_array = np.array(final_prevalence_for_each_run).reshape(num_runs, 1)
+    results_np_array = np.array(final_prevalence_for_each_run).reshape(
+        num_runs, len(year_indices)
+    )
     return results_np_array

@@ -10,6 +10,7 @@ the AMIS loop to compute fitted parameters.
 
  * R
  * Renv 
+ * CMake
 
 ## Installation
 
