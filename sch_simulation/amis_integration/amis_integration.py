@@ -93,7 +93,6 @@ def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameter
 def extract_relevant_results(
     results: pd.DataFrame, relevant_years: list[float]
 ) -> float:
-
     relevant_rows = results["Time"].isin(relevant_years)
     prevalence_for_relevant_years = pd.Series(
         data=results[relevant_rows][results_processing.OUTPUT_COLUMN_NAME],
@@ -126,9 +125,7 @@ def run_model_with_parameters(
 
         results = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
 
-        prevalence = extract_relevant_results(
-            results, year_indices
-        )
+        prevalence = extract_relevant_results(results, year_indices)
         final_prevalence_for_each_run.append(prevalence)
 
     results_np_array = np.array(final_prevalence_for_each_run).reshape(

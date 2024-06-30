@@ -425,7 +425,9 @@ def doChemoAgeRange(
 
     if d2Share > 0:
         k = np.random.choice(
-            range(int(sum(drug))), int(sum(drug) * d2Share), replace=False,
+            range(int(sum(drug))),
+            int(sum(drug) * d2Share),
+            replace=False,
         )
         drug[k] = 2
     # calculate the number of dead worms

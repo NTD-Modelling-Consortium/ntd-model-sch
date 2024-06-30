@@ -137,7 +137,7 @@ def doRealization(params, i, mult):
         if sumRates < 1e-4:
             dt = 10000 * multiplier
         else:
-            dt = np.random.exponential(scale=(1. / sumRates)) * new_multiplier
+            dt = np.random.exponential(scale=(1.0 / sumRates)) * new_multiplier
         if mult > 1:
             if t + dt >= nextStep:
                 small_multiplier = np.array(list(range(new_multiplier, 0, -1)))
@@ -362,7 +362,7 @@ def doRealizationSurveyCoveragePickle(
             dt = 10000 * multiplier
 
         else:
-            dt = np.random.exponential(scale=(1. / sumRates)) * new_multiplier
+            dt = np.random.exponential(scale=(1.0 / sumRates)) * new_multiplier
         if mult > 1:
             if t + dt >= nextStep:
                 small_multiplier = np.array(list(range(new_multiplier, 0, -1)))
