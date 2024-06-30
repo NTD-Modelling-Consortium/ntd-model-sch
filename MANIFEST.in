@@ -1,4 +1,0 @@
-include sch_simulation/data/*.txt
-include sch_simulation/data/*.xlsx
-include sch_simulation/data/*/*.txt
-include sch_simulation/data/*/*.xlsx

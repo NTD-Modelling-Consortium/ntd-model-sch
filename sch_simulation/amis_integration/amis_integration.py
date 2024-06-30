@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import random
 from typing import Literal
 import pandas as pd
 import sch_simulation
@@ -14,6 +13,7 @@ from sch_simulation.helsim_FUNC_KK.file_parsing import (
 import sch_simulation.helsim_RUN_KK
 
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
+
 
 @dataclass(eq=True, frozen=True)
 class FixedParameters:
@@ -45,7 +45,9 @@ class FixedParameters:
 
 
 def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameters):
-    cov = parse_coverage_input(
+    # Run `parse_coverage_input` for side-effect of writing coverage
+    # text file.
+    parse_coverage_input(
         fixed_parameters.coverage_file_name,
         fixed_parameters.coverage_text_file_storage_name,
     )
@@ -91,7 +93,6 @@ def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameter
 def extract_relevant_results(
     results: pd.DataFrame, relevant_years: list[float]
 ) -> float:
-
     relevant_rows = results["Time"].isin(relevant_years)
     prevalence_for_relevant_years = pd.Series(
         data=results[relevant_rows][results_processing.OUTPUT_COLUMN_NAME],
@@ -124,9 +125,7 @@ def run_model_with_parameters(
 
         results = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
 
-        prevalence = extract_relevant_results(
-            results, year_indices
-        )
+        prevalence = extract_relevant_results(results, year_indices)
         final_prevalence_for_each_run.append(prevalence)
 
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
