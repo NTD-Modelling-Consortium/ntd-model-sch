@@ -11,6 +11,8 @@ from sch_simulation.helsim_FUNC_KK.file_parsing import (
     readCoverageFile,
 )
 
+from joblib import Parallel, delayed
+
 import sch_simulation.helsim_RUN_KK
 
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
@@ -105,9 +107,17 @@ def extract_relevant_results(
 
     return prevalence_for_relevant_years
 
+def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices):
+    R0 = parameter_set[0]
+    k = parameter_set[1]
+
+    results = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
+
+    return extract_relevant_results(results, year_indices)
 
 def run_model_with_parameters(
-    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int]
+    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int],
+    num_parallel_jobs = -2 # default to all but one process to keep computers responsive
 ):
     if len(seeds) != len(parameters):
         raise ValueError(
@@ -116,18 +126,9 @@ def run_model_with_parameters(
 
     num_runs = len(seeds)
 
-    final_prevalence_for_each_run = []
-
-    for seed, parameter_set in zip(seeds, parameters):
-        R0 = parameter_set[0]
-        k = parameter_set[1]
-
-        results = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
-
-        prevalence = extract_relevant_results(
-            results, year_indices
-        )
-        final_prevalence_for_each_run.append(prevalence)
+    final_prevalence_for_each_run = Parallel(n_jobs=num_parallel_jobs)(delayed(run_and_extract_results)
+        (parameter_set, seed, fixed_parameters, year_indices) 
+        for seed, parameter_set in zip(seeds, parameters))
 
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
         num_runs, len(year_indices)
