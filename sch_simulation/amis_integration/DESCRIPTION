@@ -8,4 +8,5 @@ Imports:
     reticulate
 Suggests:
     testthat
-Remotes: evandrokonzen/AMISforInfectiousDiseases-dev
+Remotes: 
+    AMISforInfectiousDiseases=https://github.com/evandrokonzen/AMISforInfectiousDiseases-dev
