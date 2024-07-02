@@ -9,4 +9,4 @@ Imports:
 Suggests:
     testthat
 Remotes: 
-    AMISforInfectiousDiseases=https://github.com/evandrokonzen/AMISforInfectiousDiseases-dev
+    AMISforInfectiousDiseases=evandrokonzen/AMISforInfectiousDiseases-dev
