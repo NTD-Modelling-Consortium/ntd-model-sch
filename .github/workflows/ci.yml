@@ -25,7 +25,7 @@ jobs:
     - name: Instal R dev tools
       run: sudo apt install -y r-cran-devtools
     - name: Install fiddly packages
-      run: devtool:::install_version("Matrix", "1.6.5")
+      run: devtools:::install_version("Matrix", "1.6.5")
       shell: Rscript {0}
       working-directory: 'sch_simulation/amis_integration'
     - uses: r-lib/actions/setup-r-dependencies@v2
