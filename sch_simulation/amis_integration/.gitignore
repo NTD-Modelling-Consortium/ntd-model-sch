@@ -1,3 +1,4 @@
 renv/**
 Man_MDA_vacc.txt
 .Rprofile
+renv.lock
