@@ -23,7 +23,7 @@ jobs:
       with:
         r-version: ${{ matrix.r-version }}
     - name: Instal R dev tools
-      run: sudo apt-get install -y r-cran-devtools build-essential libcurl4-gnutls-dev libxml2-dev libssl-dev
+      run: sudo apt-get install -y r-cran-devtools build-essential libcurl4-gnutls-dev libxml2-dev libssl-dev libharfbuzz-dev libfribidi-dev
     - name: Install fiddly packages
       run: |
         install.packages("devtools")
