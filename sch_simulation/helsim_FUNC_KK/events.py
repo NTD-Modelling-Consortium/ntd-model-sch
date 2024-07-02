@@ -6,7 +6,7 @@ from numpy import ndarray
 from numpy.typing import NDArray
 
 from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters, SDEquilibrium
-from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, KKsampleGammaGammaPois,POC_CCA_test, PCR_test
+from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, KKsampleGammaGammaPois,POC_CCA_test, PCR_test, drawTreatmentProbabilities
 
 warnings.filterwarnings("ignore")
 
@@ -279,6 +279,7 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
         maxID = max(SD.id)
         new_ids = np.arange(maxID + 1, maxID + len(theDead) + 1)
         SD.id[theDead] = new_ids
+        SD.treatProbability[theDead] = drawTreatmentProbabilities(len(theDead), SD.MDA_coverage, params.systematic_non_compliance)
     assert params.contactAgeGroupBreaks is not None
     # update the contact age categories
     SD.contactAgeGroupIndices = (
@@ -320,14 +321,9 @@ def doChemo(
         dataclass containing the updated equilibrium parameter values;
     """
 
-    # decide which individuals are treated, treatment is random
-    attendance = (
-        np.random.uniform(low=0, high=1, size=params.N)
-        < coverage[SD.treatmentAgeGroupIndices]
-    )
+    # decide which individuals are treated
+    toTreatNow = np.random.uniform(low=0, high=1, size=params.N) < SD.treatProbability
 
-    # they're compliers and it's their turn
-    toTreatNow = np.logical_and(attendance, SD.compliers)
 
     # calculate the number of dead worms
     femaleToDie = np.random.binomial(
@@ -387,15 +383,15 @@ def doChemoAgeRange(
     mda_t = t + label * 0.0001
     numChemo1 = 0
     numChemo2 = 0
-    # decide which individuals are treated, treatment is random
-    attendance = np.random.uniform(low=0, high=1, size=params.N) < coverage
+    # decide which individuals are treated
+    attendance = np.random.uniform(low=0, high=1, size=params.N) < SD.treatProbability
+
     # get age of each individual
     ages = t - SD.demography.birthDate
     # choose individuals in correct age range
     correctAges = np.logical_and(ages < maxAge, ages >= minAge)
-    # they're compliers, in the right age group and it's their turn
-    toTreatNow = np.logical_and(attendance, SD.compliers)
-    toTreatNow = np.logical_and(toTreatNow, correctAges)
+
+    toTreatNow = np.logical_and(attendance, correctAges)
 
     # initialize the share of drug 1 and drug2
     # we allow 2 different types of drug to be given within the same MDA.
@@ -425,13 +421,13 @@ def doChemoAgeRange(
             d1Share = 1
     # assign which drug each person will take
     drug = np.ones(int(sum(toTreatNow)))
-
+    # we want to make sure that if we are using drug 2, then the correct number of people are assigned this drug
     if d2Share > 0:
         k = np.random.choice(
             range(int(sum(drug))), int(sum(drug) * d2Share), replace=False,
         )
         drug[k] = 2
-# calculate the number of dead worms
+    # calculate the number of dead worms
     ll = np.where(toTreatNow==1)[0]
     # if drug 1 share is > 0, then treat the appropriate individuals with drug 1
     if d1Share > 0:
@@ -470,6 +466,7 @@ def doChemoAgeRange(
             #str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName1 + ")"
         ] = n_people_by_age
+        
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params.DrugEfficacy2
@@ -495,7 +492,6 @@ def doChemoAgeRange(
         SD.nChemo2 += len(k)
         numChemo2 += len(k)
         SD.n_treatments[
-            #str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName2 + ")"
             
         ] = counts2
@@ -505,7 +501,6 @@ def doChemoAgeRange(
             bins=np.arange(0, params.maxHostAge + 1),
         )
         SD.n_treatments_population[
-            #str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName2 + ")"
         ] = n_people_by_age
 
@@ -560,7 +555,6 @@ def doVaccine(
     ages = t - SD.demography.birthDate
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
     SD.n_treatments[
-            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = vaccs
         
@@ -569,7 +563,6 @@ def doVaccine(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     SD.n_treatments_population[
-            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = n_people_by_age
     return SD
@@ -617,7 +610,6 @@ def doVaccineAgeRange(
     propVacc = sum(vaccNow)/sum(correctAges)
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
     SD.n_treatments[
-            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = vaccs
         
@@ -626,7 +618,6 @@ def doVaccineAgeRange(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     SD.n_treatments_population[
-            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = n_people_by_age
     return SD, propVacc
@@ -775,10 +766,8 @@ def conductPCRSurvey(
 ) -> Tuple[SDEquilibrium, float]:
     minAge = params.minSurveyAge
     maxAge = params.maxSurveyAge
-    # minAge = 5
-    # maxAge = 15
+
     # get Kato-Katz eggs for each individual
-    
     
     PCR_antigen = PCR_test( SD.worms.total, SD.worms.female, params)
             

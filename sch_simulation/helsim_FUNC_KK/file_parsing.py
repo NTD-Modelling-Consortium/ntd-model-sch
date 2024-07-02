@@ -577,6 +577,7 @@ def readParams(
 
     demographies = readParam(demogFileName)
     parameters = readParam(paramFileName)
+
     chemoTimings1 = np.array(
         [
             float(parameters["treatStart1"] + x * parameters["treatInterval1"])
@@ -619,6 +620,7 @@ def readParams(
         contactRates=parameters["betaValues"],
         v3=parameters["v3betaValues"],
         rho=parameters["rhoValues"],
+        systematic_non_compliance = parameters["systematic_non_compliance"],
         treatmentAgeBreaks=parameters["treatmentBreaks"],
         VaccTreatmentBreaks=parameters["VaccTreatmentBreaks"],
         coverage1=parameters["coverage1"],

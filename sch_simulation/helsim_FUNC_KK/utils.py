@@ -419,3 +419,51 @@ def getPsi(params: Parameters) -> float:
             * deltaT
         )
     )
+
+
+def drawTreatmentProbabilities(n:int, cov:float, snc:float):
+
+    """
+    Draw the treatment probabilities for the value of coverage and snc given.
+    This uses the scheme explained in section 1.5.3 of the suppplement to this paper
+    https://www.sciencedirect.com/science/article/pii/S1755436516300810?via%3Dihub#sec0110
+    """
+
+    if(cov == 0):
+        treatmentProb = np.zeros(n)
+    elif(snc > 0):
+        alpha = cov * (1-snc)/snc
+        beta = (1-cov)*(1-snc)/snc
+        treatmentProb = np.random.beta(alpha, beta, n)
+    else:
+        treatmentProb = np.ones(n) * cov 
+    return treatmentProb
+
+
+def editTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
+
+    """
+    Choose new values for treatment probability (e.g. for when coverage or snc change)
+
+    The rank of each individuals probability of treatement is retained
+    I.e. if previously you were the most likely person to get treated, you still will be after this
+    """
+
+    if snc > 0:
+        # Draw probabilities from the beta distribution
+        treatProbabilities = drawTreatmentProbabilities(len(SD.treatProbability), cov, snc)
+        # Sort these values so that they are in ascending order so they can later be matched with people
+        treatProbabilities.sort()
+
+        # Store the current value of the treatProbability 
+        oldTreatProbabilities = SD.treatProbability
+
+        # Sort the indices array based on the values in oldTreatProbabilities
+        indices = np.argsort(oldTreatProbabilities)
+        # Assign the newly drawn treatment probabilities to the appropriate individuals
+        for i, index in enumerate(indices):
+            SD.treatProbability[index] = treatProbabilities[i]
+    else:
+        SD.treatProbability = np.ones(len(SDEquilibrium.id)) * cov
+
+    return SD
