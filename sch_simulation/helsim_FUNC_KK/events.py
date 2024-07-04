@@ -422,7 +422,7 @@ def doChemoAgeRange(
     # assign which drug each person will take
     drug = np.ones(int(sum(toTreatNow)))
     # we want to make sure that if we are using drug 2, then the correct number of people are assigned this drug
-    if d2Share > 0:
+    if (d2Share > 0) and (any(toTreatNow)) :
         k = np.random.choice(
             range(int(sum(drug))), int(sum(drug) * d2Share), replace=False,
         )

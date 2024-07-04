@@ -29,7 +29,7 @@ example_parameters = FixedParameters(
 def test_running_model_produces_consistent_result():
     results_with_seed1 = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
     print(results_with_seed1['draw_1'])
-    expected_prevalance = [0.2, 0.3, 0.2, 0.1, 0.2, 0.2, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    expected_prevalance = [0.1, 0.2, 0.3, 0.3, 0.2, 0.0, 0.1, 0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     pdt.assert_series_equal(results_with_seed1['draw_1'], pd.Series(expected_prevalance, name="draw_1"))
 
 def test_running_parallel_produces_results():
@@ -40,7 +40,7 @@ def test_running_parallel_produces_results():
         year_indices=[23],
         num_parallel_jobs=2)
     print(results)
-    npt.assert_array_equal(results, [[0.0], [0.8], [0.5], [0.7]])
+    npt.assert_array_equal(results, [[0. ],[0.5],[0.4],[0.8]])
 
 def test_running_model_with_different_seed_gives_different_result():
     results_with_seed1 = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
