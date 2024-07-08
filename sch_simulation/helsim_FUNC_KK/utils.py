@@ -80,7 +80,7 @@ def getSetOfEggCountsv2(
     Unfertilized: bool,
     nSamples: int = 2,
     surveyType: str = 'KK2'
-) -> NDArray[np.int_]:
+) -> NDArray[np.float_]:
 
     """
     This function returns a set of readings of egg counts from a vector of individuals,
@@ -153,6 +153,7 @@ def getSetOfEggCountsv2(
             
         
         return count_ids / params.weight_sample
+    raise ValueError(f"Unsupported surveyType: {surveyType}")
         # eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
         # for i in range(nSamples):
         #     eggs +=  np.random.negative_binomial(
