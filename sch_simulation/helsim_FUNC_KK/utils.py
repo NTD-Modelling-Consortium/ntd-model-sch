@@ -153,6 +153,7 @@ def getSetOfEggCountsv2(
             
         
         return count_ids / params.weight_sample
+    raise ValueError(f"Unsupported surveyType: {surveyType}")
         # eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
         # for i in range(nSamples):
         #     eggs +=  np.random.negative_binomial(
