@@ -130,6 +130,8 @@ def run_model_with_parameters(
         raise ValueError(
             f"Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}"
         )
+    
+    print(f'Running {len(seeds)} simulations across {num_parallel_jobs} cores')
 
     num_runs = len(seeds)
 
