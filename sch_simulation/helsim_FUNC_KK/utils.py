@@ -80,7 +80,7 @@ def getSetOfEggCountsv2(
     Unfertilized: bool,
     nSamples: int = 2,
     surveyType: str = 'KK2'
-) -> NDArray[np.int_]:
+) -> NDArray[np.float_]:
 
     """
     This function returns a set of readings of egg counts from a vector of individuals,
