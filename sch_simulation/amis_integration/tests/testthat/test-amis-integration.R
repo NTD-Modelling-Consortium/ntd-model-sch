@@ -29,7 +29,7 @@ test_that("Running the model should give us consistent results", {
     # Example prevalence map, with two locations, both with prevalence of 0.5
     prevalence_map <- matrix(c(0.5, 0.5), ncol = 1)
 
-    tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices = c(23))
+    tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices = c(23), 2)
     result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.3, 0.3), ncol = 2), 1)
     expect_equal(result, matrix(c(0.0, 0.5), ncol = 1), tolerance = 0.0)
 })
@@ -43,7 +43,7 @@ test_that("Running the simulation on multiple time points gives multiple points 
 
     year_indices <- c(0L, 23L)
 
-    tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices)
+    tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices, 2)
     result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
     expect_equal(result, matrix(c(0.1, 0.1, 0.1, 0.1), ncol = 2), tolerance = 0.5)
 })
@@ -54,7 +54,7 @@ test_that("Running the simulation with different number of years specified compa
 
     year_indices <- c(0L, 23L)
 
-    expect_error(build_transmission_model(prevalence_map, example_parameters, year_indices), "Single time point prevalance map provided so should only request one year but 2 provided")
+    expect_error(build_transmission_model(prevalence_map, example_parameters, year_indices, 2), "Single time point prevalance map provided so should only request one year but 2 provided")
 })
 
 test_that("Running the simulation with different number of years specified compared to the prevalance map raises an error", {
@@ -66,7 +66,7 @@ test_that("Running the simulation with different number of years specified compa
 
     year_indices <- c(23L)
 
-    expect_error(build_transmission_model(prevalence_map, example_parameters, year_indices), "Length of prevalance map \\(2\\) must match the number of years provided in year_indices \\(1\\)")
+    expect_error(build_transmission_model(prevalence_map, example_parameters, year_indices, 2), "Length of prevalance map \\(2\\) must match the number of years provided in year_indices \\(1\\)")
 })
 
 test_that("Running the AMIS integration on multiple time points should complete with the error about weight on particles", {
@@ -98,7 +98,7 @@ test_that("Running the AMIS integration on multiple time points should complete 
 
     expect_error(AMISforInfectiousDiseases::amis(
         prevalence_map,
-        build_transmission_model(prevalence_map, example_parameters, year_indices),
+        build_transmission_model(prevalence_map, example_parameters, year_indices, 2),
         prior,
         amis_params
     ), "(No weight on any particles for locations in the active set.)|(the leading minor of order 2 is not positive definite)")
@@ -128,7 +128,7 @@ test_that("Running the AMIS integration should complete with the error about wei
 
     expect_error(AMISforInfectiousDiseases::amis(
         prevalence_map,
-        build_transmission_model(prevalence_map, example_parameters, year_indices = c(23)),
+        build_transmission_model(prevalence_map, example_parameters, year_indices = c(23), 2),
         prior,
         amis_params
     ), "(No weight on any particles for locations in the active set.)|(the leading minor of order 2 is not positive definite)")

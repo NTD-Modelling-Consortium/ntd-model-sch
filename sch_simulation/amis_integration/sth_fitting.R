@@ -46,10 +46,12 @@ rnd_function <- function(num_samples) {
 prior <- list("dprior" = density_function, "rprior" = rnd_function)
 
 year_indices <- c(0L, 23L)
+# This doesn't work correctly on the cluster - need to accept as argument
+num_cores_to_use <- parallel::detectCores()
 
 amis_output <- AMISforInfectiousDiseases::amis(
     prevalence_map,
-    build_transmission_model(prevalence_map, fixed_parameters, year_indices),
+    build_transmission_model(prevalence_map, fixed_parameters, year_indices, num_cores_to_use),
     prior
 )
 
