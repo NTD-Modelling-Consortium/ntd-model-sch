@@ -1,5 +1,13 @@
 source("amis_integration.R")
 
+args <- commandArgs(trailingOnly=TRUE)
+num_cores_to_use <- parallel::detectCores()
+if(length(args) == 1) {
+    num_cores_to_use <- as.integer(args)
+}
+
+print(paste0('Using ', num_cores_to_use, ' cores'))
+
 sch_simulation <- get_amis_integration_package()
 
 fixed_parameters <- sch_simulation$FixedParameters(
@@ -47,9 +55,10 @@ prior <- list("dprior" = density_function, "rprior" = rnd_function)
 
 year_indices <- c(0L, 23L)
 
+
 amis_output <- AMISforInfectiousDiseases::amis(
     prevalence_map,
-    build_transmission_model(prevalence_map, fixed_parameters, year_indices),
+    build_transmission_model(prevalence_map, fixed_parameters, year_indices, num_cores_to_use),
     prior
 )
 
