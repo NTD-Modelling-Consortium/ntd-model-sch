@@ -29,9 +29,9 @@ build_transmission_model <- function(prevalence_map, fixed_parameters, year_indi
     )
     colnames(output) = year_indices_all
     
-    #load(paste0("trajectories_",id,"_",species,".Rdata"))
-    #trajectories =  rbind(trajectories,output)
-    #save(trajectories, file=paste0("trajectories_",id,"_",species,".Rdata"))
+    load(paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
+    trajectories =  rbind(trajectories,output)
+    save(trajectories, file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
 
     
     return(output[,colnames(output) %in% year_indices])
