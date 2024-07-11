@@ -72,9 +72,10 @@ amis_params$sigma=0.0025
 amis_params$boundaries=c(-Inf,Inf)
 amis_params$boundaries_param = matrix(c(R_lb,k_lb,R_ub,k_ub),ncol=2)
 
-# shell to save trajectories
-trajectories = c() # save simulated trajectories as code is running
-save(trajectories,file=paste0("trajectories_",id,"_",species,".Rdata"))
+## shell to save trajectories
+## commented out to pass Github tests (maybe this is bad practice...)
+#trajectories = c() # save simulated trajectories as code is running
+#save(trajectories,file=paste0("trajectories_",id,"_",species,".Rdata"))
 
 # Run AMIS
 st<-Sys.time()
