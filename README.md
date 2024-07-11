@@ -179,7 +179,7 @@ The columns “Country/Region” and “Platform” are currently optional.
 
 #### Developer install
 
-Developers wiching to contribute can install the package in "editable"
+Developers wishing to contribute can install the package in "editable"
 mode, in order to make changes to the source code available in the
 environment right away:
 
