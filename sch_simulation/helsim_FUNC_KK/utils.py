@@ -80,9 +80,8 @@ def getSetOfEggCountsv2(
     params: Parameters,
     Unfertilized: bool,
     nSamples: int = 2,
-    surveyType: str = 'KK2'
+    surveyType: str = "KK2",
 ) -> NDArray[np.float_]:
-
     """
     This function returns a set of readings of egg counts from a vector of individuals,
     according to their reproductive biology.
@@ -158,12 +157,12 @@ def getSetOfEggCountsv2(
 
         return count_ids / params.weight_sample
     raise ValueError(f"Unsupported surveyType: {surveyType}")
-        # eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
-        # for i in range(nSamples):
-        #     eggs +=  np.random.negative_binomial(
-        #         size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
-        #         )
-        # return eggs
+    # eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
+    # for i in range(nSamples):
+    #     eggs +=  np.random.negative_binomial(
+    #         size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
+    #         )
+    # return eggs
 
 
 def KKsampleGammaGammaPois(
@@ -416,27 +415,25 @@ def getPsi(params: Parameters) -> float:
     )
 
 
-def drawTreatmentProbabilities(n:int, cov:float, snc:float):
-
+def drawTreatmentProbabilities(n: int, cov: float, snc: float):
     """
     Draw the treatment probabilities for the value of coverage and snc given.
     This uses the scheme explained in section 1.5.3 of the suppplement to this paper
     https://www.sciencedirect.com/science/article/pii/S1755436516300810?via%3Dihub#sec0110
     """
 
-    if(cov == 0):
+    if cov == 0:
         treatmentProb = np.zeros(n)
-    elif(snc > 0):
-        alpha = cov * (1-snc)/snc
-        beta = (1-cov)*(1-snc)/snc
+    elif snc > 0:
+        alpha = cov * (1 - snc) / snc
+        beta = (1 - cov) * (1 - snc) / snc
         treatmentProb = np.random.beta(alpha, beta, n)
     else:
-        treatmentProb = np.ones(n) * cov 
+        treatmentProb = np.ones(n) * cov
     return treatmentProb
 
 
 def editTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilibrium:
-
     """
     Choose new values for treatment probability (e.g. for when coverage or snc change)
 
@@ -446,11 +443,13 @@ def editTreatProbability(SD: SDEquilibrium, cov: float, snc: float) -> SDEquilib
 
     if snc > 0:
         # Draw probabilities from the beta distribution
-        treatProbabilities = drawTreatmentProbabilities(len(SD.treatProbability), cov, snc)
+        treatProbabilities = drawTreatmentProbabilities(
+            len(SD.treatProbability), cov, snc
+        )
         # Sort these values so that they are in ascending order so they can later be matched with people
         treatProbabilities.sort()
 
-        # Store the current value of the treatProbability 
+        # Store the current value of the treatProbability
         oldTreatProbabilities = SD.treatProbability
 
         # Sort the indices array based on the values in oldTreatProbabilities

@@ -109,7 +109,10 @@ def extract_relevant_results(
 
     return prevalence_for_relevant_years
 
-def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices, include_output=False):
+
+def run_and_extract_results(
+    parameter_set, seed, fixed_parameters, year_indices, include_output=False
+):
     R0 = parameter_set[0]
     k = parameter_set[1]
 
@@ -119,28 +122,39 @@ def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices,
 
     end_time = time.time()
     if include_output:
-        print(f'Run R0: {R0}, k: {k} took {end_time-start_time:10.2f} seconds')
+        print(f"Run R0: {R0}, k: {k} took {end_time-start_time:10.2f} seconds")
 
     return extract_relevant_results(results, year_indices)
 
+
 def run_model_with_parameters(
-    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int],
-    num_parallel_jobs = -2 # default to all but one process to keep computers responsive
+    seeds,
+    parameters,
+    fixed_parameters: FixedParameters,
+    year_indices: list[int],
+    num_parallel_jobs=-2,  # default to all but one process to keep computers responsive
 ):
     if len(seeds) != len(parameters):
         raise ValueError(
             f"Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}"
         )
-    
-    print(f'Running {len(seeds)} simulations across {num_parallel_jobs} cores')
+
+    print(f"Running {len(seeds)} simulations across {num_parallel_jobs} cores")
 
     num_runs = len(seeds)
 
     print_timing_info_every_n_times = 10
 
-    final_prevalence_for_each_run = Parallel(n_jobs=num_parallel_jobs)(delayed(run_and_extract_results)
-        (parameter_set, seed, fixed_parameters, year_indices, include_output=index % print_timing_info_every_n_times == 0) 
-        for index, (seed, parameter_set) in enumerate(zip(seeds, parameters)))
+    final_prevalence_for_each_run = Parallel(n_jobs=num_parallel_jobs)(
+        delayed(run_and_extract_results)(
+            parameter_set,
+            seed,
+            fixed_parameters,
+            year_indices,
+            include_output=index % print_timing_info_every_n_times == 0,
+        )
+        for index, (seed, parameter_set) in enumerate(zip(seeds, parameters))
+    )
 
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
         num_runs, len(year_indices)

@@ -6,7 +6,13 @@ from numpy import ndarray
 from numpy.typing import NDArray
 
 from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters, SDEquilibrium
-from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, POC_CCA_test, PCR_test, drawTreatmentProbabilities
+from sch_simulation.helsim_FUNC_KK.utils import (
+    getLifeSpans,
+    getSetOfEggCounts,
+    POC_CCA_test,
+    PCR_test,
+    drawTreatmentProbabilities,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -274,7 +280,9 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
         maxID = max(SD.id)
         new_ids = np.arange(maxID + 1, maxID + len(theDead) + 1)
         SD.id[theDead] = new_ids
-        SD.treatProbability[theDead] = drawTreatmentProbabilities(len(theDead), SD.MDA_coverage, params.systematic_non_compliance)
+        SD.treatProbability[theDead] = drawTreatmentProbabilities(
+            len(theDead), SD.MDA_coverage, params.systematic_non_compliance
+        )
     assert params.contactAgeGroupBreaks is not None
     # update the contact age categories
     SD.contactAgeGroupIndices = (
@@ -317,7 +325,6 @@ def doChemo(
 
     # decide which individuals are treated
     toTreatNow = np.random.uniform(low=0, high=1, size=params.N) < SD.treatProbability
-
 
     # calculate the number of dead worms
     femaleToDie = np.random.binomial(
@@ -414,7 +421,7 @@ def doChemoAgeRange(
     # assign which drug each person will take
     drug = np.ones(int(sum(toTreatNow)))
     # we want to make sure that if we are using drug 2, then the correct number of people are assigned this drug
-    if (d2Share > 0) and (any(toTreatNow)) :
+    if (d2Share > 0) and (any(toTreatNow)):
         k = np.random.choice(
             range(int(sum(drug))),
             int(sum(drug) * d2Share),
@@ -458,7 +465,7 @@ def doChemoAgeRange(
             # str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName1 + ")"
         ] = n_people_by_age
-        
+
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params.DrugEfficacy2
@@ -542,16 +549,14 @@ def doVaccine(
     # get age of each individual
     ages = t - SD.demography.birthDate
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
-    SD.n_treatments[
-            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
-        ] = vaccs
+    SD.n_treatments[str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"] = vaccs
     n_people_by_age, _ = np.histogram(
         ages,
         bins=np.arange(0, params.maxHostAge + 1),
     )
     SD.n_treatments_population[
-            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
-        ] = n_people_by_age
+        str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
+    ] = n_people_by_age
     return SD
 
 
@@ -596,9 +601,7 @@ def doVaccineAgeRange(
     SD.vaccCount += sum(vaccNow)
     propVacc = sum(vaccNow) / sum(correctAges)
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
-    SD.n_treatments[
-             str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
-        ] = vaccs
+    SD.n_treatments[str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"] = vaccs
     n_people_by_age, _ = np.histogram(
         ages,
         bins=np.arange(0, params.maxHostAge + 1),

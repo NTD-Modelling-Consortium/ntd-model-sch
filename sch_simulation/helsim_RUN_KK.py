@@ -416,7 +416,7 @@ def doRealizationSurveyCoveragePickle(
                     surveyType,
                 )
                 # get approximate prevalence of the population
-                prev = len(np.where(eggCounts > 0)[0])/len(eggCounts)
+                prev = len(np.where(eggCounts > 0)[0]) / len(eggCounts)
                 # we have to check if this is the first time that the output is being done in order
                 # to get the incidence in this time step, as if there are no previous results
                 # then there is nothing to compare the currently infected people against
@@ -523,10 +523,17 @@ def doRealizationSurveyCoveragePickle(
                     index = nextChemoIndex[i]
                     cov = params.MDA[k].Coverage[index]
                     systematic_non_compliance = params.systematic_non_compliance
-                    if (cov != simData.MDA_coverage) | (systematic_non_compliance != simData.MDA_systematic_non_compliance):
-                        simData = utils.editTreatProbability(simData, cov, systematic_non_compliance)
+                    if (cov != simData.MDA_coverage) | (
+                        systematic_non_compliance
+                        != simData.MDA_systematic_non_compliance
+                    ):
+                        simData = utils.editTreatProbability(
+                            simData, cov, systematic_non_compliance
+                        )
                         simData.MDA_coverage = cov
-                        simData.MDA_systematic_non_compliance = systematic_non_compliance
+                        simData.MDA_systematic_non_compliance = (
+                            systematic_non_compliance
+                        )
                     minAge = params.MDA[k].Age[0]
                     maxAge = params.MDA[k].Age[1]
                     label = params.MDA[k].Label
@@ -1036,7 +1043,9 @@ def multiple_simulations(
         deathDate=raw_data["demography"]["deathDate"],
     )
     ids = np.arange(len(raw_data["si"]))
-    treatProbability = np.full(shape=len(raw_data["si"]), fill_value=np.NaN, dtype=float)
+    treatProbability = np.full(
+        shape=len(raw_data["si"]), fill_value=np.NaN, dtype=float
+    )
     simData = helsim_structures.SDEquilibrium(
         si=raw_data["si"],
         worms=worms,
@@ -1059,8 +1068,8 @@ def multiple_simulations(
         compliers=np.random.uniform(low=0, high=1, size=len(raw_data["si"]))
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data["si"])),
-        id = ids,
-        treatProbability= treatProbability
+        id=ids,
+        treatProbability=treatProbability,
     )
     pickleNumIndivs = len(simData.si)
     # print("starting  j =",j)
@@ -1103,29 +1112,31 @@ def multiple_simulations(
         worms = helsim_structures.Worms(total=np.array(wormsT), female=np.array(wormsF))
         ids = np.arange(wantedPopSize)
         SD = helsim_structures.SDEquilibrium(
-        si=np.array(si),
-        worms=worms,
-        freeLiving=raw_data["freeLiving"],
-        demography=demography,
-        contactAgeGroupIndices=np.array(contactAgeGroupIndices),
-        treatmentAgeGroupIndices=np.array(treatmentAgeGroupIndices),
-        sv=np.zeros(wantedPopSize, dtype=int),
-        attendanceRecord=[],
-        ageAtChemo=[],
-        adherenceFactorAtChemo=[],
-        n_treatments = {},
-        n_treatments_population = {},
-        n_surveys = {},
-        n_surveys_population = {},
-        vaccCount=0,
-        nChemo1=0,
-        nChemo2=0,
-        numSurvey=0,
-        compliers=np.random.uniform(low=0, high=1, size=wantedPopSize)
-        > params.propNeverCompliers,
-        adherenceFactors=np.random.uniform(low=0, high=1, size=wantedPopSize),
-        id = ids,
-        treatProbability= np.full(shape=wantedPopSize, fill_value=np.NaN, dtype=float) 
+            si=np.array(si),
+            worms=worms,
+            freeLiving=raw_data["freeLiving"],
+            demography=demography,
+            contactAgeGroupIndices=np.array(contactAgeGroupIndices),
+            treatmentAgeGroupIndices=np.array(treatmentAgeGroupIndices),
+            sv=np.zeros(wantedPopSize, dtype=int),
+            attendanceRecord=[],
+            ageAtChemo=[],
+            adherenceFactorAtChemo=[],
+            n_treatments={},
+            n_treatments_population={},
+            n_surveys={},
+            n_surveys_population={},
+            vaccCount=0,
+            nChemo1=0,
+            nChemo2=0,
+            numSurvey=0,
+            compliers=np.random.uniform(low=0, high=1, size=wantedPopSize)
+            > params.propNeverCompliers,
+            adherenceFactors=np.random.uniform(low=0, high=1, size=wantedPopSize),
+            id=ids,
+            treatProbability=np.full(
+                shape=wantedPopSize, fill_value=np.NaN, dtype=float
+            ),
         )
         simData = copy.deepcopy(SD)
 
@@ -1219,8 +1230,8 @@ def multiple_simulations_after_burnin(
         compliers=np.random.uniform(low=0, high=1, size=len(raw_data.si))
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data.si)),
-        id = np.arange(len(raw_data.si)),
-        treatProbability = np.ones(len(raw_data.si)) *(-1)
+        id=np.arange(len(raw_data.si)),
+        treatProbability=np.ones(len(raw_data.si)) * (-1),
     )
 
     # Convert all layers to correct data format

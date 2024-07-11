@@ -14,7 +14,11 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     SDEquilibrium,
     Worms,
 )
-from sch_simulation.helsim_FUNC_KK.utils import (getLifeSpans, getPsi, drawTreatmentProbabilities)
+from sch_simulation.helsim_FUNC_KK.utils import (
+    getLifeSpans,
+    getPsi,
+    drawTreatmentProbabilities,
+)
 
 
 warnings.filterwarnings("ignore")
@@ -175,7 +179,9 @@ def setupSD(params: Parameters) -> SDEquilibrium:
     treatProbability = np.full(shape=params.N, fill_value=np.NaN, dtype=float)
     if len(params.MDA[0].Coverage):
         MDA_coverage = params.MDA[0].Coverage[0]
-        treatProbability = drawTreatmentProbabilities(params.N, MDA_coverage, params.systematic_non_compliance)
+        treatProbability = drawTreatmentProbabilities(
+            params.N, MDA_coverage, params.systematic_non_compliance
+        )
 
     SD = SDEquilibrium(
         si=si,
@@ -200,12 +206,12 @@ def setupSD(params: Parameters) -> SDEquilibrium:
         n_surveys_population={},
         vaccCount=0,
         numSurvey=0,
-        nChemo1 = 0,
-        nChemo2 = 0, 
-        id = ids,
-        treatProbability = treatProbability,
-        MDA_coverage = MDA_coverage,
-        MDA_systematic_non_compliance = params.systematic_non_compliance
+        nChemo1=0,
+        nChemo2=0,
+        id=ids,
+        treatProbability=treatProbability,
+        MDA_coverage=MDA_coverage,
+        MDA_systematic_non_compliance=params.systematic_non_compliance,
     )
 
     return SD
