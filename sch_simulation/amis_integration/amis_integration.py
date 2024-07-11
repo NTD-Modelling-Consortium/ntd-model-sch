@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import random
+import os
 import time
 from typing import Literal
 import pandas as pd
@@ -144,4 +145,7 @@ def run_model_with_parameters(
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
         num_runs, len(year_indices)
     )
+
+    os.remove(fixed_parameters.coverage_text_file_storage_name)
+
     return results_np_array
