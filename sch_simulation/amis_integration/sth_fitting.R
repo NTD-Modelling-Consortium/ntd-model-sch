@@ -101,7 +101,7 @@ ess<-amis_output$ess
 n_success<-length(which(ess>=amis_params[["target_ess"]]))
 failures<-which(ess<amis_params[["target_ess"]])
 n_failure<-length(failures)
-if (n_failure>0) {cat(paste(failures,id,ess[failures]),file = "../ESS_NOT_REACHED.txt",sep = "\n", append = TRUE)}
+if (n_failure>0) {cat(paste(failures,id,ess[failures]),file = paste0("../ESS_NOT_REACHED_",species,".txt"),sep = "\n", append = TRUE)}
 if (!file.exists(paste0("../summary_",species,".csv"))) {cat("ID,n_failure,n_success,n_sim,min_ess,duration_amis,durarion_subsampling\n",file=paste0("../summary_",species,".csv"))}
 cat(id,n_failure,n_success,length(amis_output$seeds),min(ess),dur_amis,NA,"\n",sep=",",file=paste0("../summary_",species,".csv"),append=TRUE)
 
