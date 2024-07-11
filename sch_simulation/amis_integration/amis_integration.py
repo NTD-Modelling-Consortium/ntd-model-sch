@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import random
+import os
 import time
 from typing import Literal
 import pandas as pd
@@ -48,11 +49,6 @@ class FixedParameters:
 
 
 def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameters):
-    cov = parse_coverage_input(
-        fixed_parameters.coverage_file_name,
-        fixed_parameters.coverage_text_file_storage_name,
-    )
-
     np.random.seed(seed)
     # initialize the parameters
     params = sch_simulation.helsim_RUN_KK.loadParameters(
@@ -131,6 +127,11 @@ def run_model_with_parameters(
             f"Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}"
         )
     
+    parse_coverage_input(
+        fixed_parameters.coverage_file_name,
+        fixed_parameters.coverage_text_file_storage_name,
+    )
+    
     print(f'Running {len(seeds)} simulations across {num_parallel_jobs} cores')
 
     num_runs = len(seeds)
@@ -144,4 +145,7 @@ def run_model_with_parameters(
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
         num_runs, len(year_indices)
     )
+
+    os.remove(fixed_parameters.coverage_text_file_storage_name)
+
     return results_np_array
