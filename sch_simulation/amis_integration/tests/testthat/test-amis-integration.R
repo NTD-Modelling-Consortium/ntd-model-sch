@@ -13,7 +13,6 @@ example_parameters <- sch_simulation$FixedParameters(
         # cset the survey type to Kato Katz with duplicate slide
         survey_type = "KK2",
         parameter_file_name = "mansoni_params.txt",
-        coverage_text_file_storage_name = "Man_MDA_vacc.txt",
         # the following number dictates the number of events (e.g. worm deaths)
         # we allow to happen before updating other parts of the model
         # the higher this number the faster the simulation

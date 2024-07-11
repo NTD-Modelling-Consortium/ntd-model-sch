@@ -35,9 +35,6 @@ class FixedParameters:
     
     Must be one KK1, KK2, POC-CCA or PCR"""
 
-    coverage_text_file_storage_name: str
-    """File name to store coverage information in"""
-
     parameter_file_name: str
     """Standard parameter file path (in sch_simulation/data folder)"""
 
@@ -47,10 +44,10 @@ class FixedParameters:
     A higher number will result in faster but less accurate simulation."""
 
 
-def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameters):
+def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameters, coverage_text_file_storage_name: str):
     cov = parse_coverage_input(
         fixed_parameters.coverage_file_name,
-        fixed_parameters.coverage_text_file_storage_name,
+        coverage_text_file_storage_name,
     )
 
     np.random.seed(seed)
@@ -59,7 +56,7 @@ def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameter
         fixed_parameters.parameter_file_name, fixed_parameters.demography_name
     )
     # add coverage data to parameters file
-    params = readCoverageFile(fixed_parameters.coverage_text_file_storage_name, params)
+    params = readCoverageFile(coverage_text_file_storage_name, params)
     # add vector control data to parameters
     params = parse_vector_control_input(fixed_parameters.coverage_file_name, params)
 
@@ -108,13 +105,15 @@ def extract_relevant_results(
 
     return prevalence_for_relevant_years
 
-def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices, include_output=False):
+def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices, job_index, include_output=False):
     R0 = parameter_set[0]
     k = parameter_set[1]
 
+    coverage_text_file_storage_name = f"Man_MDA_vacc_{job_index}.txt"
+
     start_time = time.time()
 
-    results = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
+    results = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters, coverage_text_file_storage_name)
 
     end_time = time.time()
     if include_output:
@@ -138,7 +137,7 @@ def run_model_with_parameters(
     print_timing_info_every_n_times = 10
 
     final_prevalence_for_each_run = Parallel(n_jobs=num_parallel_jobs)(delayed(run_and_extract_results)
-        (parameter_set, seed, fixed_parameters, year_indices, include_output=index % print_timing_info_every_n_times == 0) 
+        (parameter_set, seed, fixed_parameters, year_indices, index, include_output=index % print_timing_info_every_n_times == 0) 
         for index, (seed, parameter_set) in enumerate(zip(seeds, parameters)))
 
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
