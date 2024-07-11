@@ -3,6 +3,8 @@
 # id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 # for testing:
 id = 1
+# should be "ascaris", "hookworm" or "trichuris"
+species = "ascaris"
 
 library(dplyr)
 library(AMISforInfectiousDiseases)
@@ -29,8 +31,8 @@ fixed_parameters <- sch_simulation$FixedParameters(
     demography_name = "UgandaRural",
     # cset the survey type to Kato Katz with duplicate slide
     survey_type = "KK2",
-    parameter_file_name = "STH_params/ascaris_params.txt",
-    coverage_text_file_storage_name = "Man_MDA_vacc.txt",
+    parameter_file_name = paste0("STH_params/",species,"_params.txt"),
+    coverage_text_file_storage_name = paste0("Man_MDA_vacc_",species,"_",id,".txt"),
     # the following number dictates the number of events (e.g. worm deaths)
     # we allow to happen before updating other parts of the model
     # the higher this number the faster the simulation
@@ -45,8 +47,8 @@ fixed_parameters <- sch_simulation$FixedParameters(
 
 # Load prevalence map and filter rows for TaskID == id
 year_indices <- c(15L,28L,33L) # 2000, 2013, 2018 (end of year in model)
-load("../Maps/ascaris_maps.rds")
-prevalence_map = ascaris_map_allyears
+load(paste0("../Maps/",species,"_maps.rds"))
+prevalence_map = get(paste0(species,"_map_allyears"))
 prevalence_map = lapply(1:length(prevalence_map), function(t){
   output=list(data = as.matrix(prevalence_map[[t]]$data %>% 
                                  filter(TaskID==id) %>% 
@@ -58,8 +60,8 @@ prevalence_map = lapply(1:length(prevalence_map), function(t){
 })
 
 # load prior
-source("../Ascaris_prior_mixed.R")
-prior = MixedPrior
+source(paste0("../",species,"_prior.R"))
+prior = Prior
 
 # Algorithm parameters
 amis_params<-default_amis_params()
@@ -72,7 +74,7 @@ amis_params$boundaries_param = matrix(c(R_lb,k_lb,R_ub,k_ub),ncol=2)
 
 # shell to save trajectories
 trajectories = c() # save simulated trajectories as code is running
-save(trajectories,file=paste0("trajectories_",id,".Rdata"))
+save(trajectories,file=paste0("trajectories_",id,"_",species,".Rdata"))
 
 # Run AMIS
 st<-Sys.time()
@@ -86,7 +88,7 @@ amis_output <- AMISforInfectiousDiseases::amis(
 en<-Sys.time()
 dur_amis<-as.numeric(difftime(en,st,units="mins"))
 if (!dir.exists("../AMIS_output")) {dir.create("../AMIS_output")}
-save(amis_output,file=paste0("../AMIS_output/amis_output",id,".Rdata"))
+save(amis_output,file=paste0("../AMIS_output/",species,"_amis_output",id,".Rdata"))
 
 
 # Currently errors - I think because I
@@ -100,6 +102,6 @@ n_success<-length(which(ess>=amis_params[["target_ess"]]))
 failures<-which(ess<amis_params[["target_ess"]])
 n_failure<-length(failures)
 if (n_failure>0) {cat(paste(failures,id,ess[failures]),file = "../ESS_NOT_REACHED.txt",sep = "\n", append = TRUE)}
-if (!file.exists("../summary.csv")) {cat("ID,n_failure,n_success,n_sim,min_ess,duration_amis,durarion_subsampling\n",file="../summary.csv")}
-cat(id,n_failure,n_success,length(amis_output$seeds),min(ess),dur_amis,NA,"\n",sep=",",file="../summary.csv",append=TRUE)
+if (!file.exists(paste0("../summary_",species,".csv"))) {cat("ID,n_failure,n_success,n_sim,min_ess,duration_amis,durarion_subsampling\n",file=paste0("../summary_",species,".csv"))}
+cat(id,n_failure,n_success,length(amis_output$seeds),min(ess),dur_amis,NA,"\n",sep=",",file=paste0("../summary_",species,".csv"),append=TRUE)
 
