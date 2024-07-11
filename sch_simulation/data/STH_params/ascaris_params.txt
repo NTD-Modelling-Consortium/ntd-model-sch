@@ -32,8 +32,8 @@ treatmentBreaks	0 2 5 15 80		Minimum age of each treatment group (minus sign nec
 drugEff	0.985					Drug efficacy
 drugEff1	0.985					Drug efficacy [0-1]
 drugEff2	0.99					Drug efficacy drug 2 [0-1]
-drugName1	PZQ					Name of 1st drug used
-drugName2	IDA					Name of 2nd drug used
+drugName1	ALB					Name of 1st drug used
+drugName2	MBD					Name of 2nd drug used
 treatInterval1	1			interval between treatments in years, pre-COVID. 
 treatInterval2	1			interval between treatments in years, post-COVID. 
 treatStart1	1					Treatment year start, pre-COVID
