@@ -31,7 +31,7 @@ StochSR	TRUE		## Turn SR on or off in the stochastic model. 	[Stochastic]
 ### Treatment parameters. 
 treatmentBreaks	0 2 5 15 80		Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
 drugEff	0.499				Drug efficacy
-drugEff1	0.499					Drug efficacy [0-1]
+drugEff1	0.66					Drug efficacy [0-1]
 drugEff2	0.99					Drug efficacy drug 2 [0-1]
 drugName1	A					Name of 1st drug used
 drugName2	IDA					Name of 2nd drug used
