@@ -53,9 +53,13 @@ def readParam(fileName: str) -> Dict[str, Any]:
         dictionary containing the parameter names and values;
     """
 
-    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
+    if not os.path.isabs(fileName):
+        fileName = os.path.join(
+            pkg_resources.resource_filename("sch_simulation", "data"),
+            fileName
+        )
 
-    with open(DATA_PATH + fileName) as f:
+    with open(fileName) as f:
         contents = f.readlines()
 
     return params_from_contents(contents)
@@ -103,9 +107,13 @@ def parse_coverage_input(
     """
 
     # read in Coverage spreadsheet
-    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
+    if not os.path.isabs(coverageFileName):
+        coverageFileName = os.path.join(
+            pkg_resources.resource_filename("sch_simulation", "data"),
+            coverageFileName
+        )
     PlatCov = pd.read_excel(
-        DATA_PATH + coverageFileName, sheet_name="Platform Coverage"
+        coverageFileName, sheet_name="Platform Coverage"
     )
     # which rows are for MDA and vaccine
     intervention_array = PlatCov["Intervention Type"]
