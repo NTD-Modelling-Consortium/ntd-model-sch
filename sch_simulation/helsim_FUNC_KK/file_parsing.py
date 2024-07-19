@@ -272,7 +272,7 @@ def parse_coverage_input(
                 Vacc_txt = Vacc_txt + str(VaccCoverages[k]) + " "
 
     # read in market share data
-    MarketShare = pd.read_excel(DATA_PATH + coverageFileName, sheet_name="MarketShare")
+    MarketShare = pd.read_excel(coverageFileName, sheet_name="MarketShare")
     # find which rows store data for MDAs
     MDAMarketShare = np.where(np.array(MarketShare["Platform"] == "MDA"))[0]
     # initialize variable to store which drug is being used
