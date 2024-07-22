@@ -126,3 +126,4 @@ dmypy.json
 sch_vaccine_branch_no_vaccine.csv
 sch_vaccine_branch_vaccine.csv
 Man_MDA_vacc*.txt
+Man_MDA_test*.txt

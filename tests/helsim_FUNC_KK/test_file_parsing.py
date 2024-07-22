@@ -33,7 +33,7 @@ example_parameters = FixedParameters(
 def test_valid_input():
 
     input_file = 'test_inputs/InputMDA_MTP_7.xlsx'
-    output_file = 'cov_file_test.txt'
+    output_file = 'Man_MDA_test.txt'
 
     parse_coverage_input(
         input_file,
@@ -53,7 +53,7 @@ def test_valid_input():
 def test_coverage_file_where_drug2_has_only_one_year():
 
     input_file = 'test_inputs/InputMDA_MTP_8.xlsx'
-    output_file = 'cov_file_inv_test.txt'
+    output_file = 'Man_MDA_test_drug2_only_one_year.txt'
 
     parse_coverage_input(
         input_file,
@@ -72,7 +72,7 @@ def test_coverage_file_where_drug2_has_only_one_year():
 def test_coverage_file_with_single_coverage_value_for_mda():
 
     input_file = 'test_inputs/InputMDA_MTP_1378.xlsx'
-    output_file = 'cov_file_bb_test.txt'
+    output_file = 'Man_MDA_test_single_coverage.txt'
 
     parse_coverage_input(
         input_file,
