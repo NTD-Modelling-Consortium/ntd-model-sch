@@ -69,7 +69,7 @@ def test_coverage_file_where_drug2_has_only_one_year():
     assert params.drug2Split[0] == 1.0
     npt.assert_array_equal(params.drug2Split, [ 1.0 ])
 
-def test_coverage_file_big_batch():
+def test_coverage_file_with_single_coverage_value_for_mda():
 
     input_file = 'test_inputs/InputMDA_MTP_1378.xlsx'
     output_file = 'cov_file_bb_test.txt'
