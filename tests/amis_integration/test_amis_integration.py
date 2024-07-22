@@ -4,6 +4,8 @@ import pandas as pd
 from pandas import testing as pdt
 from numpy import testing as npt
 
+from sch_simulation.helsim_FUNC_KK.file_parsing import parse_coverage_input
+
 example_parameters = FixedParameters(
         # the higher the value of N, the more consistent the results will be
         # though the longer the simulation will take
@@ -27,6 +29,11 @@ example_parameters = FixedParameters(
     )
 
 def test_running_model_produces_consistent_result():
+    parse_coverage_input(
+        example_parameters.coverage_file_name,
+        example_parameters.coverage_text_file_storage_name,
+    )
+
     results_with_seed1 = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
     print(results_with_seed1['draw_1'])
     expected_prevalance = [0.1, 0.2, 0.3, 0.3, 0.2, 0.0, 0.1, 0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -43,6 +50,11 @@ def test_running_parallel_produces_results():
     npt.assert_array_equal(results, [[0. ],[0.5],[0.4],[0.8]])
 
 def test_running_model_with_different_seed_gives_different_result():
+    parse_coverage_input(
+        example_parameters.coverage_file_name,
+        example_parameters.coverage_text_file_storage_name,
+    )
+
     results_with_seed1 = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
     results_with_seed2 = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=2, fixed_parameters=example_parameters)
     with pytest.raises(AssertionError):
