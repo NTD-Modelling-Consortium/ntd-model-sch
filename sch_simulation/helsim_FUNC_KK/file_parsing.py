@@ -401,7 +401,7 @@ def readCoverageFile(
         cov = Coverage(
             Age=coverage["MDA_age" + str(i + 1)],
             Years=coverage["MDA_Years" + str(i + 1)] - coverage["start_year"],
-            Coverage=coverage["MDA_Coverage" + str(i + 1)],
+            Coverage=np.array(coverage["MDA_Coverage" + str(i + 1)], ndmin=1),
             Label=i + 1,
 
         )
@@ -419,9 +419,9 @@ def readCoverageFile(
         vacc_covs.append(cov)
     params.Vacc = vacc_covs
     params.drug1Years = np.array(coverage["drug1Years"] - coverage["start_year"])
-    params.drug1Split = np.array(coverage["drug1Split"])
+    params.drug1Split = np.array(coverage["drug1Split"], ndmin=1)
     params.drug2Years = np.array(coverage["drug2Years"] - coverage["start_year"])
-    params.drug2Split = np.array(coverage["drug2Split"])
+    params.drug2Split = np.array(coverage["drug2Split"], ndmin=1)
     return params
 
 
