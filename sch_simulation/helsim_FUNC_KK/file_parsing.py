@@ -1,4 +1,5 @@
 import copy
+import os
 import warnings
 from typing import Any, Dict, List, Tuple, Union
 
@@ -53,9 +54,13 @@ def readParam(fileName: str) -> Dict[str, Any]:
         dictionary containing the parameter names and values;
     """
 
-    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
+    if not os.path.isabs(fileName):
+        fileName = os.path.join(
+            pkg_resources.resource_filename("sch_simulation", "data"),
+            fileName
+        )
 
-    with open(DATA_PATH + fileName) as f:
+    with open(fileName) as f:
         contents = f.readlines()
 
     return params_from_contents(contents)
@@ -103,9 +108,13 @@ def parse_coverage_input(
     """
 
     # read in Coverage spreadsheet
-    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
+    if not os.path.isabs(coverageFileName):
+        coverageFileName = os.path.join(
+            pkg_resources.resource_filename("sch_simulation", "data"),
+            coverageFileName
+        )
     PlatCov = pd.read_excel(
-        DATA_PATH + coverageFileName, sheet_name="Platform Coverage"
+        coverageFileName, sheet_name="Platform Coverage"
     )
     # which rows are for MDA and vaccine
     intervention_array = PlatCov["Intervention Type"]
@@ -263,7 +272,7 @@ def parse_coverage_input(
                 Vacc_txt = Vacc_txt + str(VaccCoverages[k]) + " "
 
     # read in market share data
-    MarketShare = pd.read_excel(DATA_PATH + coverageFileName, sheet_name="MarketShare")
+    MarketShare = pd.read_excel(coverageFileName, sheet_name="MarketShare")
     # find which rows store data for MDAs
     MDAMarketShare = np.where(np.array(MarketShare["Platform"] == "MDA"))[0]
     # initialize variable to store which drug is being used
