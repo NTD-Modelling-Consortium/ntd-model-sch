@@ -1,8 +1,8 @@
 
 # on cluster:
-# id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 # for testing:
-id = 1
+#id = 16
 # should be "ascaris", "hookworm" or "trichuris"
 species = "ascaris"
 
@@ -27,7 +27,9 @@ fixed_parameters <- sch_simulation$FixedParameters(
     # though the longer the simulation will take
     number_hosts = 500L,
     # no intervention
-    coverage_file_name = paste0("endgame_inputs/InputMDA_MTP_",id,".xlsx"),
+    coverage_file_name = ifelse(species=="trichuris",
+                                paste0("endgame_inputs/InputMDA_MTP_trichuris_",id,".xlsx"),
+                                paste0("endgame_inputs/InputMDA_MTP_",id,".xlsx")),
     demography_name = "UgandaRural",
     # cset the survey type to Kato Katz with duplicate slide
     survey_type = "KK2",
@@ -65,7 +67,7 @@ prior = Prior
 
 # Algorithm parameters
 amis_params<-default_amis_params()
-amis_params$max_iters=12
+amis_params$max_iters=50
 amis_params$n_samples=1000
 amis_params$target_ess =500
 amis_params$sigma=0.0025
@@ -76,7 +78,7 @@ amis_params$boundaries_param = matrix(c(R_lb,k_lb,R_ub,k_ub),ncol=2)
 # commented out to pass Github tests (maybe this is bad practice...)
 trajectories = c() # save simulated trajectories as code is running
 if (!dir.exists("../trajectories")) {dir.create("../trajectories")}
-ssave(trajectories,file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
+save(trajectories,file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
 
 # Run AMIS
 st<-Sys.time()
