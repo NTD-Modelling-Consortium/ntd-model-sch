@@ -4,7 +4,6 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters
 
 
 def epgPerPerson(x: np.ndarray, params: Parameters) -> np.ndarray:
-
     """
     This function calculates the total eggs per gram as
     a function of the mean worm burden.
@@ -26,7 +25,6 @@ def epgPerPerson(x: np.ndarray, params: Parameters) -> np.ndarray:
 
 
 def fertilityFunc(x: np.ndarray, params: Parameters) -> np.ndarray:
-
     """
     This function calculates the multiplicative fertility correction factor
     to be applied to the mean eggs per person function.
@@ -47,7 +45,6 @@ def fertilityFunc(x: np.ndarray, params: Parameters) -> np.ndarray:
 
 
 def monogFertilityFuncApprox(x: float, params: Parameters):
-
     """
     This function calculates the fertility factor for monogamously mating worms.
 
@@ -62,11 +59,9 @@ def monogFertilityFuncApprox(x: float, params: Parameters):
     """
     assert params.monogParams is not None
     if x > 25 * params.k:
-
         return 1 - params.monogParams.c_k / np.sqrt(x)
 
     else:
-
         g = x / (x + params.k)
         integrand = (1 - params.monogParams.cosTheta) * (
             1 + float(g) * params.monogParams.cosTheta
@@ -77,7 +72,6 @@ def monogFertilityFuncApprox(x: float, params: Parameters):
 
 
 def epgMonog(x: np.ndarray, params: Parameters) -> np.ndarray:
-
     """
     This function calculates the generation of eggs with monogamous
     reproduction taken into account.
@@ -95,7 +89,6 @@ def epgMonog(x: np.ndarray, params: Parameters) -> np.ndarray:
 
 
 def epgFertility(x: np.ndarray, params: Parameters) -> np.ndarray:
-
     """
     This function calculates the generation of eggs with
     sexual reproduction taken into account.
