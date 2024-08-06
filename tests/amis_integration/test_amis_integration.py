@@ -36,8 +36,8 @@ def test_running_model_produces_consistent_result():
 
     results_with_seed1 = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
     print(results_with_seed1['draw_1'])
-    expected_prevalance = [0.1, 0.2, 0.3, 0.3, 0.2, 0.0, 0.1, 0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    pdt.assert_series_equal(results_with_seed1['draw_1'], pd.Series(expected_prevalance, name="draw_1"))
+    expected_prevalence = [0.1, 0.2, 0.3, 0.3, 0.2, 0.0, 0.1, 0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    pdt.assert_series_equal(results_with_seed1['draw_1'], pd.Series(expected_prevalence, name="draw_1"))
 
 def test_running_parallel_produces_results():
     results = run_model_with_parameters(
