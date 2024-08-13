@@ -1,6 +1,6 @@
 import os
 import pytest
-from sch_simulation.amis_integration.amis_integration import extract_relevant_results, returnYearlyPrevalenceEstimate, FixedParameters, run_model_with_parameters
+from sch_simulation.amis_integration.amis_integration import StateSnapshotConfig, extract_relevant_results, returnYearlyPrevalenceEstimate, FixedParameters, run_model_with_parameters
 import pandas as pd
 from pandas import testing as pdt
 from numpy import testing as npt
@@ -57,10 +57,38 @@ def test_running_save_state_saves_state():
         fixed_parameters=example_parameters,
         year_indices=[23],
         num_parallel_jobs=2,
-        should_save_state=True,
+        final_state_config=StateSnapshotConfig(),
     )
     assert os.path.exists("final_state_0.pickle")
     os.remove("final_state_0.pickle")
+
+
+def test_running_save_state_saves_state_in_nested_dir():
+    _ = run_model_with_parameters(
+        seeds=[1],
+        parameters=[(3.0, 0.3)],
+        fixed_parameters=example_parameters,
+        year_indices=[23],
+        num_parallel_jobs=2,
+        final_state_config=StateSnapshotConfig(
+            directory="nested_dir", name_prefix="file_prefix"
+        ),
+    )
+    assert os.path.exists("nested_dir/file_prefix_0.pickle")
+    os.remove("nested_dir/file_prefix_0.pickle")
+    os.rmdir("nested_dir/")
+
+def test_running_None_save_state_does_not_save_state():
+    _ = run_model_with_parameters(
+        seeds=[1],
+        parameters=[(3.0, 0.3)],
+        fixed_parameters=example_parameters,
+        year_indices=[23],
+        num_parallel_jobs=2,
+        final_state_prefix=None,
+    )
+    assert not os.path.exists("_0.pickle")
+
 
 def test_running_model_with_different_seed_gives_different_result():
     parse_coverage_input(
