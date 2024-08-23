@@ -5,6 +5,7 @@ id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 #id = 16
 # should be "ascaris", "hookworm" or "trichuris"
 species = "ascaris"
+task = "fitting"
 
 library(dplyr)
 library(AMISforInfectiousDiseases)
