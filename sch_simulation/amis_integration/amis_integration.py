@@ -119,8 +119,8 @@ def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices,
     results, end_state = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
 
     end_time = time.time()
-    if include_output:
-        print(f'Run R0: {R0}, k: {k} took {end_time-start_time:10.2f} seconds')
+    # if include_output:
+      #  print(f'Run R0: {R0}, k: {k} took {end_time-start_time:10.2f} seconds')
 
     return extract_relevant_results(results, year_indices), end_state
 

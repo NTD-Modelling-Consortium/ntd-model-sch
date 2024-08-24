@@ -14,10 +14,11 @@ library(AMISforInfectiousDiseases)
 source("./sch_simulation/amis_integration/amis_integration.R")
 
 args <- commandArgs(trailingOnly=TRUE)
-num_cores_to_use <- parallel::detectCores()
+# num_cores_to_use <- parallel::detectCores()
 if(length(args) == 1) {
     num_cores_to_use <- as.integer(args)
 }
+# num_cores_to_use <- 2
 
 print(paste0('Using ', num_cores_to_use, ' cores'))
 
@@ -100,6 +101,10 @@ save(amis_output,file=paste0("../AMIS_output/",species,"_amis_output",id,".Rdata
 # don't know where the weights need to be set
 # "No weight on any particles for locations in the active set."
 print(amis_output)
+
+summary(amis_output)
+cat("--------------------- \n")
+print(paste0("AMIS run time: ", round(dur_amis, digits=2), " minutes"))
 
 # save summary
 ess<-amis_output$ess
