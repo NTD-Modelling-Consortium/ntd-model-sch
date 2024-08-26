@@ -1,8 +1,8 @@
 
 # on cluster:
-#id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 # for testing:
-id = 1
+# id = 1
 # should be "ascaris", "hookworm" or "trichuris"
 species = "ascaris"
 task = "projections"
@@ -15,10 +15,11 @@ library(dplyr)
 source("./sch_simulation/amis_integration/amis_integration.R")
 
 args <- commandArgs(trailingOnly=TRUE)
-num_cores_to_use <- parallel::detectCores()
+# num_cores_to_use <- parallel::detectCores()
 if(length(args) == 1) {
     num_cores_to_use <- as.integer(args)
 }
+# num_cores_to_use <- 2
 
 print(paste0('Using ', num_cores_to_use, ' cores'))
 
@@ -40,23 +41,23 @@ prevalence_map = lapply(1:length(prevalence_map), function(t){
 n_tims = length(prevalence_map)
 
 st<-Sys.time()
-# load IUs and iu_task_lookup
+# load IUs and proj_iu_task_lookup
+load("../Maps/proj_iu_task_lookup.rds") # for projections, it's the same for the 3 species
 if (species=="trichuris"){
-    load("../Maps/iu_task_lookup_trichuris.rds")
     ius_list=read.csv(paste0("sch_simulation/data/endgame_inputs/IUs_MTP_projections_trichuris_",id,".csv"), header=F)
 } else {
-    load("../Maps/iu_task_lookup_sth.rds")
     ius_list=read.csv(paste0("sch_simulation/data/endgame_inputs/IUs_MTP_projections_",id,".csv"), header=F)
 }
 
 # run projections for each iu
 for (iu in ius_list){
-    fitting_id = iu_task_lookup$TaskID[which(iu_task_lookup$IU_2021 == iu)]
+    fitting_id = proj_iu_task_lookup$TaskID[which(proj_iu_task_lookup$IU_2021 == iu)]
     
     #for testing
-    seeds = 1:10
-    params = cbind(R0=runif(10,1.2,2),
-                   k=runif(10,0.3,0.5))
+    num_seeds = 10
+    seeds = 1:num_seeds
+    params = cbind(R0=runif(num_seeds,1.2,2),
+                   k=runif(num_seeds,0.3,0.5))
     #for real!
     #sampled_params = load(paste0("../data/endgame_inputs/sampled_params_",iu,".csv"))
     #seeds = sampled_params[,1]
@@ -90,7 +91,7 @@ for (iu in ius_list){
         directory = "projections", name_prefix = paste0("projections_",species,"_",iu)
     )
 
-    transmission_model = build_transmission_model(prevalence_map, fixed_parameters, year_indices, num_cores_to_use, final_state_config = final_state_config)
+    transmission_model = build_transmission_model(prevalence_map, fixed_parameters, year_indices, num_cores_to_use, final_state_config)
 
     # Run projections
     projections <- transmission_model(seeds, params, n_tims)
