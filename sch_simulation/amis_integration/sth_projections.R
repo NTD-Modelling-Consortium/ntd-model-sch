@@ -4,7 +4,7 @@ id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 # for testing:
 # id = 1
 # should be "ascaris", "hookworm" or "trichuris"
-species = "ascaris"
+species = "trichuris"
 task = "projections"
 
 set.seed(id*3)
@@ -15,11 +15,12 @@ library(dplyr)
 source("./sch_simulation/amis_integration/amis_integration.R")
 
 args <- commandArgs(trailingOnly=TRUE)
-# num_cores_to_use <- parallel::detectCores()
 if(length(args) == 1) {
     num_cores_to_use <- as.integer(args)
+}else{
+    ## for testing
+    num_cores_to_use <- 1
 }
-# num_cores_to_use <- 2
 
 print(paste0('Using ', num_cores_to_use, ' cores'))
 
@@ -41,27 +42,24 @@ prevalence_map = lapply(1:length(prevalence_map), function(t){
 n_tims = length(prevalence_map)
 
 st<-Sys.time()
+
 # load IUs and proj_iu_task_lookup
-load("../Maps/proj_iu_task_lookup.rds") # for projections, it's the same for the 3 species
-if (species=="trichuris"){
-    ius_list=read.csv(paste0("sch_simulation/data/endgame_inputs/IUs_MTP_projections_trichuris_",id,".csv"), header=F)
-} else {
-    ius_list=read.csv(paste0("sch_simulation/data/endgame_inputs/IUs_MTP_projections_",id,".csv"), header=F)
-}
+load("../Maps/proj_iu_task_lookup.rds") # this loads proj_iu_task_lookup. It is for projections, and it is the same for the 3 species
+ius_list <- sort(unique(proj_iu_task_lookup$IU_2021[proj_iu_task_lookup$TaskID==id]))
 
 # run projections for each iu
 for (iu in ius_list){
-    fitting_id = proj_iu_task_lookup$TaskID[which(proj_iu_task_lookup$IU_2021 == iu)]
-    
-    #for testing
-    num_seeds = 10
-    seeds = 1:num_seeds
-    params = cbind(R0=runif(num_seeds,1.2,2),
-                   k=runif(num_seeds,0.3,0.5))
-    #for real!
-    #sampled_params = load(paste0("../data/endgame_inputs/sampled_params_",iu,".csv"))
-    #seeds = sampled_params[,1]
-    #params = sampled_params[,2:3]
+ 
+    ## for testing
+    # num_seeds = 10
+    # seeds = 1:num_seeds
+    # params = cbind(R0=runif(num_seeds,1.2,2),
+    #	 	     k=runif(num_seeds,0.3,0.5))
+
+    ## for real!
+    sampled_params = read.csv(paste0("~/NTDs/STH/post_AMIS_analysis/InputPars_MTP_",species,"/InputPars_MTP_",iu,".csv"))
+    seeds = sampled_params[,"seed"]
+    params = as.matrix(sampled_params[,c("R0","k")])
 
     fixed_parameters <- sch_simulation$FixedParameters(
         # the higher the value of N, the more consistent the results will be
@@ -69,8 +67,8 @@ for (iu in ius_list){
         number_hosts = 500L,
         # no intervention
         coverage_file_name = ifelse(species=="trichuris",
-                                    paste0("endgame_inputs/InputMDA_MTP_projections_trichuris_",fitting_id,".xlsx"),
-                                    paste0("endgame_inputs/InputMDA_MTP_projections_",fitting_id,".xlsx")),
+                                    paste0("endgame_inputs/InputMDA_MTP_projections_trichuris_",id,".xlsx"),
+                                    paste0("endgame_inputs/InputMDA_MTP_projections_",id,".xlsx")),
         demography_name = "UgandaRural",
         # cset the survey type to Kato Katz with duplicate slide
         survey_type = "KK2",
@@ -99,3 +97,4 @@ for (iu in ius_list){
 
 en<-Sys.time()
 print(as.numeric(difftime(en,st,units="mins")))
+

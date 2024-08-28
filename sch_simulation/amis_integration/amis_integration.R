@@ -33,9 +33,10 @@ build_transmission_model <- function(prevalence_map, fixed_parameters, year_indi
       load(paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
       trajectories =  rbind(trajectories,output)
       save(trajectories, file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
-    }else if(task=="projections"){
-      load(paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
-      trajectories =  rbind(trajectories,output)
+    }
+    
+    if(task=="projections"){
+      trajectories = output
       save(trajectories, file=paste0("../trajectories/proj_trajectories_",id,"_",species,".Rdata"))
     }
     
