@@ -35,7 +35,7 @@ def test_running_model_produces_consistent_result():
         example_parameters.coverage_text_file_storage_name,
     )
 
-    results_with_seed1 = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
+    results_with_seed1, _ = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
     print(results_with_seed1['draw_1'])
     expected_prevalence = [0.1, 0.2, 0.3, 0.3, 0.2, 0.0, 0.1, 0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     pdt.assert_series_equal(results_with_seed1['draw_1'], pd.Series(expected_prevalence, name="draw_1"))
@@ -85,7 +85,7 @@ def test_running_None_save_state_does_not_save_state():
         fixed_parameters=example_parameters,
         year_indices=[23],
         num_parallel_jobs=2,
-        final_state_prefix=None,
+        final_state_config=None,
     )
     assert not os.path.exists("_0.pickle")
 
