@@ -162,12 +162,12 @@ def run_model_with_parameters(
             os.makedirs(final_state_config.directory)
         final_states = list(map(lambda run_result: run_result[1], run_results))
         print("Saving pickle files")
-        for index, final_state in enumerate(final_states):
-            with open(
-                f"{final_state_config.directory}/{final_state_config.name_prefix}_{index}.pickle",
+        with open(
+                f"{final_state_config.directory}/{final_state_config.name_prefix}.p",
                 "wb",
             ) as pickle_file:
-                pickle.dump(final_state, pickle_file)
+                pickle.dump(final_states, pickle_file)
+            
 
     os.remove(fixed_parameters.coverage_text_file_storage_name)
 
