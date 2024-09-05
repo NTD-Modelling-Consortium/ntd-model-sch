@@ -85,10 +85,8 @@ test_that("Runnig the simulation and requesting saving the state saves the state
 
     tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices, 2, final_state_config = final_state_config)
     result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.3, 0.3), ncol = 2), 1)
-    expect_true(file.exists("nested_dir/file_prefix_0.pickle"))
-    expect_true(file.exists("nested_dir/file_prefix_1.pickle"))
-    file.remove("nested_dir/file_prefix_0.pickle")
-    file.remove("nested_dir/file_prefix_1.pickle")
+    expect_true(file.exists("nested_dir/file_prefix.p"))
+    file.remove("nested_dir/file_prefix.p")
     unlink("nested_dir")
 })
 
