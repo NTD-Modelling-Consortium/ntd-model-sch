@@ -51,7 +51,7 @@ class FixedParameters:
 @dataclass(eq=True, frozen=True)
 class StateSnapshotConfig:
     directory: str = "."
-    name_prefix: str = "final_state"
+    name: str = "final_state"
 
 
 def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameters):
@@ -163,7 +163,7 @@ def run_model_with_parameters(
         final_states = list(map(lambda run_result: run_result[1], run_results))
         print("Saving pickle files")
         with open(
-                f"{final_state_config.directory}/{final_state_config.name_prefix}.p",
+                f"{final_state_config.directory}/{final_state_config.name}.p",
                 "wb",
             ) as pickle_file:
                 pickle.dump(final_states, pickle_file)
