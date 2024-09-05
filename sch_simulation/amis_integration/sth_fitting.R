@@ -5,7 +5,6 @@ id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 #id = 16
 # should be "ascaris", "hookworm" or "trichuris"
 species = "ascaris"
-task = "fitting"
 
 library(dplyr)
 library(AMISforInfectiousDiseases)
@@ -82,11 +81,28 @@ trajectories = c() # save simulated trajectories as code is running
 if (!dir.exists("../trajectories")) {dir.create("../trajectories")}
 save(trajectories,file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
 
+
+python_model <- build_transmission_model(prevalence_map, fixed_parameters, year_indices_all, num_cores_to_use)
+
+model_with_post_processing <- function(seeds, params, n_tims) {
+    all_results <- python_model(seeds, params, n_tims)
+    colnames(all_results) <- year_indices_all
+    load(paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
+    trajectories =  rbind(trajectories,output)
+    save(trajectories, file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
+
+    # Filter to the years the fitting is actually interested in after doing
+    # whatever we want with every intermediate year.
+    # drop = FALSE required incase year_indices is just one as then this
+    # becomes a vector rather than a matrix
+    return(all_results[,colnames(all_results) %in% year_indices, drop = FALSE])
+}
+
 # Run AMIS
 st<-Sys.time()
 amis_output <- AMISforInfectiousDiseases::amis(
     prevalence_map,
-    build_transmission_model(prevalence_map, fixed_parameters, year_indices, num_cores_to_use),
+    model_with_post_processing
     prior,
     amis_params,
     seed = id
@@ -114,4 +130,3 @@ n_failure<-length(failures)
 if (n_failure>0) {cat(paste(failures,id,ess[failures]),file = paste0("../ESS_NOT_REACHED_",species,".txt"),sep = "\n", append = TRUE)}
 if (!file.exists(paste0("../summary_",species,".csv"))) {cat("ID,n_failure,n_success,n_sim,min_ess,duration_amis,durarion_subsampling\n",file=paste0("../summary_",species,".csv"))}
 cat(id,n_failure,n_success,length(amis_output$seeds),min(ess),dur_amis,NA,"\n",sep=",",file=paste0("../summary_",species,".csv"),append=TRUE)
-

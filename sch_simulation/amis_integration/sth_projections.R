@@ -5,7 +5,6 @@ id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 # id = 1
 # should be "ascaris", "hookworm" or "trichuris"
 species = "trichuris"
-task = "projections"
 
 set.seed(id*3)
 
@@ -89,12 +88,17 @@ for (iu in ius_list){
         directory = "projections", name_prefix = paste0("projections_",species,"_",iu)
     )
 
-    transmission_model = build_transmission_model(prevalence_map, fixed_parameters, year_indices, num_cores_to_use, final_state_config)
+    year_indices_all = min(year_indices):max(year_indices)
+    transmission_model = build_transmission_model(prevalence_map, fixed_parameters, year_indices_all, num_cores_to_use, final_state_config)
 
     # Run projections
-    projections <- transmission_model(seeds, params, n_tims)
+    all_years_result <- transmission_model(seeds, params, n_tims)
+    colnames(all_years_result) <- year_indices_all
+    trajectories = output
+    save(trajectories, file=paste0("../trajectories/proj_trajectories_",id,"_",species,".Rdata"))
+
+    projections <- all_years_result[,colnames(output) %in% year_indices, drop = FALSE]
 }
 
 en<-Sys.time()
 print(as.numeric(difftime(en,st,units="mins")))
-
