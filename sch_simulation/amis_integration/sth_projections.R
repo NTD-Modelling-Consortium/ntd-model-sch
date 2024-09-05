@@ -85,7 +85,7 @@ for (iu in ius_list){
     )
 
     final_state_config <- sch_simulation$StateSnapshotConfig(
-        directory = "projections", name_prefix = paste0("projections_",species,"_",iu)
+        directory = "projections", name = paste0("projections_",species,"_",iu)
     )
 
     year_indices_all = min(year_indices):max(year_indices)

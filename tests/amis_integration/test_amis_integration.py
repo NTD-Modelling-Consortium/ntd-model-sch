@@ -80,11 +80,11 @@ def test_running_save_state_saves_state_in_nested_dir():
         year_indices=[23],
         num_parallel_jobs=2,
         final_state_config=StateSnapshotConfig(
-            directory="nested_dir", name_prefix="file_prefix"
+            directory="nested_dir", name="file"
         ),
     )
-    assert os.path.exists("nested_dir/file_prefix.p")
-    os.remove("nested_dir/file_prefix.p")
+    assert os.path.exists("nested_dir/file.p")
+    os.remove("nested_dir/file.p")
     os.rmdir("nested_dir/")
 
 def test_running_None_save_state_does_not_save_state():
