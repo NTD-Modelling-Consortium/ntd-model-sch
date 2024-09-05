@@ -93,7 +93,6 @@ for (iu in ius_list){
 
     # Run projections
     all_years_result <- transmission_model(seeds, params, n_tims)
-    colnames(all_years_result) <- year_indices_all
     trajectories = output
     save(trajectories, file=paste0("../trajectories/proj_trajectories_",id,"_",species,".Rdata"))
 

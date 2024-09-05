@@ -90,7 +90,6 @@ python_model <- build_transmission_model(prevalence_map, fixed_parameters, year_
 
 model_with_post_processing <- function(seeds, params, n_tims) {
     all_results <- python_model(seeds, params, n_tims)
-    colnames(all_results) <- year_indices_all
     # TODO: unknown what task this should be
 
     # Filter to the years the fitting is actually interested in after doing

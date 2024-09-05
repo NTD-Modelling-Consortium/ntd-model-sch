@@ -26,6 +26,7 @@ build_transmission_model <- function(prevalence_map, fixed_parameters, year_indi
       # automatically be converted into a scalar
       seeds, params, fixed_parameters, as.array(year_indices), as.integer(num_cores), final_state_config
     )
+    colnames(output) <- year_indices
     return(output)
   }
 
