@@ -20,7 +20,7 @@ np.seterr(divide="ignore")
 
 # When running a single simulation the output is always put in a column called
 # draw_1.
-OUTPUT_COLUMN_NAME = "draw_1"
+OUTPUT_COLUMN_NAME = "SAC Prevalence"
 
 def extractHostData(results: List[List[Result]]) -> List[ProcResult]:
 
