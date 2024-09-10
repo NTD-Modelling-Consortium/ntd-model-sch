@@ -128,3 +128,4 @@ sch_vaccine_branch_vaccine.csv
 Man_MDA_vacc*.txt
 Man_MDA_test*.txt
 projections/
+sch_simulation/data/endgame_inputs/
