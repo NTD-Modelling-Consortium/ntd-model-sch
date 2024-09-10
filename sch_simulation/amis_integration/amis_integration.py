@@ -93,7 +93,7 @@ def extract_relevant_results(
 
     relevant_rows = results["Time"].isin(relevant_years)
     prevalence_for_relevant_years = pd.Series(
-        data=results[relevant_rows][results_processing.OUTPUT_COLUMN_NAME],
+        data=results[relevant_rows]["SAC Prevalence"],
         index=relevant_years,
         name="Prevalence",
     )
