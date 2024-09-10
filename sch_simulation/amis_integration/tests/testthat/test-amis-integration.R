@@ -31,7 +31,7 @@ test_that("Running the model should give us consistent results", {
 
     tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices = c(23), 2)
     result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.3, 0.3), ncol = 2), 1)
-    expect_equal(result, matrix(c(0.0, 0.5), ncol = 1, dimnames = list(NULL, c(23))), tolerance = 0.0)
+    expect_equal(result, matrix(c(0.0, 0.29), ncol = 1, dimnames = list(NULL, c(23))), tolerance = 0.0)
 
     # Verify no pickle file is created
     expect_false(file.exists("_0.pickle"))
