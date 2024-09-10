@@ -18,6 +18,7 @@ from joblib import Parallel, delayed
 import sch_simulation.helsim_RUN_KK
 
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
+import sch_simulation.helsim_FUNC_KK.prevalence_column_names as prevalence_column_names
 
 @dataclass(eq=True, frozen=True)
 class FixedParameters:
@@ -93,7 +94,7 @@ def extract_relevant_results(
 
     relevant_rows = results["Time"].isin(relevant_years)
     prevalence_for_relevant_years = pd.Series(
-        data=results[relevant_rows]["SAC Prevalence"],
+        data=results[relevant_rows][prevalence_column_names.SAC_PREVALENCE],
         index=relevant_years,
         name="Prevalence",
     )
