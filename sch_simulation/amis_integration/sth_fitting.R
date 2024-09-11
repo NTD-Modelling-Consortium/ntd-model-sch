@@ -86,7 +86,7 @@ python_model <- build_transmission_model(prevalence_map, fixed_parameters, year_
 model_with_post_processing <- function(seeds, params, n_tims) {
     all_results <- python_model(seeds, params, n_tims)
     load(paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
-    trajectories =  rbind(trajectories,output)
+    trajectories =  rbind(trajectories, all_results)
     save(trajectories, file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
 
     # Filter to the years the fitting is actually interested in after doing
