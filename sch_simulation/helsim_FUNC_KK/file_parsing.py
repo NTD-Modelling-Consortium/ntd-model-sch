@@ -401,6 +401,7 @@ def readCoverageFile(
         cov = Coverage(
             Age=coverage["MDA_age" + str(i + 1)],
             Years=coverage["MDA_Years" + str(i + 1)] - coverage["start_year"],
+            # We must specify ndmin=1 here as single values are converted to 0d arryas by default
             Coverage=np.array(coverage["MDA_Coverage" + str(i + 1)], ndmin=1),
             Label=i + 1,
 

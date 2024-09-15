@@ -1,0 +1,5 @@
+TIME = "Time"
+SAC_PREVALENCE = "SAC Prevalence"
+ADULT_PREVALENCE = "Adult Prevalence"
+SAC_HEAVY_INTENSITY_PREVALENCE = "SAC Heavy Intensity Prevalence"
+ADULT_HEAVY_INTENSITY_PREVALENCE = "Adult Heavy Intensity Prevalence"

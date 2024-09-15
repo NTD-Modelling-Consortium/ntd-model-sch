@@ -774,6 +774,8 @@ def getPrevalence(
     Returns
     -------
     data frame with SAC and adult prevalence at each time point;
+    See prevalence_column_names for the names of the columns that are
+    present in this dataframe.
     """
 
     sac_results = np.array(

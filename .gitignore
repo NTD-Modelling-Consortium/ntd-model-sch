@@ -126,6 +126,6 @@ dmypy.json
 sch_vaccine_branch_no_vaccine.csv
 sch_vaccine_branch_vaccine.csv
 Man_MDA_vacc*.txt
-InputMDA_MTP_projections_*.xlsx
+Man_MDA_test*.txt
 projections/
 sch_simulation/data/endgame_inputs/
