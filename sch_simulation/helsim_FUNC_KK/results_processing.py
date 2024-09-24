@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from numpy import ndarray
 from numpy.typing import NDArray
-
+import copy
 from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     Parameters,
     ProcResult,
