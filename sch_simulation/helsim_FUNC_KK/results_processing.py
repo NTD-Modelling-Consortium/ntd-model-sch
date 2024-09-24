@@ -612,17 +612,12 @@ def getBurdens(
     mean_eggs = np.empty((0, numReps))
     for t in range(len(hostData[0].timePoints)):  # loop over time points
         # calculate burdens using the same sample
-        #newrow = np.array(
-        #  getSampledDetectedPrevByVillageAll(
-        #        hostData, t, ageBand, params, Unfertilized, surveyType, nSamples, villageSampleSize
-        #    )
-        #)
-        
         newrow = np.array(
-            getSampledDetectedPrevByVillageAll(
-                hostData, t, ageBand, params, Unfertilized, surveyType, 1, villageSampleSize
-            )
+         getSampledDetectedPrevByVillageAll(
+               hostData, t, ageBand, params, Unfertilized, surveyType, nSamples, villageSampleSize
+           )
         )
+        
         newrowinfected = newrow[:, 0]
         newrowlow = newrow[:, 1]
         newrowmedium = newrow[:, 2]
