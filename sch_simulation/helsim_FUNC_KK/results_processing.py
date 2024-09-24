@@ -1643,11 +1643,9 @@ def constructNTDMCResultsAcrossAllSims(params, res, surveyType, startYear):
 
     # unpack results from the simulation here. These will be called to extract data from later
     results = [ item[ 0 ] for item in res ]
-    allSD = [ item[ 1 ] for item in res ]
     for i in range(len(results)):
 
         singleSimResult = results[i]
-        SD = allSD[i]
 
         _, _, _, dfSAC = returnNTDMCOutputForOneSim(params, singleSimResult, [5, 15], "SAC", startYear, surveyType = surveyType)
         _, _, _, dfAll = returnNTDMCOutputForOneSim(params, singleSimResult, [0,100], "Whole Population", startYear, surveyType = surveyType)
