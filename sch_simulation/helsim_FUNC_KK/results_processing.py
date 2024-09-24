@@ -617,7 +617,7 @@ def getBurdens(
         #        hostData, t, ageBand, params, Unfertilized, surveyType, nSamples, villageSampleSize
         #    )
         #)
-
+        
         newrow = np.array(
             getSampledDetectedPrevByVillageAll(
                 hostData, t, ageBand, params, Unfertilized, surveyType, 1, villageSampleSize
