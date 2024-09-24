@@ -612,17 +612,12 @@ def getBurdens(
     mean_eggs = np.empty((0, numReps))
     for t in range(len(hostData[0].timePoints)):  # loop over time points
         # calculate burdens using the same sample
-        #newrow = np.array(
-        #  getSampledDetectedPrevByVillageAll(
-        #        hostData, t, ageBand, params, Unfertilized, surveyType, nSamples, villageSampleSize
-        #    )
-        #)
-        
         newrow = np.array(
-            getSampledDetectedPrevByVillageAll(
-                hostData, t, ageBand, params, Unfertilized, surveyType, nSamples, villageSampleSize
-            )
+         getSampledDetectedPrevByVillageAll(
+               hostData, t, ageBand, params, Unfertilized, surveyType, nSamples, villageSampleSize
+           )
         )
+        
         newrowinfected = newrow[:, 0]
         newrowlow = newrow[:, 1]
         newrowmedium = newrow[:, 2]
@@ -1527,7 +1522,7 @@ def returnIHMEOutputForOneSim(params, results, SD, surveyType, startYear):
 
 
 
-def constructIHMEResultAcrossAllSims(params, res, startYear):
+def constructIHMEResultsAcrossAllSims(params, res, surveyType, startYear):
     """
     This function will return a data frame for IHME containing appropriate data across all simulations
 
@@ -1537,6 +1532,8 @@ def constructIHMEResultAcrossAllSims(params, res, startYear):
         dataclass containing the parameter names and values;
     res: 
         the results from the simulation along with the state of the population
+    surveyType:
+        Type of survey to use. Must be one of "KK1" and "KK2"
     startYear:
         the first year of the simulation. This will be added to simulation time to 
         give the correct data for the data provided
@@ -1553,7 +1550,7 @@ def constructIHMEResultAcrossAllSims(params, res, startYear):
 
         singleSimResult = results[i]
         SD = allSD[i]
-        IHMEoutput = returnIHMEOutputForOneSim(params, singleSimResult, SD, startYear)
+        IHMEoutput = returnIHMEOutputForOneSim(params, singleSimResult, SD, surveyType, startYear)
 
         if i == 0:
             allIHME = IHMEoutput
@@ -1626,7 +1623,7 @@ def returnNTDMCOutputForOneSim(params, results, ageBand, PopType, startYear, pre
     return prevalence, medium_prevalence, heavy_prevalence, df1
 
 
-def constructNTDMCResultsAcrossAllSims(params, res, startYear):
+def constructNTDMCResultsAcrossAllSims(params, res, surveyType, startYear):
     """
     This function will return a data frame for NTDMC containing appropriate data
 
@@ -1636,6 +1633,8 @@ def constructNTDMCResultsAcrossAllSims(params, res, startYear):
         dataclass containing the parameter names and values;
     res: 
         the results from the simulation along with the state of the population
+    surveyType:
+        Type of survey to use. Must be one of "KK1" and "KK2"
     Returns
     -------
      Data frame for NTDMC which contains simpler
@@ -1650,8 +1649,8 @@ def constructNTDMCResultsAcrossAllSims(params, res, startYear):
         singleSimResult = results[i]
         SD = allSD[i]
 
-        _, _, _, dfSAC = returnNTDMCOutputForOneSim(params, singleSimResult, [5, 15], "SAC", startYear)
-        _, _, _, dfAll = returnNTDMCOutputForOneSim(params, singleSimResult, [0,100], "Whole Population", startYear)
+        _, _, _, dfSAC = returnNTDMCOutputForOneSim(params, singleSimResult, [5, 15], "SAC", startYear, surveyType = surveyType)
+        _, _, _, dfAll = returnNTDMCOutputForOneSim(params, singleSimResult, [0,100], "Whole Population", startYear, surveyType = surveyType)
 
         if i == 0:
             NTDMC = pd.concat([dfSAC, dfAll], ignore_index = True)

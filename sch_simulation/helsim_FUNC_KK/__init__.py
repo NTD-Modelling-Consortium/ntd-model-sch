@@ -44,7 +44,9 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
     outputNumberSurveyedAgeGroup,
     outputNumberTreatmentAgeGroup,
     getCostData,
-    getActualCoverages
+    getActualCoverages,
+    constructIHMEResultsAcrossAllSims,
+    constructNTDMCResultsAcrossAllSims
 )
 from sch_simulation.helsim_FUNC_KK.utils import (
     calcRates2, 
