@@ -42,7 +42,9 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
     getPrevalenceWholePop,
     outputNumberInAgeGroup,
     outputNumberSurveyedAgeGroup,
-    outputNumberTreatmentAgeGroup
+    outputNumberTreatmentAgeGroup,
+    getCostData,
+    getActualCoverages
 )
 from sch_simulation.helsim_FUNC_KK.utils import (
     calcRates2, 
