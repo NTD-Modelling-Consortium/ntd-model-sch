@@ -66,8 +66,8 @@ for (iu in ius_list){
         number_hosts = 500L,
         # no intervention
         coverage_file_name = ifelse(species=="trichuris",
-                                    paste0("endgame_inputs/InputMDA_MTP_projections_trichuris_",id,".xlsx"),
-                                    paste0("endgame_inputs/InputMDA_MTP_projections_",id,".xlsx")),
+                                    paste0("endgame_inputs/InputMDA_MTP_projections_trichuris_",iu,".xlsx"),
+                                    paste0("endgame_inputs/InputMDA_MTP_projections_",iu,".xlsx")),
         demography_name = "UgandaRural",
         # cset the survey type to Kato Katz with duplicate slide
         survey_type = "KK2",
@@ -94,7 +94,7 @@ for (iu in ius_list){
     # Run projections
     all_years_result <- transmission_model(seeds, params, n_tims)
     trajectories = output
-    save(trajectories, file=paste0("../trajectories/proj_trajectories_",id,"_",species,".Rdata"))
+    save(trajectories, file=paste0("../trajectories/proj_trajectories_",iu,"_",species,".Rdata"))
 
     projections <- all_years_result[,colnames(output) %in% year_indices, drop = FALSE]
 }
