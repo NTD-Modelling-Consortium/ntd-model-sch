@@ -1466,6 +1466,31 @@ def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes
     return df1
 
 
+def getnSamplesFromSurveyType(surveyType):
+    """
+    Given a survey type which must be either "KK1" or "KK2" we return the number 
+    of samples of Kato-Katz which is simulated to generate results. 
+    
+    Parameters
+    ----------
+        surveyType: are we doing single Kato-Katz sample or duplicate. Entry will be
+            "KK1" or "KK2" respectively
+
+    Return
+    ----------
+        1 if survey type is "KK1", 2 if survey type is "KK2"
+
+    Raises
+    ------
+        ValueError: If surveyType is not "KK1" or "KK2".
+    """
+    if surveyType == "KK2":
+        return 2
+    elif surveyType == "KK1":
+        return 1
+    else:
+        raise ValueError("surveyType must be either 'KK1' or 'KK2'.")
+
 
 
 def returnIHMEOutputForOneSim(params, results, SD, surveyType, startYear):
@@ -1493,36 +1518,28 @@ def returnIHMEOutputForOneSim(params, results, SD, surveyType, startYear):
     """
     results = [results]
     # process the output
-    output = extractHostData(results)
+    processed_results = extractHostData(results)
 
-    if surveyType == "KK2":
-        nSamples = 2
-    if surveyType == "KK1":
-        nSamples = 1
+    nSamples = getnSamplesFromSurveyType(surveyType)
     # transform the output to data frame
     prevalenceData = getPrevalenceDALYsAll(
-        output, params, 1, params.Unfertilized,  surveyType, nSamples
+        processed_results, params, 1, params.Unfertilized,  surveyType, nSamples
     )
     numAgeGroup = outputNumberInAgeGroup(results, params)
     incidence = getIncidence(results, params)
     costData = getCostData(results, params)
-    allTimes = np.unique(numAgeGroup.Time)
-    trueCoverageData = getActualCoverages(results, params, allTimes)
+    timepoints = np.unique(numAgeGroup.Time)
+    trueCoverageData = getActualCoverages(results, params, timepoints)
     surveyData = outputNumberSurveyedAgeGroup(SD, params)
     treatmentData = outputNumberTreatmentAgeGroup(SD, params)
 
-    # df1 = pd.concat([wholePopPrev, df], ignore_index= True)
-    df1 = pd.concat([prevalenceData, numAgeGroup], ignore_index=True)
-    df1 = pd.concat([df1, incidence], ignore_index=True)
-    df1 = pd.concat([df1, costData], ignore_index=True)
-    df1 = pd.concat([df1, trueCoverageData], ignore_index=True)
-    df1 = pd.concat([df1, surveyData], ignore_index=True)
-    df1 = pd.concat([df1, treatmentData], ignore_index=True)
-    df1 = df1.reset_index()
-    df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
-    df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
-    df1['Time'] = df1['Time'] + startYear
-    return df1
+    ihme_data = pd.concat([prevalenceData, numAgeGroup, incidence, costData, trueCoverageData, surveyData, treatmentData], ignore_index=True)
+    
+    ihme_data = ihme_data.reset_index()
+    ihme_data[OUTPUT_COLUMN_NAME][np.where(pd.isna(ihme_data[OUTPUT_COLUMN_NAME]))[0]] = -1
+    ihme_data = ihme_data[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
+    ihme_data['Time'] = ihme_data['Time'] + startYear
+    return ihme_data
 
 
 
@@ -1560,11 +1577,11 @@ def constructIHMEResultsAcrossAllSims(params, res, surveyType, startYear):
 
         if i == 0:
             allIHME = IHMEoutput
-            allIHME["draw_0"] = allIHME['draw_1'].values
-            allIHME = allIHME.drop('draw_1', axis=1)
+            allIHME["draw_0"] = allIHME[OUTPUT_COLUMN_NAME].values
+            allIHME = allIHME.drop(OUTPUT_COLUMN_NAME, axis=1)
         else:
             colname = "draw_" + str(i)
-            allIHME[colname] = IHMEoutput['draw_1'].values
+            allIHME[colname] = IHMEoutput[OUTPUT_COLUMN_NAME].values
             
     return allIHME
 
@@ -1574,59 +1591,56 @@ def constructIHMEResultsAcrossAllSims(params, res, surveyType, startYear):
 
 def returnNTDMCOutputForOneSim(params, results, ageBand, PopType, startYear, prevThreshold = 0.02, surveyType = "KK2", numReps = 1, sampleSize = 100):
 
-    output = extractHostData([results])
-    if surveyType == "KK2":
-        nSamples = 2
-    if surveyType == "KK1":
-        nSamples = 1
-
-    prevalence, _, medium_prevalence, heavy_prevalence, _ = getBurdens(output, params, 
+    processed_results = extractHostData([results])
+    
+    nSamples = getnSamplesFromSurveyType(surveyType)
+    prevalence, _, medium_prevalence, heavy_prevalence, _ = getBurdens(processed_results, params, 
                                                                        numReps, ageBand,
                                                                        params.Unfertilized, 
                                                                        surveyType, nSamples, 
                                                                        sampleSize
                                                                        ) 
-    allTimes = output[0].timePoints + startYear
+    timepoints = processed_results[0].timePoints + startYear
     if PopType == "SAC":
         prevBelowThreshold = (medium_prevalence + heavy_prevalence) < prevThreshold
-    newrows = pd.DataFrame(
+    prevalence_measure = pd.DataFrame(
                         {
-                            "year_id": allTimes,
-                            "age_start": np.repeat(ageBand[0], len(allTimes)),
-                            "age_end": np.repeat(ageBand[1], len(allTimes)),
-                            "intensity": np.repeat("None", len(allTimes)),
-                            "species": np.repeat(params.species, len(allTimes)),
-                            "measure": np.repeat("Prevalence " + PopType, len(allTimes)),
-                            "draw_1": prevalence,
+                            "year_id": timepoints,
+                            "age_start": np.repeat(ageBand[0], len(timepoints)),
+                            "age_end": np.repeat(ageBand[1], len(timepoints)),
+                            "intensity": np.repeat("None", len(timepoints)),
+                            "species": np.repeat(params.species, len(timepoints)),
+                            "measure": np.repeat("Prevalence " + PopType, len(timepoints)),
+                            OUTPUT_COLUMN_NAME: prevalence,
                         }
                     )
-    df1 = newrows
-    newrows = pd.DataFrame(
+    NTDMC_data = prevalence_measure
+    medium_and_heavy_prevalence_measure = pd.DataFrame(
                         {
-                            "year_id": allTimes,
-                            "age_start": np.repeat(ageBand[0], len(allTimes)),
-                            "age_end": np.repeat(ageBand[1], len(allTimes)),
-                            "intensity": np.repeat("None", len(allTimes)),
-                            "species": np.repeat(params.species, len(allTimes)),
-                            "measure": np.repeat("Medium + Heavy Prevalence " + PopType, len(allTimes)),
-                            "draw_1": medium_prevalence + heavy_prevalence,
+                            "year_id": timepoints,
+                            "age_start": np.repeat(ageBand[0], len(timepoints)),
+                            "age_end": np.repeat(ageBand[1], len(timepoints)),
+                            "intensity": np.repeat("None", len(timepoints)),
+                            "species": np.repeat(params.species, len(timepoints)),
+                            "measure": np.repeat("Medium + Heavy Prevalence " + PopType, len(timepoints)),
+                            OUTPUT_COLUMN_NAME: medium_prevalence + heavy_prevalence,
                         }
                     )
-    df1 = pd.concat([df1, newrows], ignore_index = True)
+    NTDMC_data = pd.concat([NTDMC_data, medium_and_heavy_prevalence_measure], ignore_index = True)
     if PopType == "SAC":
-        newrows = pd.DataFrame(
+        below_ephp_threshold_measure = pd.DataFrame(
                             {
-                                "year_id": allTimes,
-                                "age_start": np.repeat(ageBand[0], len(allTimes)),
-                                "age_end": np.repeat(ageBand[1], len(allTimes)),
-                                "intensity": np.repeat("None", len(allTimes)),
-                                "species": np.repeat(params.species, len(allTimes)),
-                                "measure": np.repeat("Below  EPHP threshold", len(allTimes)),
-                                "draw_1": prevBelowThreshold,
+                                "year_id": timepoints,
+                                "age_start": np.repeat(ageBand[0], len(timepoints)),
+                                "age_end": np.repeat(ageBand[1], len(timepoints)),
+                                "intensity": np.repeat("None", len(timepoints)),
+                                "species": np.repeat(params.species, len(timepoints)),
+                                "measure": np.repeat("Below  EPHP threshold", len(timepoints)),
+                                OUTPUT_COLUMN_NAME: prevBelowThreshold,
                             }
                         )
-        df1 = pd.concat([df1, newrows], ignore_index = True)
-    return prevalence, medium_prevalence, heavy_prevalence, df1
+        NTDMC_data = pd.concat([NTDMC_data, below_ephp_threshold_measure], ignore_index = True)
+    return prevalence, medium_prevalence, heavy_prevalence, NTDMC_data
 
 
 def constructNTDMCResultsAcrossAllSims(params, res, surveyType, startYear):
@@ -1658,12 +1672,12 @@ def constructNTDMCResultsAcrossAllSims(params, res, surveyType, startYear):
 
         if i == 0:
             NTDMC = pd.concat([dfSAC, dfAll], ignore_index = True)
-            NTDMC["draw_0"] = NTDMC['draw_1'].values
-            NTDMC = NTDMC.drop('draw_1', axis=1)
+            NTDMC["draw_0"] = NTDMC[OUTPUT_COLUMN_NAME].values
+            NTDMC = NTDMC.drop(OUTPUT_COLUMN_NAME, axis=1)
         else:
             colname = "draw_" + str(i)
 
             newColsNTDMC = pd.concat([dfSAC, dfAll], ignore_index = True)
-            NTDMC[colname] = newColsNTDMC['draw_1'].values
+            NTDMC[colname] = newColsNTDMC[OUTPUT_COLUMN_NAME].values
 
     return NTDMC
