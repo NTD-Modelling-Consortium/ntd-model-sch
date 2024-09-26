@@ -129,3 +129,5 @@ Man_MDA_vacc*.txt
 Man_MDA_test*.txt
 projections/
 sch_simulation/data/endgame_inputs/
+!sch_simulation/data/endgame_inputs/.gitkeep
+
