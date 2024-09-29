@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools==70.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sch_simulation"
+dynamic = ["version"]
+authors = [
+  {name = "NTD Modelling Consortium"},
+]
+description = "SCH simulation model"
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+requires-python = ">= 3.9"
+dependencies = [
+  "numpy==1.26.*",
+  "scipy==1.13.*",
+  "pandas==2.2.*",
+  "joblib==1.4.*",
+  "matplotlib==3.9.*",
+  "openpyxl==3.1.*",
+]
+[project.optional-dependencies]
+dev = ["pytest", "ruff==0.4.*"]
+
+[project.urls]
+Homepage = "https://github.com/NTD-Modelling-Consortium/ntd-model-sch"
+
+[tool.setuptools]
+packages = [
+  "sch_simulation",
+  "sch_simulation.helsim_FUNC_KK",
+  "sch_simulation.amis_integration",
+]
+
+[tool.setuptools.package-data]
+sch_simulation = ["data/**/*.txt", "data/**/*.xlsx"]
+
+[tool.setuptools.dynamic]
+version = {attr = "sch_simulation.__version__"}

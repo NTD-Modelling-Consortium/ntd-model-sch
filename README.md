@@ -30,17 +30,21 @@ The output data frame can be exported in several different formats; see `sch_res
 
 See also `sch_run.py` for an example of how to use the `SCH_Simulation()` function.
 
-### How to run
+### Installation
 
-Requires Python 3.9-3.10.
+Required: Python 3.9 or higher.
 
-- Install [pipenv](https://pipenv.pypa.io/en/latest/) according to the instructions for your OS (on macOS it's `brew install pipenv`), then `cd` to the project directory, check out the branch you want to use, and run:
+It is recommended to install the package into a specific Python
+"virtual" environment, see [Install packages in a virtual environment using pip and
+venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#install-packages-in-a-virtual-environment-using-pip-and-venv).
 
+```shell
+$ git clone https://github.com/NTD-Modelling-Consortium/ntd-model-sch.git
+$ pip install ntd-model-sch/
 ```
-$ pipenv shell # sets up/runs a per-project python environment ('virtualenv'/'venv')
-(ntd-model-sch) $ pip install . # installs python libraries & NTD model inside the venv
-(ntd-model-sch) $ python sch_run.py # or could be 'pickle_example.py' - runs the model
-```
+
+See the [Contributing](#Developer-install) section for instructions on
+installing the model package for developers.
 
 ### Automatic tests
 
@@ -170,3 +174,50 @@ Example row:
 | DRC| MDA |Old Product B (SOC) | 1 | 1 | 0.5 | |  |
 
 The columns “Country/Region” and “Platform” are currently optional.
+
+### Contributing
+
+#### Developer install
+
+Developers wishing to contribute can install the package in "editable"
+mode, in order to make changes to the source code available in the
+environment right away:
+
+```shell
+$ pip install --editable ntd-model-sch/[dev]
+```
+
+See [Development Mode (a.k.a. “Editable
+Installs”)](https://setuptools.pypa.io/en/latest/userguide/development_mode.html).
+
+The suffix `[dev]` enables installation of the developement
+utilities `pytest` and `ruff`.
+
+#### Running the tests and linter
+
+Before committing, and even more importantly before pushing new commits
+to the repository, please ensure that the automatic tests pass and that the `ruff` linter raises no errors. You can do so with
+
+```shell
+# From the project's root directory
+$ pytest tests/
+$ ruff check sch_simulation/
+```
+
+#### Code formatting
+
+Code pushed to the repository is expected to be formatted according to
+the rules enforced by the `ruff format` tool, version 0.4.* with
+default settings. To automatically format the files your changed by
+running
+
+```shell
+ruff format sch_simulation/path/to/file1 /sch_simulation/path/to/file2 ...
+```
+
+or simply
+
+```shell
+# Format all *.py files in sch_simulation directory
+ruff format sch_simulation
+```

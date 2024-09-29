@@ -5,7 +5,7 @@ import pandas as pd
 from pandas import testing as pdt
 from numpy import testing as npt
 
-from sch_simulation.helsim_FUNC_KK.file_parsing import parse_coverage_input
+from sch_simulation.helsim_FUNC_KK.file_parsing import parse_coverage_input, readCoverageFile
 from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters
 
 example_parameters = FixedParameters(
@@ -44,7 +44,7 @@ def test_valid_input():
         example_parameters.parameter_file_name, example_parameters.demography_name
     )
     # add coverage data to parameters file
-    params = sch_simulation.helsim_FUNC_KK.readCoverageFile(output_file, params)
+    params = readCoverageFile(output_file, params)
 
     
     npt.assert_array_equal(params.drug2Split, [ 1.0, 1.0, 1.0])
@@ -64,7 +64,7 @@ def test_coverage_file_where_drug2_has_only_one_year():
         example_parameters.parameter_file_name, example_parameters.demography_name
     )
     # add coverage data to parameters file
-    params = sch_simulation.helsim_FUNC_KK.readCoverageFile(output_file, params)
+    params = readCoverageFile(output_file, params)
 
     assert params.drug2Split[0] == 1.0
     npt.assert_array_equal(params.drug2Split, [ 1.0 ])
@@ -83,6 +83,6 @@ def test_coverage_file_with_single_coverage_value_for_mda():
         example_parameters.parameter_file_name, example_parameters.demography_name
     )
     # add coverage data to parameters file
-    params = sch_simulation.helsim_FUNC_KK.readCoverageFile(output_file, params)
+    params = readCoverageFile(output_file, params)
 
     assert len(params.MDA[0].Coverage) == 1

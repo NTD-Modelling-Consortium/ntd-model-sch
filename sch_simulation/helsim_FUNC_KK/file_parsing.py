@@ -1,13 +1,18 @@
 import copy
+from pathlib import Path
 import warnings
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import pkg_resources
 from numpy.typing import NDArray
 
-from sch_simulation.helsim_FUNC_KK.helsim_structures import Coverage, Parameters, VecControl
+from sch_simulation.helsim_FUNC_KK.helsim_structures import (
+    Coverage,
+    Parameters,
+    VecControl,
+)
+from sch_simulation import DATA_PATH
 
 warnings.filterwarnings("ignore")
 
@@ -39,7 +44,6 @@ def params_from_contents(contents: List[str]) -> Dict[str, Any]:
 
 
 def readParam(fileName: str) -> Dict[str, Any]:
-
     """
     This function extracts the parameter values stored
     in the input text files into a dictionary.
@@ -53,16 +57,14 @@ def readParam(fileName: str) -> Dict[str, Any]:
         dictionary containing the parameter names and values;
     """
 
-    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
-
-    with open(DATA_PATH + fileName) as f:
+    param_file_path = DATA_PATH / Path(fileName)
+    with open(param_file_path) as f:
         contents = f.readlines()
 
     return params_from_contents(contents)
 
 
 def readCovFile(fileName: str) -> Dict[str, Any]:
-
     """
     This function extracts the parameter values stored
     in the input text files into a dictionary.
@@ -103,9 +105,8 @@ def parse_coverage_input(
     """
 
     # read in Coverage spreadsheet
-    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
     PlatCov = pd.read_excel(
-        DATA_PATH + coverageFileName, sheet_name="Platform Coverage"
+        DATA_PATH / Path(coverageFileName), sheet_name="Platform Coverage"
     )
     # which rows are for MDA and vaccine
     intervention_array = PlatCov["Intervention Type"]
@@ -116,7 +117,6 @@ def parse_coverage_input(
     MDAAges = np.zeros([len(MDARows), 2])
     MDAYears = []
     MDACoverages = []
-    MDADrugs = []
     VaccAges = np.zeros([len(VaccRows), 2])
     VaccYears = []
     VaccCoverages = []
@@ -126,7 +126,7 @@ def parse_coverage_input(
     fy = 10000
     fy_index = 10000
     for i in range(len(PlatCov.columns)):
-        if type(PlatCov.columns[i]) == int:
+        if isinstance(PlatCov.columns[i], int):
             fy = min(fy, PlatCov.columns[i])
             fy_index = min(fy_index, i)
 
@@ -182,8 +182,8 @@ def parse_coverage_input(
         # re initilize the coverage and years data
         MDAYears = []
         MDACoverages = []
-        
-        #drugIndex = np.where(PlatCov.columns == "Drug")
+
+        # drugIndex = np.where(PlatCov.columns == "Drug")
 
         # loop over the yearly data for this row
         for j in range(fy_index, len(PlatCov.columns)):
@@ -193,7 +193,7 @@ def parse_coverage_input(
             if w[cname] > 0:
                 MDAYears.append(cname)
                 MDACoverages.append(w[cname])
-                
+
         MDA_txt = (
             MDA_txt
             + "MDA_age"
@@ -217,8 +217,6 @@ def parse_coverage_input(
             else:
                 MDA_txt = MDA_txt + str(MDACoverages[k]) + " "
 
-
-    
     # loop over Vaccination coverage rows
     for i in range(len(VaccRows)):
         # get row number of each MDA entry
@@ -263,7 +261,9 @@ def parse_coverage_input(
                 Vacc_txt = Vacc_txt + str(VaccCoverages[k]) + " "
 
     # read in market share data
-    MarketShare = pd.read_excel(DATA_PATH + coverageFileName, sheet_name="MarketShare")
+    MarketShare = pd.read_excel(
+        DATA_PATH / Path(coverageFileName), sheet_name="MarketShare"
+    )
     # find which rows store data for MDAs
     MDAMarketShare = np.where(np.array(MarketShare["Platform"] == "MDA"))[0]
     # initialize variable to store which drug is being used
@@ -281,7 +281,7 @@ def parse_coverage_input(
     fy = 10000
     fy_index = 10000
     for i in range(len(MarketShare.columns)):
-        if type(MarketShare.columns[i]) == int:
+        if isinstance(MarketShare.columns[i], int):
             fy = min(fy, MarketShare.columns[i])
             fy_index = min(fy_index, i)
 
@@ -321,7 +321,7 @@ def parse_coverage_input(
             else:
                 MDA_txt = MDA_txt + str(MDAYearSplit[k]) + " "
 
-    coverageText = MDA_txt + Vacc_txt + 'start_year\t'+ str(fy) +"\n"
+    coverageText = MDA_txt + Vacc_txt + "start_year\t" + str(fy) + "\n"
     # store the Coverage data in a text file
     with open(coverageTextFileStorageName, "w", encoding="utf-8") as f:
         f.write(coverageText)
@@ -348,29 +348,26 @@ def parse_vector_control_input(
     """
 
     # read in Coverage spreadsheet
-    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
     PlatCov = pd.read_excel(
-        DATA_PATH + coverageFileName, sheet_name="Platform Coverage"
+        DATA_PATH / Path(coverageFileName), sheet_name="Platform Coverage"
     )
     # which rows are for MDA and vaccine
     intervention_array = PlatCov["Intervention Type"]
     VectorControl = np.where(np.array(intervention_array == "Vector Control"))[0]
     if len(VectorControl) == 0:
-        VecControlInfo = VecControl(Years = [1000000,10000000], Coverage = [0.01,0.01])
+        VecControlInfo = VecControl(Years=[1000000, 10000000], Coverage=[0.01, 0.01])
     else:
         # we want to find which is the first year specified in the coverage data, along with which
         # column of the data set this corresponds to
         fy = 10000
         fy_index = 10000
         for i in range(len(PlatCov.columns)):
-            if type(PlatCov.columns[i]) == int:
+            if isinstance(PlatCov.columns[i], int):
                 fy = min(fy, PlatCov.columns[i])
                 fy_index = min(fy_index, i)
-            
-        
-        VecControlInfo = VecControl(Years = [], Coverage = [])
-        
-        
+
+        VecControlInfo = VecControl(Years=[], Coverage=[])
+
         # for each non-zero entry of the vector control data add an entry to the parameters object
         for i in range(len(VectorControl)):
             k = VectorControl[i]
@@ -378,25 +375,23 @@ def parse_vector_control_input(
             for j in range(fy_index, len(PlatCov.columns)):
                 cname = PlatCov.columns[j]
                 if w[cname] > 0:
-                    VecControlInfo.Years.append(cname-fy)
+                    VecControlInfo.Years.append(cname - fy)
                     VecControlInfo.Coverage.append(w[cname])
-                
+
     params.VecControl = [VecControlInfo]
 
     return params
 
 
-
 def readCoverageFile(
     coverageTextFileStorageName: str, params: Parameters
 ) -> Parameters:
-
     coverage = readCovFile(coverageTextFileStorageName)
 
     nMDAAges = int(coverage["nMDAAges"])
     nVaccAges = int(coverage["nVaccAges"])
     mda_covs = []
-    
+
     for i in range(nMDAAges):
         cov = Coverage(
             Age=coverage["MDA_age" + str(i + 1)],
@@ -404,7 +399,6 @@ def readCoverageFile(
             # We must specify ndmin=1 here as single values are converted to 0d arryas by default
             Coverage=np.array(coverage["MDA_Coverage" + str(i + 1)], ndmin=1),
             Label=i + 1,
-
         )
         mda_covs.append(cov)
     params.MDA = mda_covs
@@ -415,7 +409,6 @@ def readCoverageFile(
             Years=coverage["Vacc_Years" + str(i + 1)] - coverage["start_year"],
             Coverage=coverage["Vacc_Coverage" + str(i + 1)],
             Label=i + 1,
-
         )
         vacc_covs.append(cov)
     params.Vacc = vacc_covs
@@ -426,31 +419,28 @@ def readCoverageFile(
     return params
 
 
-
 def nextMDAVaccInfo(
     params: Parameters,
 ) -> Tuple[Dict, Dict, int, List[int], List[int], int, List[int], List[int]]:
     chemoTiming = {}
     assert params.MDA is not None
     assert params.Vacc is not None
-    
+
     for i in range(len(params.Vacc)):
         k = copy.deepcopy(params.Vacc[i])
-        if type(k.Years) == float:
+        if isinstance(k.Years, float):
             y1 = k.Years
             c1 = k.Coverage
-            k.Years = [y1,1000]
+            k.Years = [y1, 1000]
             k.Coverage = [c1, 0]
             params.Vacc[i] = k
-            
-            
-    
+
     for i in range(len(params.MDA)):
         k = copy.deepcopy(params.MDA[i])
-        if type(k.Years) == float:
+        if isinstance(k.Years, float):
             y1 = k.Years
             c1 = k.Coverage
-            k.Years = [y1,1000]
+            k.Years = [y1, 1000]
             k.Coverage = [c1, 0]
             params.MDA[i] = k
     chemoTiming = {}
@@ -461,7 +451,7 @@ def nextMDAVaccInfo(
         VaccTiming["Age{0}".format(i)] = copy.deepcopy(np.array(vacc.Years))
     VecControlTiming = {}
     for i, vecControl in enumerate(params.VecControl):
-        VecControlTiming["Time".format(i)] = copy.deepcopy(vecControl.Years)    
+        VecControlTiming["Time"] = copy.deepcopy(vecControl.Years)
     #  currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
 
     nextChemoTime = 10000
@@ -487,13 +477,13 @@ def nextMDAVaccInfo(
     for i in range(len(nextVaccAge)):
         k = nextVaccAge[i]
         nextVaccIndex.append(np.argmin(np.array(VaccTiming["Age{0}".format(k)])))
-      
+
     nextVecControlTime = 10000
     for i, vecControl in enumerate(params.VecControl):
-        nextVecControlTime = min(nextVecControlTime, min(VecControlTiming ["Time".format(i)]))
+        nextVecControlTime = min(nextVecControlTime, min(VecControlTiming["Time"]))
     nextVecControlIndex = []
-    for i in range(len(VecControlTiming['Time'])):
-        k = copy.deepcopy(VecControlTiming['Time'][i])
+    for i in range(len(VecControlTiming["Time"])):
+        k = copy.deepcopy(VecControlTiming["Time"][i])
         if k == nextVecControlTime:
             nextVecControlIndex = i
 
@@ -525,7 +515,6 @@ def overWritePostVacc(
     return params
 
 
-
 def overWritePostMDA(
     params: Parameters,
     nextMDAAge: Union[NDArray[np.int_], List[int]],
@@ -540,17 +529,15 @@ def overWritePostMDA(
     return params
 
 
-
 def overWritePostVecControl(
     params: Parameters,
-    nextVecControlIndex:int,
+    nextVecControlIndex: int,
 ):
     assert params.VecControl is not None
-    
+
     params.VecControl[0].Years[nextVecControlIndex] = 10000
 
     return params
-
 
 
 def readParams(
@@ -558,7 +545,6 @@ def readParams(
     demogFileName: str = "Demographies.txt",
     demogName: str = "Default",
 ) -> Parameters:
-
     """
     This function organizes the model parameters and
     the demography parameters into a unique dictionary.
@@ -615,13 +601,13 @@ def readParams(
         DrugEfficacy=parameters["drugEff"],
         DrugEfficacy1=parameters["drugEff1"],
         DrugEfficacy2=parameters["drugEff2"],
-        DrugName1 = parameters["drugName1"],
-        DrugName2 = parameters["drugName2"],
+        DrugName1=parameters["drugName1"],
+        DrugName2=parameters["drugName2"],
         contactAgeBreaks=parameters["contactAgeBreaks"],
         contactRates=parameters["betaValues"],
         v3=parameters["v3betaValues"],
         rho=parameters["rhoValues"],
-        systematic_non_compliance = parameters["systematic_non_compliance"],
+        systematic_non_compliance=parameters["systematic_non_compliance"],
         treatmentAgeBreaks=parameters["treatmentBreaks"],
         VaccTreatmentBreaks=parameters["VaccTreatmentBreaks"],
         coverage1=parameters["coverage1"],
@@ -663,11 +649,11 @@ def readParams(
         timeToNextSurvey=parameters["timeToNextSurvey"],
         surveyThreshold=parameters["surveyThreshold"],
         Unfertilized=parameters["unfertilized"],
-        k_within = parameters["k_within"],
-        k_slide = parameters["k_slide"],
-        weight_sample = parameters["weight_sample"],
-        testSensitivity = parameters["testSensitivity"],
-        testSpecificity = parameters["testSpecificity"]
+        k_within=parameters["k_within"],
+        k_slide=parameters["k_slide"],
+        weight_sample=parameters["weight_sample"],
+        testSensitivity=parameters["testSensitivity"],
+        testSpecificity=parameters["testSpecificity"],
     )
 
     return params
