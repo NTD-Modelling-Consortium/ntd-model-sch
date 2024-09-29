@@ -17,6 +17,7 @@ from joblib import Parallel, delayed
 import sch_simulation.helsim_RUN_KK
 
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
+import sch_simulation.helsim_FUNC_KK.prevalence_column_names as prevalence_column_names
 
 
 @dataclass(eq=True, frozen=True)
@@ -81,8 +82,8 @@ def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameter
 
     # do a single simulation
     numReps = 1
-    PrevalenceEstimate = results_processing.getPrevalenceWholePop(
-        output, params, numReps, params.Unfertilized, fixed_parameters.survey_type, 1
+    PrevalenceEstimate = results_processing.getPrevalence(
+        output, params, numReps, params.Unfertilized
     )
     return PrevalenceEstimate
 
@@ -92,7 +93,7 @@ def extract_relevant_results(
 ) -> float:
     relevant_rows = results["Time"].isin(relevant_years)
     prevalence_for_relevant_years = pd.Series(
-        data=results[relevant_rows][results_processing.OUTPUT_COLUMN_NAME],
+        data=results[relevant_rows][prevalence_column_names.SAC_PREVALENCE],
         index=relevant_years,
         name="Prevalence",
     )
