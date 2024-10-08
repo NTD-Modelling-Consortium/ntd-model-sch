@@ -1637,7 +1637,7 @@ def returnNTDMCOutputForOneSim(params, results, ageBand, PopType, startYear, pre
     return prevalence, medium_prevalence, heavy_prevalence, NTDMC_data
 
 
-def constructNTDMCResultsAcrossAllSims(params, res, surveyType, startYear):
+def constructNTDMCResultsAcrossAllSims(params, res, surveyType, startYear, resultsIndex = 0):
     """
     This function will return a data frame for NTDMC containing appropriate data
 
@@ -1656,7 +1656,7 @@ def constructNTDMCResultsAcrossAllSims(params, res, surveyType, startYear):
     """
 
     # unpack results from the simulation here. These will be called to extract data from later
-    results = [ item[ 0 ] for item in res ]
+    results = [ item[ resultsIndex ] for item in res ]
     for i in range(len(results)):
 
         singleSimResult = results[i]
