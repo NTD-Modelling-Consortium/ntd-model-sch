@@ -4,7 +4,7 @@ unfertilized	True		unfertilised marker
 
 ### Model running parameters.
 repNum	1		Number of repetitions
-nYears	23		Number of years to run
+nYears	14		Number of years to run
 nHosts	500			Size of definitive host population (N)
 outputEvents	0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22	23 output events.
 neverTreated	0.185
@@ -31,9 +31,9 @@ StochSR	TRUE		## Turn SR on or off in the stochastic model. 	[Stochastic]
 treatmentBreaks	0 2 5 15 80		Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
 drugEff	0.499				Drug efficacy
 drugEff1	0.499					Drug efficacy [0-1]
-drugEff2	0.99					Drug efficacy drug 2 [0-1]
-drugName1	A					Name of 1st drug used
-drugName2	IDA					Name of 2nd drug used
+drugEff2	0.85					Drug efficacy drug 2 [0-1]
+drugName1	IVMALB					Name of 1st drug used
+drugName2	PZQ					Name of 2nd drug used
 treatInterval1	1			interval between treatments in years, pre-COVID. 
 treatInterval2	1			interval between treatments in years, post-COVID. 
 treatStart1	1					Treatment year start, pre-COVID
@@ -72,9 +72,9 @@ heavyThreshold	416.7
 ## Survey parameters
 timeToFirstSurvey	5.49
 timeToNextSurvey	4
-surveyThreshold	0.02
-sampleSizeOne	250
-sampleSizeTwo	250
+surveyThreshold	0
+sampleSizeOne	100
+sampleSizeTwo	100
 nSamples	2
 minSurveyAge	5
 maxSurveyAge	100
