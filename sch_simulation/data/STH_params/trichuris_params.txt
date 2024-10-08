@@ -71,7 +71,7 @@ mediumThreshold	41.7
 heavyThreshold	416.7
 
 ## Survey parameters
-timeToFirstSurvey	5.49
+timeToFirstSurvey	549
 timeToNextSurvey	4
 surveyThreshold	0
 sampleSizeOne	100
