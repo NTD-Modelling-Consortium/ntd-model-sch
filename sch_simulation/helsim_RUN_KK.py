@@ -679,9 +679,9 @@ def singleSimulationDALYCoverage(
     results, SD = doRealizationSurveyCoveragePickle(params, surveyType, simData)
     
  
-    results = [results]
     # process the output
-    output = extractHostData(results)
+    resultslist = [results]
+    output = extractHostData(resultslist)
 
     # transform the output to data frame
     df = getPrevalenceDALYsAll(
@@ -689,11 +689,11 @@ def singleSimulationDALYCoverage(
     )
          
     # wholePopPrev = getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
-    numAgeGroup = outputNumberInAgeGroup(results, params)
-    incidence = getIncidence(results, params)
-    costData = getCostData(results, params)
+    numAgeGroup = outputNumberInAgeGroup(resultslist, params)
+    incidence = getIncidence(resultslist, params)
+    costData = getCostData(resultslist, params)
     allTimes = np.unique(numAgeGroup.Time)
-    trueCoverageData = getActualCoverages(results, params, allTimes)
+    trueCoverageData = getActualCoverages(resultslist, params, allTimes)
     surveyData = outputNumberSurveyedAgeGroup(SD, params)
     treatmentData = outputNumberTreatmentAgeGroup(SD, params)
 
@@ -707,7 +707,7 @@ def singleSimulationDALYCoverage(
     df1 = df1.reset_index()
     df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
     df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
-    return df1, SD
+    return results, df1, SD
 
 
 
@@ -1023,11 +1023,11 @@ def multiple_simulations_after_burnin(
     # output = extractHostData(results)
 
     # transform the output to data frame
-    df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
+    results, df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
     end_time = time.time()
     total_time = end_time - start_time
     print(f"==> after burn in finishing sim {i}: {total_time:.3f}s")
-    return df, simData
+    return df, simData, results
 
 
 
