@@ -1,10 +1,10 @@
 
 # on cluster:
-id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+#id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 # for testing:
-#id = 16
+id = 1
 # should be "ascaris", "hookworm" or "trichuris"
-species = "ascaris"
+species = "hookworm"
 
 library(dplyr)
 library(AMISforInfectiousDiseases)
@@ -17,7 +17,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args) == 1) {
     num_cores_to_use <- as.integer(args)
 }
-# num_cores_to_use <- 2
+num_cores_to_use <- 1
 
 print(paste0('Using ', num_cores_to_use, ' cores'))
 
@@ -28,9 +28,7 @@ fixed_parameters <- sch_simulation$FixedParameters(
     # though the longer the simulation will take
     number_hosts = 500L,
     # no intervention
-    coverage_file_name = ifelse(species=="trichuris",
-                                paste0("endgame_inputs/InputMDA_MTP_trichuris_",id,".xlsx"),
-                                paste0("endgame_inputs/InputMDA_MTP_",id,".xlsx")),
+    coverage_file_name = paste0("endgame_inputs/InputMDA_MTP_",id,".xlsx"),
     demography_name = "UgandaRural",
     # cset the survey type to Kato Katz with duplicate slide
     survey_type = "KK2",
@@ -48,16 +46,8 @@ fixed_parameters <- sch_simulation$FixedParameters(
 )
 
 
-# Clarifying year_indices
-# - The Python code can simulate prevalences at any point in continuous time.
-# - In the Python code, year_indices 0, 1, ..., 33 refer to years 1985.0, 1986.0, ..., 2018.0 (beginning of each year).
-# - Map samples are in discrete time, and we assume that samples for 2000 refer to the end of the year 2000 (approximately, 2000.99999 ~ 2001.0).
-# - Therefore, if we have map samples for the (end of) years 2000, 2013, 2018, these should be compared to the simulations at times 2001.0, 2014.0, 2019.0 if we use the discrete-valued vector "year_indices".
-# - Thus, we need to pass year_indices <- c(16L,29L,34L) to the Python code
-# - The Python model will return a matrix with only 3 columns called 16L,29L,34L.
-year_indices <- c(16L,29L,34L)
-
 # Load prevalence map and filter rows for TaskID == id
+year_indices <- c(15L,28L,33L) # 2000, 2013, 2018 (end of year in model)
 load(paste0("../Maps/",species,"_maps.rds"))
 prevalence_map = get(paste0(species,"_map_allyears"))
 prevalence_map = lapply(1:length(prevalence_map), function(t){
@@ -83,20 +73,30 @@ amis_params$sigma=0.0025
 amis_params$boundaries=c(-Inf,Inf)
 amis_params$boundaries_param = matrix(c(R_lb,k_lb,R_ub,k_ub),ncol=2)
 
-# shell to save trajectories
-# commented out to pass Github tests (maybe this is bad practice...)
-trajectories <- c() # save simulated trajectories as code is running
+## shell to save trajectories
+## commented out to pass Github tests (maybe this is bad practice...)
+trajectories = c() # save simulated trajectories as code is running
 if (!dir.exists("../trajectories")) {dir.create("../trajectories")}
 save(trajectories,file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
 
-python_model <- build_transmission_model(prevalence_map, fixed_parameters, year_indices, num_cores_to_use)
+save(prevalence_map,file=paste0("../debug/prevalence_map_",id,"_",species,".Rdata"))
+save(fixed_parameters,file=paste0("../debug/fixed_parameters_",id,"_",species,".Rdata"))
+save(year_indices,file=paste0("../debug/year_indices_",id,"_",species,".Rdata"))
+
+stop("Stop here to avoid running amis().")
+
+year_indices_all = min(year_indices):max(year_indices)
+python_model <- build_transmission_model(prevalence_map, fixed_parameters, year_indices_all, num_cores_to_use)
 
 model_with_post_processing <- function(seeds, params, n_tims) {
     all_results <- python_model(seeds, params, n_tims)
-    load(paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
-    trajectories <- rbind(trajectories, all_results)
-    save(trajectories, file=paste0("../trajectories/trajectories_",id,"_",species,".Rdata"))
-    return(all_results)
+    # TODO: unknown what task this should be
+
+    # Filter to the years the fitting is actually interested in after doing
+    # whatever we want with every intermediate year.
+    # drop = FALSE required incase year_indices is just one as then this
+    # becomes a vector rather than a matrix
+    return(all_results[,colnames(all_results) %in% year_indices, drop = FALSE])
 }
 
 # Run AMIS
@@ -113,6 +113,10 @@ dur_amis<-as.numeric(difftime(en,st,units="mins"))
 if (!dir.exists("../AMIS_output")) {dir.create("../AMIS_output")}
 save(amis_output,file=paste0("../AMIS_output/",species,"_amis_output",id,".Rdata"))
 
+
+# Currently errors - I think because I
+# don't know where the weights need to be set
+# "No weight on any particles for locations in the active set."
 print(amis_output)
 summary(amis_output)
 cat("--------------------- \n")
@@ -126,4 +130,3 @@ n_failure<-length(failures)
 if (n_failure>0) {cat(paste(failures,id,ess[failures]),file = paste0("../ESS_NOT_REACHED_",species,".txt"),sep = "\n", append = TRUE)}
 if (!file.exists(paste0("../summary_",species,".csv"))) {cat("ID,n_failure,n_success,n_sim,min_ess,duration_amis,durarion_subsampling\n",file=paste0("../summary_",species,".csv"))}
 cat(id,n_failure,n_success,length(amis_output$seeds),min(ess),dur_amis,NA,"\n",sep=",",file=paste0("../summary_",species,".csv"),append=TRUE)
-

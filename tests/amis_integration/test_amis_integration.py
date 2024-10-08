@@ -1,10 +1,13 @@
+import os
+import pickle
 import pytest
-from sch_simulation.amis_integration.amis_integration import extract_relevant_results, returnYearlyPrevalenceEstimate, FixedParameters, run_model_with_parameters
+from sch_simulation.amis_integration.amis_integration import StateSnapshotConfig, extract_relevant_results, returnYearlyPrevalenceEstimate, FixedParameters, run_model_with_parameters
 import pandas as pd
 from pandas import testing as pdt
 from numpy import testing as npt
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
 from sch_simulation.helsim_FUNC_KK.file_parsing import parse_coverage_input
+from sch_simulation.helsim_FUNC_KK.helsim_structures import SDEquilibrium
 
 
 example_parameters = FixedParameters(
@@ -34,10 +37,10 @@ def test_running_model_produces_consistent_result():
         example_parameters.coverage_file_name,
         example_parameters.coverage_text_file_storage_name,
     )
-    results_with_seed1 = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
+    results_with_seed1, _ = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
     print(results_with_seed1["SAC Prevalence"])
-    expected_prevalance = [0.0, 0.0, 0.0, 0.31, 0.3, 0.0, 0.44, 0.0, 0.49, 0.57, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    pdt.assert_series_equal(results_with_seed1["SAC Prevalence"], pd.Series(expected_prevalance, name="SAC Prevalence"))
+    expected_prevalence = [0.0, 0.0, 0.0, 0.31, 0.3, 0.0, 0.44, 0.0, 0.49, 0.57, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    pdt.assert_series_equal(results_with_seed1["SAC Prevalence"], pd.Series(expected_prevalence, name="SAC Prevalence"))
 
 def test_running_parallel_produces_results():
     results = run_model_with_parameters(
@@ -48,6 +51,72 @@ def test_running_parallel_produces_results():
         num_parallel_jobs=2)
     print(results)
     npt.assert_array_equal(results, [[0.  ],[0.29],[0.  ],[1.  ]])
+
+def test_running_save_state_saves_state():
+    _ = run_model_with_parameters(
+        seeds=[1],
+        parameters=[(3.0, 0.3)],
+        fixed_parameters=example_parameters,
+        year_indices=[23],
+        num_parallel_jobs=2,
+        final_state_config=StateSnapshotConfig(),
+    )
+    assert os.path.exists("final_state.p")
+
+    with open("final_state.p", "rb") as f:
+        pickle_data = pickle.load(f)
+    print(type(pickle_data))
+    assert type(pickle_data) is list
+    assert len(pickle_data) == 1
+    assert type(pickle_data[0]) is SDEquilibrium
+    os.remove("final_state.p")
+
+
+def test_running_save_state_saves_state_in_nested_dir():
+    _ = run_model_with_parameters(
+        seeds=[1],
+        parameters=[(3.0, 0.3)],
+        fixed_parameters=example_parameters,
+        year_indices=[23],
+        num_parallel_jobs=2,
+        final_state_config=StateSnapshotConfig(
+            directory="nested_dir", name="file"
+        ),
+    )
+    assert os.path.exists("nested_dir/file.p")
+    os.remove("nested_dir/file.p")
+    os.rmdir("nested_dir/")
+
+def test_running_None_save_state_does_not_save_state():
+    _ = run_model_with_parameters(
+        seeds=[1],
+        parameters=[(3.0, 0.3)],
+        fixed_parameters=example_parameters,
+        year_indices=[23],
+        num_parallel_jobs=2,
+        final_state_config=None,
+    )
+    assert not os.path.exists(".p")
+
+
+def test_running_two_saves_one_pickle_file_as_list():
+    _ = run_model_with_parameters(
+        seeds=[1,2],
+        parameters=[(3.0, 0.3), (3.0, 0.3)],
+        fixed_parameters=example_parameters,
+        year_indices=[23],
+        num_parallel_jobs=2,
+        final_state_config=StateSnapshotConfig(),
+    )
+    assert os.path.exists("final_state.p")
+
+    with open("final_state.p", "rb") as f:
+        pickle_data = pickle.load(f)
+    print(type(pickle_data))
+    assert type(pickle_data) is list
+    assert len(pickle_data) == 2
+    os.remove("final_state.p") 
+
 
 def test_running_model_with_different_seed_gives_different_result():
     parse_coverage_input(
