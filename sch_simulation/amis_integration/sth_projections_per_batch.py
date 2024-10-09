@@ -4,14 +4,14 @@ from sch_simulation.helsim_FUNC_KK.results_processing import getBurdens
 import pickle
 import numpy as np
 import time
-from tqdm.contrib.concurrent import process_map
+import os
 from multiprocessing import Pool
 
 species = "ascaris"
 
 id = os.getenv("SLURM_ARRAY_TASK_ID")
-# id = 1
-num_cores = 16
+# id = 2
+num_cores = 8
 
 
 start = time.time()
@@ -226,11 +226,40 @@ def wrap_function(iu):
         If so here we specify the name of the pickle file 
     '''
 
-    newOutputSimDataFilePath = 'projections/pickle_files/projections_' + str(species) + '_' + str(iu) + '_Y2000_2025.pkl'
+
+    pathCountry = '~/NTDs/STH/post_AMIS_analysis/table_iu_idx_hookworm.csv' # same for all species. this is just to get country code
+    df_IU_country = pd.read_csv(pathCountry)
+    country = df_IU_country[df_IU_country.IU_CODE == iu]["country"].iloc[0]
+    
+    if species == "ascaris":
+        species_prefix = "Asc_"
+    if species == "hookworm":
+        species_prefix = "Hook_"
+    if species == "trichuris":
+        species_prefix = "Tri_"        
+
+    print(country)
+    print(species)
+    print(str(iu).zfill(5))
+    print(species_prefix)
+    
+    # Old file names
+    # newOutputSimDataFilePath = 'projections/' + str(species) + '/' + str(country) + '/' + str(country) + str(iu).zfill(5) + '/' + str(species_prefix) + str(country) + str(iu).zfill(5) + '.p'
+    #NTDMC.to_csv(f'projections/csv_files/PrevDataset_' + str(species) + '_' + str(iu) + '.csv', index=False)
+    # PrevDatasetFilePath = f'projections/csv_files/PrevDataset_{species}_{iu}.csv'
+        
+    # want outputs like <ascaris-folder>/AGO/AGO02049/Asc_AGO02049.p
+    newOutputSimDataFilePath = f'projections/{species}/{country}/{country}' + str(iu).zfill(5) + f'/{species_prefix}{country}' + str(iu).zfill(5) + '.p'
+    print("Pickle file name:")
+    print(newOutputSimDataFilePath)
     pickle.dump( simData, open( newOutputSimDataFilePath, 'wb' ) )
 
-    NTDMC = constructNTDMCResults(params, res, startYear)
-    NTDMC.to_csv(f'projections/csv_files/PrevDataset_' + str(species) + '_' + str(iu) + '.csv', index=False)
+    NTDMC = constructNTDMCResults(params, res, startYear)    
+    PrevDatasetFilePath = f'projections/{species}/{country}/{country}' + str(iu).zfill(5) + f'/PrevDataset_{species_prefix}{country}' + str(iu).zfill(5) + '.csv'
+    print("PrevDataset_species_iu.csv file name:")
+    print(PrevDatasetFilePath)
+    NTDMC.to_csv(PrevDatasetFilePath, index=False)
+    
 
     print('Finished projections for ' + str(species) + ' in IU ' + str(iu) + ".")
     
@@ -246,11 +275,15 @@ else:
 IU_list = pd.read_csv(path, header=None)
 IU_list.columns = ["iu"]
 
+print('IUs:')
+print(IU_list.T)
+
 # Parallelisation. This will run one IU in each CPU core
 def run_in_parallel():
-    pool = Pool(processes=num_cores)
-    pool.map(wrap_function, IU_list.iu)
-
+    print("Starting parallel")
+    with Pool(processes=num_cores) as pool:
+        pool.map(wrap_function, IU_list.iu)        
+        
 if __name__ == '__main__':
     run_in_parallel()
 
