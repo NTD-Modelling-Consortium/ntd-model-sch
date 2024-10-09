@@ -965,31 +965,7 @@ def multiple_simulations_after_burnin(
         birthDate=raw_data.demography.birthDate,
         deathDate=raw_data.demography.deathDate,
     )
-    simData = SDEquilibrium(
-        si=raw_data.si,
-        worms=worms,
-        freeLiving=raw_data.freeLiving,
-        demography=demography,
-        contactAgeGroupIndices=raw_data.contactAgeGroupIndices,
-        treatmentAgeGroupIndices=raw_data.treatmentAgeGroupIndices,
-        sv=np.zeros(len(raw_data.si), dtype=int),
-        attendanceRecord=[],
-        ageAtChemo=[],
-        adherenceFactorAtChemo=[],
-        n_treatments = {},
-        n_treatments_population = {},
-        n_surveys = {},
-        n_surveys_population = {},
-        vaccCount=0,
-        nChemo1=0,
-        nChemo2=0,
-        numSurvey=0,
-        compliers=np.random.uniform(low=0, high=1, size=len(raw_data.si))
-        > params.propNeverCompliers,
-        adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data.si)),
-        id = np.arange(len(raw_data.si)),
-        treatProbability = np.ones(len(raw_data.si)) *(-1)
-    )
+    simData = raw_data
     
     # Convert all layers to correct data format
 
