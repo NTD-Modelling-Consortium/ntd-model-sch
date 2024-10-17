@@ -1620,7 +1620,18 @@ def returnNTDMCOutputForOneSim(params, results, ageBand, PopType, startYear, pre
                             OUTPUT_COLUMN_NAME: medium_prevalence + heavy_prevalence,
                         }
                     )
-    NTDMC_data = pd.concat([NTDMC_data, medium_and_heavy_prevalence_measure], ignore_index = True)
+    heavy_prevalence_measure = pd.DataFrame(
+                        {
+                            "year_id": timepoints,
+                            "age_start": np.repeat(ageBand[0], len(timepoints)),
+                            "age_end": np.repeat(ageBand[1], len(timepoints)),
+                            "intensity": np.repeat("None", len(timepoints)),
+                            "species": np.repeat(params.species, len(timepoints)),
+                            "measure": np.repeat("Heavy Prevalence " + PopType, len(timepoints)),
+                            OUTPUT_COLUMN_NAME: heavy_prevalence,
+                        }
+                    )
+    NTDMC_data = pd.concat([NTDMC_data, medium_and_heavy_prevalence_measure, heavy_prevalence_measure], ignore_index = True)
     if PopType == "SAC":
         below_ephp_threshold_measure = pd.DataFrame(
                             {
