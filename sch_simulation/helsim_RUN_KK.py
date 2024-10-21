@@ -45,7 +45,10 @@ from sch_simulation.helsim_FUNC_KK import (
     readCoverageFile,
     readParams,
     setupSD,
-    editTreatProbability
+    editTreatProbability,
+    getCostData,
+    getActualCoverages
+
 )
 
 num_cores = multiprocessing.cpu_count()
@@ -650,215 +653,7 @@ def doRealizationSurveyCoveragePickle(
 
 
 
-def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes)-> pd.DataFrame:
-    
-    ind = 0
-    p = copy.deepcopy(params.MDA)
-    for i in range(len(p)):
-        a1 = p[i].Age[0]
-        a2 = p[i].Age[1]
-        if i == 0:
-            newrows = pd.DataFrame(
-                        {
-                            "Time": allTimes,
-                            "age_start": np.repeat(a1, len(allTimes)),
-                            "age_end": np.repeat(a2, len(allTimes)),
-                            "intensity": np.repeat("None", len(allTimes)),
-                            "species": np.repeat(params.species, len(allTimes)),
-                            "measure": np.repeat("Chemo1Cov", len(allTimes)),
-                            "draw_1": np.repeat(0, len(allTimes)),
-                        }
-                    )
-            df1 = newrows
-                                                 
-        else:
-            newrows = pd.DataFrame(
-                        {
-                            "Time": allTimes,
-                            "age_start": np.repeat(a1, len(allTimes)),
-                            "age_end": np.repeat(a2, len(allTimes)),
-                            "intensity": np.repeat("None", len(allTimes)),
-                            "species": np.repeat(params.species, len(allTimes)),
-                            "measure": np.repeat("Chemo1Cov", len(allTimes)),
-                            "draw_1": np.repeat(0, len(allTimes)),
-                        }
-                    )
-            df1 = pd.concat([df1, newrows], ignore_index = True)
-            
-        newrows = pd.DataFrame(
-                        {
-                            "Time": allTimes,
-                            "age_start": np.repeat(a1, len(allTimes)),
-                            "age_end": np.repeat(a2, len(allTimes)),
-                            "intensity": np.repeat("None", len(allTimes)),
-                            "species": np.repeat(params.species, len(allTimes)),
-                            "measure": np.repeat("Chemo2Cov", len(allTimes)),
-                            "draw_1": np.repeat(0, len(allTimes)),
-                        }
-                    )
-        df1 = pd.concat([df1, newrows], ignore_index = True)
-    p = copy.deepcopy(params.Vacc)
-    for i in range(len(p)):
-        a1 = p[i].Age[0]
-        a2 = p[i].Age[1]
         
-            
-        newrows = pd.DataFrame(
-                        {
-                            "Time": allTimes,
-                            "age_start": np.repeat(a1, len(allTimes)),
-                            "age_end": np.repeat(a2, len(allTimes)),
-                            "intensity": np.repeat("None", len(allTimes)),
-                            "species": np.repeat(params.species, len(allTimes)),
-                            "measure": np.repeat("VaccCov", len(allTimes)),
-                            "draw_1": np.repeat(0, len(allTimes)),
-                        }
-                    )
-        df1 = pd.concat([df1, newrows], ignore_index = True)
-
-        
-    pp = len(results[0])
-    for i in range(len(results[0][pp-1].propChemo1)):
-        df = results[0][pp-1].propChemo1[i]
-        t = df[0]
-        a1 = df[1]
-        a2 = df[2]
-        k = np.where(np.logical_and(df1.measure == "Chemo1Cov", np.logical_and(np.logical_and(df1.Time == t, df1.age_start == a1), df1.age_end == a2)))
-        
-        df1.draw_1.iloc[k] = df[4]
-        
-            
-    for i in range(len(results[0][pp-1].propChemo2)):
-        df = results[0][pp-1].propChemo2[i]
-        t = df[0]
-        a1 = df[1]
-        a2 = df[2]
-        k = np.where(np.logical_and(df1.measure == "Chemo2Cov", np.logical_and(np.logical_and(df1.Time == t, df1.age_start == a1), df1.age_end == a2)))
-        
-        df1.draw_1.iloc[k] = df[4]
-        
-            
-    for i in range(len(results[0][pp-1].propVacc)):
-        df = results[0][pp-1].propVacc[i]
-        t = df[0]
-        a1 = df[1]
-        a2 = df[2]
-        k = np.where(np.logical_and(df1.measure == "VaccCov", np.logical_and(np.logical_and(df1.Time == t, df1.age_start == a1), df1.age_end == a2)))
-        
-        df1.draw_1.iloc[k] = df[3]
-        
-            
-    return df1
-        
-def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame:
-    df1 = None
-    for i, list_res in enumerate(results):
-        df = pd.DataFrame(list_res)
-        if i == 0:
-            # newrows = pd.DataFrame(
-            #     {
-            #         "Time": df["time"],
-            #         "age_start": np.repeat("None", df.shape[0]),
-            #         "age_end": np.repeat("None", df.shape[0]),
-            #         "intensity": np.repeat("None", df.shape[0]),
-            #         "species": np.repeat(params.species, df.shape[0]),
-            #         "measure": np.repeat("nChemo1", df.shape[0]),
-            #         "draw_1": df["nChemo1"],
-            #     })
-            # df1 = newrows
-            newrows =  pd.DataFrame(
-                {
-                    "Time": df["time"],
-                    "age_start": np.repeat("None", df.shape[0]),
-                    "age_end": np.repeat("None", df.shape[0]),
-                    "intensity": np.repeat("None", df.shape[0]),
-                    "species": np.repeat(params.species, df.shape[0]),
-                    "measure": np.repeat("nSurvey", df.shape[0]),
-                    "draw_1": df["nSurvey"],
-                }
-            )
-            df1 = newrows
-        else:
-            assert df1 is not None
-        #     newrows = pd.DataFrame(
-        #             {
-        #                 "Time": df["time"],
-        #                 "age_start": np.repeat("None", df.shape[0]),
-        #                 "age_end": np.repeat("None", df.shape[0]),
-        #                 "intensity": np.repeat("None", df.shape[0]),
-        #                 "species": np.repeat(params.species, df.shape[0]),
-        #                 "measure": np.repeat("nChemo1", df.shape[0]),
-        #                 "draw_1": df["nChemo1"],
-        #             }
-        #         )
-            
-        #     df1 = pd.concat([df1, newrows], ignore_index = True)
-        # newrows = pd.DataFrame(
-        #         {
-        #             "Time": df["time"],
-        #             "age_start": np.repeat("None", df.shape[0]),
-        #             "age_end": np.repeat("None", df.shape[0]),
-        #             "intensity": np.repeat("None", df.shape[0]),
-        #             "species": np.repeat(params.species, df.shape[0]),
-        #             "measure": np.repeat("nChemo2", df.shape[0]),
-        #             "draw_1": df["nChemo2"],
-        #         }
-        #     )
-        # df1 = pd.concat([df1, newrows], ignore_index = True)
-
-        # newrows = pd.DataFrame(
-        #         {
-        #             "Time": df["time"],
-        #             "age_start": np.repeat("None", df.shape[0]),
-        #             "age_end": np.repeat("None", df.shape[0]),
-        #             "intensity": np.repeat("None", df.shape[0]),
-        #             "species": np.repeat(params.species, df.shape[0]),
-        #             "measure": np.repeat("nVacc", df.shape[0]),
-        #             "draw_1": df["nVacc"],
-        #         }
-        #     )
-        # df1 = pd.concat([df1, newrows], ignore_index = True)
-
-            newrows =  pd.DataFrame(
-                    {
-                        "Time": df["time"],
-                        "age_start": np.repeat("None", df.shape[0]),
-                        "age_end": np.repeat("None", df.shape[0]),
-                        "intensity": np.repeat("None", df.shape[0]),
-                        "species": np.repeat(params.species, df.shape[0]),
-                        "measure": np.repeat("nSurvey", df.shape[0]),
-                        "draw_1": df["nSurvey"],
-                    }
-                )
-            df1 = pd.concat([df1, newrows], ignore_index = True)
-
-        newrows = pd.DataFrame(
-                {
-                    "Time": df["time"],
-                    "age_start": np.repeat("None", df.shape[0]),
-                    "age_end": np.repeat("None", df.shape[0]),
-                    "intensity": np.repeat("None", df.shape[0]),
-                    "species": np.repeat(params.species, df.shape[0]),
-                    "measure": np.repeat("surveyPass", df.shape[0]),
-                    "draw_1": df["surveyPass"],
-                }
-            )
-        df1 = pd.concat([df1, newrows], ignore_index = True)
-        newrows = pd.DataFrame(
-                {
-                    "Time": df["time"],
-                    "age_start": np.repeat("None", df.shape[0]),
-                    "age_end": np.repeat("None", df.shape[0]),
-                    "intensity": np.repeat("None", df.shape[0]),
-                    "species": np.repeat(params.species, df.shape[0]),
-                    "measure": np.repeat("trueElimination", df.shape[0]),
-                    "draw_1": df["elimination"],
-                }
-            )
-        df1 = pd.concat([df1, newrows], ignore_index = True)
-    return df1
-
-
 
 
 def singleSimulationDALYCoverage(
@@ -884,9 +679,9 @@ def singleSimulationDALYCoverage(
     results, SD = doRealizationSurveyCoveragePickle(params, surveyType, simData)
     
  
-    results = [results]
     # process the output
-    output = extractHostData(results)
+    resultslist = [results]
+    output = extractHostData(resultslist)
 
     # transform the output to data frame
     df = getPrevalenceDALYsAll(
@@ -894,11 +689,11 @@ def singleSimulationDALYCoverage(
     )
          
     # wholePopPrev = getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
-    numAgeGroup = outputNumberInAgeGroup(results, params)
-    incidence = getIncidence(results, params)
-    costData = getCostData(results, params)
+    numAgeGroup = outputNumberInAgeGroup(resultslist, params)
+    incidence = getIncidence(resultslist, params)
+    costData = getCostData(resultslist, params)
     allTimes = np.unique(numAgeGroup.Time)
-    trueCoverageData = getActualCoverages(results, params, allTimes)
+    trueCoverageData = getActualCoverages(resultslist, params, allTimes)
     surveyData = outputNumberSurveyedAgeGroup(SD, params)
     treatmentData = outputNumberTreatmentAgeGroup(SD, params)
 
@@ -912,7 +707,7 @@ def singleSimulationDALYCoverage(
     df1 = df1.reset_index()
     df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
     df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
-    return df1, SD
+    return results, df1, SD
 
 
 
@@ -1170,31 +965,7 @@ def multiple_simulations_after_burnin(
         birthDate=raw_data.demography.birthDate,
         deathDate=raw_data.demography.deathDate,
     )
-    simData = SDEquilibrium(
-        si=raw_data.si,
-        worms=worms,
-        freeLiving=raw_data.freeLiving,
-        demography=demography,
-        contactAgeGroupIndices=raw_data.contactAgeGroupIndices,
-        treatmentAgeGroupIndices=raw_data.treatmentAgeGroupIndices,
-        sv=np.zeros(len(raw_data.si), dtype=int),
-        attendanceRecord=[],
-        ageAtChemo=[],
-        adherenceFactorAtChemo=[],
-        n_treatments = {},
-        n_treatments_population = {},
-        n_surveys = {},
-        n_surveys_population = {},
-        vaccCount=0,
-        nChemo1=0,
-        nChemo2=0,
-        numSurvey=0,
-        compliers=np.random.uniform(low=0, high=1, size=len(raw_data.si))
-        > params.propNeverCompliers,
-        adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data.si)),
-        id = np.arange(len(raw_data.si)),
-        treatProbability = np.ones(len(raw_data.si)) *(-1)
-    )
+    simData = raw_data
     
     # Convert all layers to correct data format
 
@@ -1228,11 +999,11 @@ def multiple_simulations_after_burnin(
     # output = extractHostData(results)
 
     # transform the output to data frame
-    df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
+    results, df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
     end_time = time.time()
     total_time = end_time - start_time
     print(f"==> after burn in finishing sim {i}: {total_time:.3f}s")
-    return df, simData
+    return df, simData, results
 
 
 
