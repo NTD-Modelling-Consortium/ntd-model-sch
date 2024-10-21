@@ -1,4 +1,2 @@
-include sch_simulation/data/*.txt
-include sch_simulation/data/*.xlsx
-include sch_simulation/data/*/*.txt
-include sch_simulation/data/*/*.xlsx
+recursive-include sch_simulation/data *.txt
+recursive-include sch_simulation/data *.xlsx
