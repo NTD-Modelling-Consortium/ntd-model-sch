@@ -31,7 +31,10 @@ test_that("Running the model should give us consistent results", {
 
     tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices = c(23), 2)
     result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.3, 0.3), ncol = 2), 1)
-    expect_equal(result, matrix(c(0.0, 0.29), ncol = 1), tolerance = 0.0)
+    expect_equal(result, matrix(c(0.0, 0.29), ncol = 1, dimnames = list(NULL, c(23))), tolerance = 0.0)
+
+    # Verify no pickle file is created
+    expect_false(file.exists("_0.pickle"))
 })
 
 test_that("Running the simulation on multiple time points gives multiple points back", {
@@ -45,7 +48,7 @@ test_that("Running the simulation on multiple time points gives multiple points 
 
     tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices, 2)
     result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.04, 0.04), ncol = 2), 1)
-    expect_equal(result, matrix(c(0.1, 0.1, 0.1, 0.1), ncol = 2), tolerance = 0.5)
+    expect_equal(result, matrix(c(0.1, 0.1, 0.1, 0.1), ncol = 2, dimnames = list(NULL, c(0, 23))), tolerance = 0.5)
 })
 
 test_that("Running the simulation with different number of years specified compared to the prevalance map raises an error", {
@@ -67,6 +70,24 @@ test_that("Running the simulation with different number of years specified compa
     year_indices <- c(23L)
 
     expect_error(build_transmission_model(prevalence_map, example_parameters, year_indices, 2), "Length of prevalance map \\(2\\) must match the number of years provided in year_indices \\(1\\)")
+})
+
+test_that("Runnig the simulation and requesting saving the state saves the state", {
+    prevalence_map <- vector("list", 2)
+    prevalence_map[[1]]$data <- matrix(c(0.031, 0.031))
+    prevalence_map[[2]]$data <- matrix(c(0.021, 0.021))
+
+    year_indices <- c(0L, 23L)
+
+    final_state_config <- sch_simulation$StateSnapshotConfig(
+        directory = "nested_dir", name = "file"
+    )
+
+    tranmission_model <- build_transmission_model(prevalence_map, example_parameters, year_indices, 2, final_state_config = final_state_config)
+    result <- tranmission_model(c(1L, 2L), matrix(c(3, 3, 0.3, 0.3), ncol = 2), 1)
+    expect_true(file.exists("nested_dir/file.p"))
+    file.remove("nested_dir/file.p")
+    unlink("nested_dir")
 })
 
 test_that("Running the AMIS integration on multiple time points should complete with the error about weight on particles", {

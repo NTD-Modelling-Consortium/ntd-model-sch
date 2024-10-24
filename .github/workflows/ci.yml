@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10"] # Test oldest and newest supported Python
+        python-version: ["3.10.9"] # Test on version used in cloud runs
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -34,4 +34,3 @@ jobs:
     - name: Run R tests
       run: Rscript tests/testthat.R
       working-directory: 'sch_simulation/amis_integration'
-

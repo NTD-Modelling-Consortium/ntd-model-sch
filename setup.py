@@ -9,7 +9,7 @@ setuptools.setup(
     description='SCH simulation model',
     long_description='Individual-based model in Medley 1989 thesis and Anderson&Medley 1985.',
     packages=setuptools.find_packages(),
-    python_requires='>=3.9,<3.11',
-    install_requires=['numpy<2.0', 'scipy', 'pandas', 'joblib', 'matplotlib', 'openpyxl', 'pytest'],
+    python_requires='==3.10.9',
+    install_requires=['numpy<2.0', 'scipy', 'pandas', 'joblib', 'openpyxl', 'pytest'],
     include_package_data=True
 )
