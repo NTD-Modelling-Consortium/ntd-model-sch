@@ -1,6 +1,6 @@
 #### Haematobium parameter values.
-species	haematobium
-unfertilized	False
+species	haematobium	species name
+unfertilized	False	unfertilized marker
 
 ### Model running parameters.
 repNum	1		Number of repetitions

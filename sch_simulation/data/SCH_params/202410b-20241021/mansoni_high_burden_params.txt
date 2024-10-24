@@ -1,6 +1,6 @@
 #### Mansoni parameter values.
-species	mansoni
-unfertilized	False
+species	mansoni	species name
+unfertilized	False	unfertilized marker
 
 ### Model running parameters.
 repNum	1		Number of repetitions
