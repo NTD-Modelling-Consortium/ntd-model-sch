@@ -958,7 +958,10 @@ def multiple_simulations_after_burnin(
 
     raw_data.demography.birthDate = raw_data.demography.birthDate - burnInTime
     raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime 
-
+    raw_data.n_treatments = {}
+    raw_data.n_treatments_population = {}
+    raw_data.n_surveys = {}
+    raw_data.n_surveys_population = {}
     
     worms = Worms(total=raw_data.worms.total, female=raw_data.worms.female)
     demography = Demography(
