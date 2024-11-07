@@ -26,6 +26,7 @@ from sch_simulation.helsim_FUNC_KK import (
     doVaccine,
     doVaccineAgeRange,
     doVectorControl,
+    doImportation,
     extractHostData,
     getEquilibrium,
     getPrevalence,
@@ -47,7 +48,7 @@ from sch_simulation.helsim_FUNC_KK import (
     setupSD,
     editTreatProbability,
     getCostData,
-    getActualCoverages
+    getActualCoverages,
 
 )
 
@@ -389,10 +390,10 @@ def doRealizationSurveyCoveragePickle(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
     while t < maxTime:
-
-        # if t > print_t:
-        #     print_t += print_t_interval
-        #     print(t)
+        import_indivs = np.where(np.random.uniform(size = params.N) < params.importation_rate)[0]
+        if len(import_indivs) > 0:
+            simData = doImportation(simData, import_indivs, params, t)
+        
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
