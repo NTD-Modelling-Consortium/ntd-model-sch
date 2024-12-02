@@ -351,8 +351,15 @@ def doImportation(SD: SDEquilibrium, import_indivs, params: Parameters, t: float
     SD.VaccTreatmentAgeGroupIndices = (
         np.digitize(t - SD.demography.birthDate, params.VaccTreatmentAgeGroupBreaks) - 1
     )
-    SD.worms.female[import_indivs] = max(1, round(np.mean(SD.worms.female)))
-    SD.worms.total[import_indivs] = max(2, round(np.mean(SD.worms.total)))
+
+    meanBurdenIndex = (
+        np.digitize(-SD.demography.birthDate[import_indivs], np.append(0, params.equiData.ageValues)) - 1
+    )
+    wTotal =  np.random.poisson(
+        lam=SD.si[import_indivs] * params.equiData.stableProfile[meanBurdenIndex] * 2, size=len(import_indivs))
+    for i in range(len(import_indivs)):
+        SD.worms.female[import_indivs[i]] = max(max(1, np.random.binomial(n=wTotal[i], p=0.5, size=1)), int(np.mean(SD.worms.female)))
+        SD.worms.total[import_indivs[i]] = max(max(2, wTotal[i]),  int(np.mean(SD.worms.total)))
     return SD
 
 
