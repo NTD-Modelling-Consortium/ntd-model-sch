@@ -383,7 +383,7 @@ def doRealizationSurveyCoveragePickle(
     print_t = 0
   
     #tSurvey = 0.9
-      
+    importationReductionTime = 1
 
     # run stochastic algorithm
     multiplier = math.floor(
@@ -393,7 +393,9 @@ def doRealizationSurveyCoveragePickle(
         import_indivs = np.where(np.random.uniform(size = params.N) < params.importation_rate)[0]
         if len(import_indivs) > 0:
             simData = doImportation(simData, import_indivs, params, t)
-        
+        if t > importationReductionTime:
+            params.importation_rate *= params.importation_reduction_rate
+            importationReductionTime += 1
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
