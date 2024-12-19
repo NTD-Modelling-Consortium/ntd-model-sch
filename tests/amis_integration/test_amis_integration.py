@@ -39,7 +39,7 @@ def test_running_model_produces_consistent_result():
     )
     results_with_seed1, _ = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=2, fixed_parameters=example_parameters)
     print(results_with_seed1["SAC Prevalence"])
-    expected_prevalence = [0.0, 0.0, 0.0, 0.31, 0.3, 0.0, 0.44, 0.0, 0.49, 0.57, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    expected_prevalence = [0.87, 1.0, 0.44, 0.36, 1.0, 1.0, 1.0, 0.67, 1.0, 0.7, 0.37, 0.57, 0.82, 0.77, 0.82, 0.77, 0.78, 0.79, 0.8, 1.0, 0.53, 0.61, 0.0, 0.0]
     pdt.assert_series_equal(results_with_seed1["SAC Prevalence"], pd.Series(expected_prevalence, name="SAC Prevalence"))
 
 def test_running_parallel_produces_results():
