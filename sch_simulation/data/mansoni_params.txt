@@ -1,6 +1,6 @@
 #### Mansoni parameter values.
-species	mansoni
-unfertilized	False
+species	mansoni		species name
+unfertilized	False		unfertilized marker
 
 ### Model running parameters.
 repNum	1		Number of repetitions
@@ -93,3 +93,7 @@ testSensitivity	0.553
 
 ## testSpecificity
 testSpecificity	1
+
+## importation
+importation_rate	0	## probability of importation per timestep per person
+importation_reduction_rate	0	## rate of reduction of importation rate per year
