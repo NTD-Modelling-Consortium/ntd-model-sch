@@ -303,14 +303,15 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
 def doImportation(SD: SDEquilibrium, import_indivs, params: Parameters, t: float):
     '''
     When someone is imported, we assume that they are infected and diseased and some random proportion
-    of time through their infection period. We will assume that they are at the average number of infecteds
-    for the whole population in order to draw these times too.
+    of time through their infection period. We will assume that they are at the average number of infected worms
+    for the whole population in order to draw these times too. If this average is 0 then they will have 1 female
+    and 1 male worm.
     '''
     SD.si[import_indivs] = np.random.gamma(
         size=len(import_indivs), scale=1 / params.k, shape=params.k
     )
     SD.sv[import_indivs] = 0
-    # SD['sex_id'][import_indivs] = np.round(np.random.uniform(low = 1, high = 2, size = len(import_indivs)))
+
     # update the birth dates and death dates
     lifeSpans = getLifeSpans(len(import_indivs), params)
     SD.demography.birthDate[import_indivs] = t - lifeSpans * np.random.uniform(
@@ -332,6 +333,7 @@ def doImportation(SD: SDEquilibrium, import_indivs, params: Parameters, t: float
         np.random.uniform(low=0, high=1, size=len(import_indivs))
         > params.propNeverCompliers
     )
+    # assign new id's so we can track incidence of new infections year to year
     maxID = max(SD.id)
     new_ids = np.arange(maxID + 1, maxID + len(import_indivs) + 1)
     SD.id[import_indivs] = new_ids

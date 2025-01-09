@@ -382,7 +382,7 @@ def doRealizationSurveyCoveragePickle(
     print_t_interval = 0.5
     print_t = 0
   
-    #tSurvey = 0.9
+    # reduce importation every year, hence set the time of importation reduction to be 1 (1 year)
     importationReductionTime = 1
 
     # run stochastic algorithm
