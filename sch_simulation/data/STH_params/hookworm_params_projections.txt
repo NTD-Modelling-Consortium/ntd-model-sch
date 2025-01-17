@@ -95,3 +95,7 @@ testSensitivity	0.553
 
 ## testSpecificity
 testSpecificity	1
+
+## importation
+importation_rate	0.000038	## probability of importation per timestep per person (1/(52*500))
+importation_reduction_rate	0.9895	## rate of reduction of importation rate per year ((0.9)**(1/10))

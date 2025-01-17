@@ -2,7 +2,10 @@
 # on cluster:
 id = as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 # for testing:
-#id = 16
+# id = 16
+# setwd("~/Documents/STH-endgame/ntd-model-sch/")
+# num_cores_to_use <- 8
+
 # should be "ascaris", "hookworm" or "trichuris"
 species = "ascaris"
 
@@ -17,7 +20,6 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args) == 1) {
     num_cores_to_use <- as.integer(args)
 }
-# num_cores_to_use <- 2
 
 print(paste0('Using ', num_cores_to_use, ' cores'))
 
