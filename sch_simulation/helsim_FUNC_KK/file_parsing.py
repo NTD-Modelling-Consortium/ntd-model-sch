@@ -601,6 +601,8 @@ def readParams(
     )
 
     params = Parameters(
+        importation_rate = parameters["importation_rate"],
+        importation_reduction_rate = parameters["importation_reduction_rate"],
         numReps=int(parameters["repNum"]),
         maxTime=parameters["nYears"],
         N=int(parameters["nHosts"]),
@@ -667,7 +669,9 @@ def readParams(
         k_slide = parameters["k_slide"],
         weight_sample = parameters["weight_sample"],
         testSensitivity = parameters["testSensitivity"],
-        testSpecificity = parameters["testSpecificity"]
+        testSpecificity = parameters["testSpecificity"],
+        
+
     )
 
     return params

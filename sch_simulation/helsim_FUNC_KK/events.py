@@ -299,6 +299,72 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
     return SD
 
 
+
+def doImportation(SD: SDEquilibrium, import_indivs, params: Parameters, t: float):
+    '''
+    When someone is imported, we assume that they are infected and diseased and some random proportion
+    of time through their infection period. We will assume that they are at the average number of infected worms
+    for the whole population in order to draw these times too. If this average is 0 then they will have 1 female
+    and 1 male worm.
+    '''
+    SD.si[import_indivs] = np.random.gamma(
+        size=len(import_indivs), scale=1 / params.k, shape=params.k
+    )
+    SD.sv[import_indivs] = 0
+
+    # update the birth dates and death dates
+    lifeSpans = getLifeSpans(len(import_indivs), params)
+    SD.demography.birthDate[import_indivs] = t - lifeSpans * np.random.uniform(
+        low=0, high=1, size=len(import_indivs)
+    )
+    SD.demography.deathDate[import_indivs] = SD.demography.birthDate[import_indivs] + lifeSpans
+
+    # kill all their worms
+    SD.worms.total[import_indivs] = 0
+    SD.worms.female[import_indivs] = 0
+
+    # update the adherence factors
+    SD.adherenceFactors[import_indivs] = np.random.uniform(
+        low=0, high=1, size=len(import_indivs)
+    )
+
+    # assign the newly-born to either comply or not
+    SD.compliers[import_indivs] = (
+        np.random.uniform(low=0, high=1, size=len(import_indivs))
+        > params.propNeverCompliers
+    )
+    # assign new id's so we can track incidence of new infections year to year
+    maxID = max(SD.id)
+    new_ids = np.arange(maxID + 1, maxID + len(import_indivs) + 1)
+    SD.id[import_indivs] = new_ids
+    SD.treatProbability[import_indivs] = drawTreatmentProbabilities(len(import_indivs), SD.MDA_coverage, params.systematic_non_compliance)
+    assert params.contactAgeGroupBreaks is not None
+    # update the contact age categories
+    SD.contactAgeGroupIndices = (
+        np.digitize(t - SD.demography.birthDate, params.contactAgeGroupBreaks) - 1
+    )
+
+    assert params.treatmentAgeGroupBreaks is not None
+    assert params.VaccTreatmentAgeGroupBreaks is not None
+    # update the treatment age categories
+    SD.treatmentAgeGroupIndices = (
+        np.digitize(t - SD.demography.birthDate, params.treatmentAgeGroupBreaks) - 1
+    )
+    SD.VaccTreatmentAgeGroupIndices = (
+        np.digitize(t - SD.demography.birthDate, params.VaccTreatmentAgeGroupBreaks) - 1
+    )
+
+    meanBurdenIndex = (
+        np.digitize(-SD.demography.birthDate[import_indivs], np.append(0, params.equiData.ageValues)) - 1
+    )
+    wTotal =  np.random.poisson(
+        lam=SD.si[import_indivs] * params.equiData.stableProfile[meanBurdenIndex] * 2, size=len(import_indivs))
+    for i in range(len(import_indivs)):
+        SD.worms.female[import_indivs[i]] = max(max(1, np.random.binomial(n=wTotal[i], p=0.5, size=1)), int(np.mean(SD.worms.female)))
+        SD.worms.total[import_indivs[i]] = max(max(2, wTotal[i]),  int(np.mean(SD.worms.total)))
+    return SD
+
+
 def doChemo(
     params: Parameters, SD: SDEquilibrium, t: NDArray[np.int_], coverage: ndarray
 ) -> SDEquilibrium:

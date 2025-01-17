@@ -13,6 +13,7 @@ from sch_simulation.helsim_FUNC_KK.events import (
     doVaccine,
     doVaccineAgeRange,
     doVectorControl,
+    doImportation,
     conductKKSurvey,
     conductPOCCCASurvey,
     conductPCRSurvey

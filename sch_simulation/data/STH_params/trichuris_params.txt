@@ -4,9 +4,9 @@ unfertilized	True		unfertilised marker
 
 ### Model running parameters.
 repNum	1		Number of repetitions
-nYears	14		Number of years to run
+nYears	34		Number of years to run
 nHosts	500			Size of definitive host population (N)
-outputEvents	0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22	23 output events.
+outputEvents	0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 output events.
 neverTreated	0
 systematic_non_compliance	0.3			level of systematic non compliance in range [0,1]
 
@@ -96,3 +96,7 @@ testSensitivity	0.553
 
 ## testSpecificity
 testSpecificity	1
+
+## importation
+importation_rate	0.000038	## probability of importation per timestep per person (1/(52*500))
+importation_reduction_rate	0.9895	## rate of reduction of importation rate per year ((0.9)**(1/10))

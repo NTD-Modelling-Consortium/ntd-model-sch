@@ -157,7 +157,7 @@ def run_model_with_parameters(
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
         num_runs, len(year_indices)
     )
-
+    
     if final_state_config is not None:
         if not os.path.exists(final_state_config.directory):
             os.makedirs(final_state_config.directory)

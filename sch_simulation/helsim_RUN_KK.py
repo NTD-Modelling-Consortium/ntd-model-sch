@@ -26,6 +26,7 @@ from sch_simulation.helsim_FUNC_KK import (
     doVaccine,
     doVaccineAgeRange,
     doVectorControl,
+    doImportation,
     extractHostData,
     getEquilibrium,
     getPrevalence,
@@ -47,7 +48,7 @@ from sch_simulation.helsim_FUNC_KK import (
     setupSD,
     editTreatProbability,
     getCostData,
-    getActualCoverages
+    getActualCoverages,
 
 )
 
@@ -381,18 +382,23 @@ def doRealizationSurveyCoveragePickle(
     print_t_interval = 0.5
     print_t = 0
   
-    #tSurvey = 0.9
-      
+    # reduce importation every year, hence set the time of importation reduction to be 1 (1 year)
+    importationReductionTime = 1
 
     # run stochastic algorithm
     multiplier = math.floor(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
     while t < maxTime:
-
-        # if t > print_t:
-        #     print_t += print_t_interval
-        #     print(t)
+        if(params.importation_rate > 0):
+            import_indivs = np.where(np.random.uniform(size = params.N) < params.importation_rate)[0]
+            if len(import_indivs) > 0:
+                simData = doImportation(simData, import_indivs, params, t)
+            if t > importationReductionTime:
+                params.importation_rate *= params.importation_reduction_rate
+                importationReductionTime += 1
+        
+        
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)

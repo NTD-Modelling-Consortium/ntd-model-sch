@@ -115,6 +115,8 @@ class Parameters:
     weight_sample: float
     testSensitivity: float
     testSpecificity: float
+    importation_rate: float
+    importation_reduction_rate: float
     psi: float = 1.0
     reproFunc: Optional[Callable[[np.ndarray, "Parameters"], np.ndarray]] = None
     maxHostAge: Optional[ndarray] = None

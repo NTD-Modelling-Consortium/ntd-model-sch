@@ -37,9 +37,9 @@ def test_running_model_produces_consistent_result():
         example_parameters.coverage_file_name,
         example_parameters.coverage_text_file_storage_name,
     )
-    results_with_seed1, _ = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=1, fixed_parameters=example_parameters)
+    results_with_seed1, _ = returnYearlyPrevalenceEstimate(3.0, 0.3, seed=2, fixed_parameters=example_parameters)
     print(results_with_seed1["SAC Prevalence"])
-    expected_prevalence = [0.0, 0.0, 0.0, 0.31, 0.3, 0.0, 0.44, 0.0, 0.49, 0.57, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    expected_prevalence = [0.86, 0.74, 0.47, 0.36, 0.64, 1.0, 0.5, 0.72, 0.51, 0.79, 0.55, 0.71, 0.69, 0.72, 0.71, 1.0, 0.78, 0.31, 0.57, 0.36, 0.25, 0.24, 0.0, 0.29]
     pdt.assert_series_equal(results_with_seed1["SAC Prevalence"], pd.Series(expected_prevalence, name="SAC Prevalence"))
 
 def test_running_parallel_produces_results():
@@ -50,7 +50,10 @@ def test_running_parallel_produces_results():
         year_indices=[23],
         num_parallel_jobs=2)
     print(results)
-    npt.assert_array_equal(results, [[0.  ],[0.29],[0.  ],[1.  ]])
+    npt.assert_array_equal(results, [[0.  ],
+       [0.29],
+       [0.  ],
+       [1.  ]])
 
 def test_running_save_state_saves_state():
     _ = run_model_with_parameters(
