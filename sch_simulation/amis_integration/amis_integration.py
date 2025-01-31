@@ -3,6 +3,7 @@ import os
 import time
 from typing import Literal
 import pandas as pd
+import pickle
 import sch_simulation
 import numpy as np
 from sch_simulation.helsim_FUNC_KK.configuration import setupSD
@@ -48,6 +49,11 @@ class FixedParameters:
 
     A higher number will result in faster but less accurate simulation."""
 
+@dataclass(eq=True, frozen=True)
+class StateSnapshotConfig:
+    directory: str = "."
+    name: str = "final_state"
+
 
 def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameters):
     np.random.seed(seed)
@@ -85,7 +91,7 @@ def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameter
     PrevalenceEstimate = results_processing.getPrevalence(
         output, params, numReps, params.Unfertilized
     )
-    return PrevalenceEstimate
+    return PrevalenceEstimate, SD
 
 
 def extract_relevant_results(
@@ -113,21 +119,17 @@ def run_and_extract_results(
 
     start_time = time.time()
 
-    results = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
+    results, end_state = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
 
     end_time = time.time()
-    if include_output:
-        print(f"Run R0: {R0}, k: {k} took {end_time-start_time:10.2f} seconds")
 
-    return extract_relevant_results(results, year_indices)
+    return extract_relevant_results(results, year_indices), end_state
 
 
 def run_model_with_parameters(
-    seeds,
-    parameters,
-    fixed_parameters: FixedParameters,
-    year_indices: list[int],
-    num_parallel_jobs=-2,  # default to all but one process to keep computers responsive
+    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int],
+    num_parallel_jobs = -2, # default to all but one process to keep computers responsive
+    final_state_config: StateSnapshotConfig | None = None,
 ):
     if len(seeds) != len(parameters):
         raise ValueError(
@@ -145,20 +147,29 @@ def run_model_with_parameters(
 
     print_timing_info_every_n_times = 10
 
-    final_prevalence_for_each_run = Parallel(n_jobs=num_parallel_jobs)(
-        delayed(run_and_extract_results)(
-            parameter_set,
-            seed,
-            fixed_parameters,
-            year_indices,
-            include_output=index % print_timing_info_every_n_times == 0,
-        )
-        for index, (seed, parameter_set) in enumerate(zip(seeds, parameters))
+    run_results = Parallel(n_jobs=num_parallel_jobs)(delayed(run_and_extract_results)
+        (parameter_set, seed, fixed_parameters, year_indices, include_output=index % print_timing_info_every_n_times == 0) 
+        for index, (seed, parameter_set) in enumerate(zip(seeds, parameters)))
+    
+    final_prevalence_for_each_run = list(
+        map(lambda run_result: run_result[0], run_results)
     )
 
     results_np_array = np.array(final_prevalence_for_each_run).reshape(
         num_runs, len(year_indices)
     )
+
+    if final_state_config is not None:
+        if not os.path.exists(final_state_config.directory):
+            os.makedirs(final_state_config.directory)
+        final_states = list(map(lambda run_result: run_result[1], run_results))
+        print("Saving pickle files")
+        with open(
+                f"{final_state_config.directory}/{final_state_config.name}.p",
+                "wb",
+            ) as pickle_file:
+                pickle.dump(final_states, pickle_file)
+            
 
     os.remove(fixed_parameters.coverage_text_file_storage_name)
 

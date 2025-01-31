@@ -663,25 +663,21 @@ def singleSimulationDALYCoverage(
     # run the simulations
     results, SD = doRealizationSurveyCoveragePickle(params, surveyType, simData)
 
-    results = [results]
+    results = [resultslist]
     # process the output
-    output = results_processing.extractHostData(results)
+    output = results_processing.extractHostData(resultslist)
 
     # transform the output to data frame
     df = results_processing.getPrevalenceDALYsAll(
         output, params, numReps, params.Unfertilized, "KK1", 1
     )
-
+         
     # wholePopPrev = results_processing.getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
-    numAgeGroup = results_processing.outputNumberInAgeGroup(results, params)
-    incidence = results_processing.getIncidence(results, params)
-    costData = results_processing.getCostData(results, params)
+    numAgeGroup = results_processing.outputNumberInAgeGroup(resultslist, params)
+    incidence = results_processing.getIncidence(resultslist, params)
+    costData = results_processing.getCostData(resultslist, params)
     allTimes = np.unique(numAgeGroup.Time)
-    trueCoverageData = results_processing.getActualCoverages(
-        results,
-        params,
-        allTimes,
-    )
+    trueCoverageData = results_processing.getActualCoverages(resultslist, params, allTimes)
     surveyData = results_processing.outputNumberSurveyedAgeGroup(SD, params)
     treatmentData = results_processing.outputNumberTreatmentAgeGroup(SD, params)
 
@@ -693,11 +689,9 @@ def singleSimulationDALYCoverage(
     df1 = pd.concat([df1, surveyData], ignore_index=True)
     df1 = pd.concat([df1, treatmentData], ignore_index=True)
     df1 = df1.reset_index()
-    df1["draw_1"][np.where(pd.isna(df1["draw_1"]))[0]] = -1
-    df1 = df1[
-        ["Time", "age_start", "age_end", "intensity", "species", "measure", "draw_1"]
-    ]
-    return df1, SD
+    df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
+    df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
+    return results, df1, SD
 
 
 def getDesiredAgeDistribution(params, timeLimit):
@@ -970,41 +964,19 @@ def multiple_simulations_after_burnin(
     t = 0
 
     raw_data.demography.birthDate = raw_data.demography.birthDate - burnInTime
-    raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime
-
-    worms = helsim_structures.Worms(
-        total=raw_data.worms.total, female=raw_data.worms.female
-    )
+    raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime 
+    raw_data.n_treatments = {}
+    raw_data.n_treatments_population = {}
+    raw_data.n_surveys = {}
+    raw_data.n_surveys_population = {}
+    
+    worms = helsim_structures.Worms(total=raw_data.worms.total, female=raw_data.worms.female)
     demography = helsim_structures.Demography(
         birthDate=raw_data.demography.birthDate,
         deathDate=raw_data.demography.deathDate,
     )
-    simData = helsim_structures.SDEquilibrium(
-        si=raw_data.si,
-        worms=worms,
-        freeLiving=raw_data.freeLiving,
-        demography=demography,
-        contactAgeGroupIndices=raw_data.contactAgeGroupIndices,
-        treatmentAgeGroupIndices=raw_data.treatmentAgeGroupIndices,
-        sv=np.zeros(len(raw_data.si), dtype=int),
-        attendanceRecord=[],
-        ageAtChemo=[],
-        adherenceFactorAtChemo=[],
-        n_treatments={},
-        n_treatments_population={},
-        n_surveys={},
-        n_surveys_population={},
-        vaccCount=0,
-        nChemo1=0,
-        nChemo2=0,
-        numSurvey=0,
-        compliers=np.random.uniform(low=0, high=1, size=len(raw_data.si))
-        > params.propNeverCompliers,
-        adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data.si)),
-        id=np.arange(len(raw_data.si)),
-        treatProbability=np.ones(len(raw_data.si)) * (-1),
-    )
-
+    simData = raw_data
+    
     # Convert all layers to correct data format
 
     # extract the previous random state
@@ -1037,11 +1009,11 @@ def multiple_simulations_after_burnin(
     # output = results_processing.extractHostData(results)
 
     # transform the output to data frame
-    df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
+    results, df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
     end_time = time.time()
     total_time = end_time - start_time
     print(f"==> after burn in finishing sim {i}: {total_time:.3f}s")
-    return df, simData
+    return df, simData, results
 
 
 def BurnInSimulations(
