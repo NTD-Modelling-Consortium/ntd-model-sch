@@ -5,7 +5,6 @@ import pickle
 import numpy as np
 import time
 import os
-from multiprocessing import Pool
 
 species = "trichuris"
 
@@ -59,10 +58,8 @@ def constructNTDMCResults(params, res, startYear):
 
     # unpack results from the simulation here. These will be called to extract data from later
     results = [item[0] for item in res]
-    allSD = [item[1] for item in res]
     for i in range(len(results)):
         singleSimResult = results[i]
-        SD = allSD[i]
 
         _, _, _, dfSAC = returnNTDMCOutputs(
             params, singleSimResult, [5, 15], "SAC", startYear
