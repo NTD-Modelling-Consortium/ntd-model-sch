@@ -49,6 +49,7 @@ class FixedParameters:
 
     A higher number will result in faster but less accurate simulation."""
 
+
 @dataclass(eq=True, frozen=True)
 class StateSnapshotConfig:
     directory: str = "."
@@ -127,8 +128,11 @@ def run_and_extract_results(
 
 
 def run_model_with_parameters(
-    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int],
-    num_parallel_jobs = -2, # default to all but one process to keep computers responsive
+    seeds,
+    parameters,
+    fixed_parameters: FixedParameters,
+    year_indices: list[int],
+    num_parallel_jobs=-2,  # default to all but one process to keep computers responsive
     final_state_config: StateSnapshotConfig | None = None,
 ):
     if len(seeds) != len(parameters):
@@ -147,10 +151,17 @@ def run_model_with_parameters(
 
     print_timing_info_every_n_times = 10
 
-    run_results = Parallel(n_jobs=num_parallel_jobs)(delayed(run_and_extract_results)
-        (parameter_set, seed, fixed_parameters, year_indices, include_output=index % print_timing_info_every_n_times == 0) 
-        for index, (seed, parameter_set) in enumerate(zip(seeds, parameters)))
-    
+    run_results = Parallel(n_jobs=num_parallel_jobs)(
+        delayed(run_and_extract_results)(
+            parameter_set,
+            seed,
+            fixed_parameters,
+            year_indices,
+            include_output=index % print_timing_info_every_n_times == 0,
+        )
+        for index, (seed, parameter_set) in enumerate(zip(seeds, parameters))
+    )
+
     final_prevalence_for_each_run = list(
         map(lambda run_result: run_result[0], run_results)
     )
@@ -165,11 +176,10 @@ def run_model_with_parameters(
         final_states = list(map(lambda run_result: run_result[1], run_results))
         print("Saving pickle files")
         with open(
-                f"{final_state_config.directory}/{final_state_config.name}.p",
-                "wb",
-            ) as pickle_file:
-                pickle.dump(final_states, pickle_file)
-            
+            f"{final_state_config.directory}/{final_state_config.name}.p",
+            "wb",
+        ) as pickle_file:
+            pickle.dump(final_states, pickle_file)
 
     os.remove(fixed_parameters.coverage_text_file_storage_name)
 

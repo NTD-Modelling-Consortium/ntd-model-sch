@@ -671,13 +671,15 @@ def singleSimulationDALYCoverage(
     df = results_processing.getPrevalenceDALYsAll(
         output, params, numReps, params.Unfertilized, "KK1", 1
     )
-         
+
     # wholePopPrev = results_processing.getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
     numAgeGroup = results_processing.outputNumberInAgeGroup(resultslist, params)
     incidence = results_processing.getIncidence(resultslist, params)
     costData = results_processing.getCostData(resultslist, params)
     allTimes = np.unique(numAgeGroup.Time)
-    trueCoverageData = results_processing.getActualCoverages(resultslist, params, allTimes)
+    trueCoverageData = results_processing.getActualCoverages(
+        resultslist, params, allTimes
+    )
     surveyData = results_processing.outputNumberSurveyedAgeGroup(SD, params)
     treatmentData = results_processing.outputNumberTreatmentAgeGroup(SD, params)
 
@@ -689,8 +691,10 @@ def singleSimulationDALYCoverage(
     df1 = pd.concat([df1, surveyData], ignore_index=True)
     df1 = pd.concat([df1, treatmentData], ignore_index=True)
     df1 = df1.reset_index()
-    df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
-    df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
+    df1["draw_1"][np.where(pd.isna(df1["draw_1"]))[0]] = -1
+    df1 = df1[
+        ["Time", "age_start", "age_end", "intensity", "species", "measure", "draw_1"]
+    ]
     return results, df1, SD
 
 
@@ -964,19 +968,21 @@ def multiple_simulations_after_burnin(
     t = 0
 
     raw_data.demography.birthDate = raw_data.demography.birthDate - burnInTime
-    raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime 
+    raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime
     raw_data.n_treatments = {}
     raw_data.n_treatments_population = {}
     raw_data.n_surveys = {}
     raw_data.n_surveys_population = {}
-    
-    worms = helsim_structures.Worms(total=raw_data.worms.total, female=raw_data.worms.female)
+
+    worms = helsim_structures.Worms(
+        total=raw_data.worms.total, female=raw_data.worms.female
+    )
     demography = helsim_structures.Demography(
         birthDate=raw_data.demography.birthDate,
         deathDate=raw_data.demography.deathDate,
     )
     simData = raw_data
-    
+
     # Convert all layers to correct data format
 
     # extract the previous random state
@@ -1009,7 +1015,9 @@ def multiple_simulations_after_burnin(
     # output = results_processing.extractHostData(results)
 
     # transform the output to data frame
-    results, df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
+    results, df, simData = singleSimulationDALYCoverage(
+        parameters, simData, surveyType, 1
+    )
     end_time = time.time()
     total_time = end_time - start_time
     print(f"==> after burn in finishing sim {i}: {total_time:.3f}s")
