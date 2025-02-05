@@ -663,7 +663,7 @@ def singleSimulationDALYCoverage(
     # run the simulations
     results, SD = doRealizationSurveyCoveragePickle(params, surveyType, simData)
 
-    results = [resultslist]
+    resultslist = [results]
     # process the output
     output = results_processing.extractHostData(resultslist)
 
