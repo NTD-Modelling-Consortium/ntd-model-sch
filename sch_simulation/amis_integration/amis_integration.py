@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import random
 import os
 import time
 from typing import Literal
@@ -21,6 +20,7 @@ import sch_simulation.helsim_RUN_KK
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
 import sch_simulation.helsim_FUNC_KK.prevalence_column_names as prevalence_column_names
 
+
 @dataclass(eq=True, frozen=True)
 class FixedParameters:
     number_hosts: int
@@ -35,7 +35,7 @@ class FixedParameters:
 
     survey_type: Literal["KK1", "KK2", "POC-CCA", "PCR"]
     """Which suvery type to use
-    
+
     Must be one KK1, KK2, POC-CCA or PCR"""
 
     coverage_text_file_storage_name: str
@@ -46,8 +46,9 @@ class FixedParameters:
 
     min_multiplier: int
     """Used to speed up running the model
-    
+
     A higher number will result in faster but less accurate simulation."""
+
 
 @dataclass(eq=True, frozen=True)
 class StateSnapshotConfig:
@@ -97,7 +98,6 @@ def returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters: FixedParameter
 def extract_relevant_results(
     results: pd.DataFrame, relevant_years: list[float]
 ) -> float:
-
     relevant_rows = results["Time"].isin(relevant_years)
     prevalence_for_relevant_years = pd.Series(
         data=results[relevant_rows][prevalence_column_names.SAC_PREVALENCE],
@@ -111,7 +111,10 @@ def extract_relevant_results(
 
     return prevalence_for_relevant_years
 
-def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices, include_output=False):
+
+def run_and_extract_results(
+    parameter_set, seed, fixed_parameters, year_indices, include_output=False
+):
     R0 = parameter_set[0]
     k = parameter_set[1]
 
@@ -120,36 +123,45 @@ def run_and_extract_results(parameter_set, seed, fixed_parameters, year_indices,
     results, end_state = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
 
     end_time = time.time()
-    # if include_output:
-      #  print(f'Run R0: {R0}, k: {k} took {end_time-start_time:10.2f} seconds')
 
     return extract_relevant_results(results, year_indices), end_state
 
+
 def run_model_with_parameters(
-    seeds, parameters, fixed_parameters: FixedParameters, year_indices: list[int],
-    num_parallel_jobs = -2, # default to all but one process to keep computers responsive
+    seeds,
+    parameters,
+    fixed_parameters: FixedParameters,
+    year_indices: list[int],
+    num_parallel_jobs=-2,  # default to all but one process to keep computers responsive
     final_state_config: StateSnapshotConfig | None = None,
 ):
     if len(seeds) != len(parameters):
         raise ValueError(
             f"Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}"
         )
-    
+
     parse_coverage_input(
         fixed_parameters.coverage_file_name,
         fixed_parameters.coverage_text_file_storage_name,
     )
-    
-    print(f'Running {len(seeds)} simulations across {num_parallel_jobs} cores')
+
+    print(f"Running {len(seeds)} simulations across {num_parallel_jobs} cores")
 
     num_runs = len(seeds)
 
     print_timing_info_every_n_times = 10
 
-    run_results = Parallel(n_jobs=num_parallel_jobs)(delayed(run_and_extract_results)
-        (parameter_set, seed, fixed_parameters, year_indices, include_output=index % print_timing_info_every_n_times == 0) 
-        for index, (seed, parameter_set) in enumerate(zip(seeds, parameters)))
-    
+    run_results = Parallel(n_jobs=num_parallel_jobs)(
+        delayed(run_and_extract_results)(
+            parameter_set,
+            seed,
+            fixed_parameters,
+            year_indices,
+            include_output=index % print_timing_info_every_n_times == 0,
+        )
+        for index, (seed, parameter_set) in enumerate(zip(seeds, parameters))
+    )
+
     final_prevalence_for_each_run = list(
         map(lambda run_result: run_result[0], run_results)
     )
@@ -164,11 +176,10 @@ def run_model_with_parameters(
         final_states = list(map(lambda run_result: run_result[1], run_results))
         print("Saving pickle files")
         with open(
-                f"{final_state_config.directory}/{final_state_config.name}.p",
-                "wb",
-            ) as pickle_file:
-                pickle.dump(final_states, pickle_file)
-            
+            f"{final_state_config.directory}/{final_state_config.name}.p",
+            "wb",
+        ) as pickle_file:
+            pickle.dump(final_states, pickle_file)
 
     os.remove(fixed_parameters.coverage_text_file_storage_name)
 

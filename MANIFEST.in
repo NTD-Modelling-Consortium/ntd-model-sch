@@ -1,2 +1,0 @@
-recursive-include sch_simulation/data *.txt
-recursive-include sch_simulation/data *.xlsx

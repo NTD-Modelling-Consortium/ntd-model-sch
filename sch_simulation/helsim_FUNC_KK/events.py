@@ -6,7 +6,13 @@ from numpy import ndarray
 from numpy.typing import NDArray
 
 from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters, SDEquilibrium
-from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, KKsampleGammaGammaPois,POC_CCA_test, PCR_test, drawTreatmentProbabilities
+from sch_simulation.helsim_FUNC_KK.utils import (
+    getLifeSpans,
+    getSetOfEggCounts,
+    POC_CCA_test,
+    PCR_test,
+    drawTreatmentProbabilities,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -16,7 +22,6 @@ np.seterr(divide="ignore")
 def doEvent(
     rates: NDArray[np.float_], params: Parameters, SD: SDEquilibrium
 ) -> SDEquilibrium:
-
     """
     This function enacts the event; the events are
     new worms, worms death and vaccine recoveries
@@ -40,7 +45,6 @@ def doEvent(
     )
 
     if event == len(rates) - 1:  # worm death event
-
         deathIndex = np.argmax(
             np.random.uniform(low=0, high=1, size=1)
             * np.sum(SD.worms.total * params.v1[SD.sv])
@@ -74,7 +78,6 @@ def doEvent2(
     SD: SDEquilibrium,
     multiplier: int = 1,
 ) -> SDEquilibrium:
-
     """
     This function enacts the event; the events are
     new worms, worms death and vaccine recoveries
@@ -177,7 +180,6 @@ def doRegular(
 
 
 def doFreeLive(params: Parameters, SD: SDEquilibrium, dt: float) -> SDEquilibrium:
-
     """
     This function updates the freeliving population deterministically.
     Parameters
@@ -232,7 +234,6 @@ def doFreeLive(params: Parameters, SD: SDEquilibrium, dt: float) -> SDEquilibriu
 
 
 def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
-
     """
     Death and aging function.
     Parameters
@@ -279,7 +280,9 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
         maxID = max(SD.id)
         new_ids = np.arange(maxID + 1, maxID + len(theDead) + 1)
         SD.id[theDead] = new_ids
-        SD.treatProbability[theDead] = drawTreatmentProbabilities(len(theDead), SD.MDA_coverage, params.systematic_non_compliance)
+        SD.treatProbability[theDead] = drawTreatmentProbabilities(
+            len(theDead), SD.MDA_coverage, params.systematic_non_compliance
+        )
     assert params.contactAgeGroupBreaks is not None
     # update the contact age categories
     SD.contactAgeGroupIndices = (
@@ -302,7 +305,6 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
 def doChemo(
     params: Parameters, SD: SDEquilibrium, t: NDArray[np.int_], coverage: ndarray
 ) -> SDEquilibrium:
-
     """
     Chemoterapy function.
     Parameters
@@ -323,7 +325,6 @@ def doChemo(
 
     # decide which individuals are treated
     toTreatNow = np.random.uniform(low=0, high=1, size=params.N) < SD.treatProbability
-
 
     # calculate the number of dead worms
     femaleToDie = np.random.binomial(
@@ -354,10 +355,8 @@ def doChemoAgeRange(
     minAge: int,
     maxAge: int,
     coverage: ndarray,
-    label:int,
-    
+    label: int,
 ) -> SDEquilibrium:
-
     """
     Chemoterapy function.
     Parameters
@@ -395,7 +394,7 @@ def doChemoAgeRange(
 
     # initialize the share of drug 1 and drug2
     # we allow 2 different types of drug to be given within the same MDA.
-    # Hence we need to split the population into groups who will take each of the drugs. 
+    # Hence we need to split the population into groups who will take each of the drugs.
     # in reality it will often be just one of the drugs each year, making this redundant
     d1Share = 0
     d2Share = 0
@@ -413,7 +412,7 @@ def doChemoAgeRange(
         j = np.where(params.drug2Years == t)[0][0]
         d2Share = params.drug2Split[j]
 
-    # ensure that a drug is assigned even if missed in the coverage file    
+    # ensure that a drug is assigned even if missed in the coverage file
     if np.logical_and(d1Share == 0, d2Share == 0):
         if max(params.drug1Years) < t:
             d2Share = 1
@@ -422,22 +421,22 @@ def doChemoAgeRange(
     # assign which drug each person will take
     drug = np.ones(int(sum(toTreatNow)))
     # we want to make sure that if we are using drug 2, then the correct number of people are assigned this drug
-    if (d2Share > 0) and (any(toTreatNow)) :
+    if (d2Share > 0) and (any(toTreatNow)):
         k = np.random.choice(
-            range(int(sum(drug))), int(sum(drug) * d2Share), replace=False,
+            range(int(sum(drug))),
+            int(sum(drug) * d2Share),
+            replace=False,
         )
         drug[k] = 2
     # calculate the number of dead worms
-    ll = np.where(toTreatNow==1)[0]
+    ll = np.where(toTreatNow == 1)[0]
     # if drug 1 share is > 0, then treat the appropriate individuals with drug 1
     if d1Share > 0:
         dEff = params.DrugEfficacy1
         k = np.where(drug == 1)[0]
 
         femaleToDie = np.random.binomial(
-            size=len(k), 
-            n=np.array(SD.worms.female[ll[k]], dtype="int32"), 
-            p=dEff
+            size=len(k), n=np.array(SD.worms.female[ll[k]], dtype="int32"), p=dEff
         )
 
         maleToDie = np.random.binomial(
@@ -455,7 +454,7 @@ def doChemoAgeRange(
         SD.nChemo1 += len(k)
         numChemo1 += len(k)
         SD.n_treatments[
-            #str(mda_t) + ", MDA drug 1 (campaign " + str(label) + str(int(minAge)) + "-" + str(int(maxAge)) + ", )"
+            # str(mda_t) + ", MDA drug 1 (campaign " + str(label) + str(int(minAge)) + "-" + str(int(maxAge)) + ", )"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName1 + ")"
         ] = counts1
         n_people_by_age, _ = np.histogram(
@@ -463,19 +462,17 @@ def doChemoAgeRange(
             bins=np.arange(0, params.maxHostAge + 1),
         )
         SD.n_treatments_population[
-            #str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            # str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName1 + ")"
         ] = n_people_by_age
-        
+
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params.DrugEfficacy2
         k = np.where(drug == 2)[0]
 
         femaleToDie = np.random.binomial(
-            size=len(k),
-            n=np.array(SD.worms.female[ll[k]], dtype="int32"),
-            p=dEff
+            size=len(k), n=np.array(SD.worms.female[ll[k]], dtype="int32"), p=dEff
         )
 
         maleToDie = np.random.binomial(
@@ -493,7 +490,6 @@ def doChemoAgeRange(
         numChemo2 += len(k)
         SD.n_treatments[
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName2 + ")"
-            
         ] = counts2
 
         n_people_by_age, _ = np.histogram(
@@ -504,7 +500,6 @@ def doChemoAgeRange(
             str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName2 + ")"
         ] = n_people_by_age
 
-    
     propTreated1 = numChemo1 / sum(correctAges)
     propTreated2 = numChemo2 / sum(correctAges)
     SD.ageAtChemo.append(t - SD.demography.birthDate)
@@ -514,9 +509,9 @@ def doChemoAgeRange(
 
 
 def doVaccine(
-    params: Parameters, 
-    SD: SDEquilibrium, 
-    t: int, 
+    params: Parameters,
+    SD: SDEquilibrium,
+    t: int,
     VaccCoverage: ndarray,
     label: int,
 ) -> SDEquilibrium:
@@ -541,7 +536,7 @@ def doVaccine(
     assert SD.VaccTreatmentAgeGroupIndices is not None
     temp = ((SD.VaccTreatmentAgeGroupIndices + 1) // 2) - 1
     vaccinate = np.random.uniform(low=0, high=1, size=params.N) < VaccCoverage[temp]
-    
+
     indicesToVaccinate = []
     for i in range(len(params.VaccTreatmentBreaks)):
         indicesToVaccinate.append(1 + i * 2)
@@ -554,17 +549,14 @@ def doVaccine(
     # get age of each individual
     ages = t - SD.demography.birthDate
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
-    SD.n_treatments[
-            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
-        ] = vaccs
-        
+    SD.n_treatments[str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"] = vaccs
     n_people_by_age, _ = np.histogram(
-            ages,
-            bins=np.arange(0, params.maxHostAge + 1),
-        )
+        ages,
+        bins=np.arange(0, params.maxHostAge + 1),
+    )
     SD.n_treatments_population[
-            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
-        ] = n_people_by_age
+        str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
+    ] = n_people_by_age
     return SD
 
 
@@ -603,23 +595,20 @@ def doVaccineAgeRange(
     ages = t - SD.demography.birthDate
     correctAges = np.logical_and(ages <= maxAge, ages >= minAge)
     # they're compliers and it's their turn
-    #vaccNow = np.logical_and(vaccinate, SD.compliers)
+    # vaccNow = np.logical_and(vaccinate, SD.compliers)
     vaccNow = np.logical_and(vaccinate, correctAges)
     SD.sv[vaccNow] = 1
     SD.vaccCount += sum(vaccNow)
-    propVacc = sum(vaccNow)/sum(correctAges)
+    propVacc = sum(vaccNow) / sum(correctAges)
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
-    SD.n_treatments[
-            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
-        ] = vaccs
-        
+    SD.n_treatments[str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"] = vaccs
     n_people_by_age, _ = np.histogram(
-            ages,
-            bins=np.arange(0, params.maxHostAge + 1),
-        )
+        ages,
+        bins=np.arange(0, params.maxHostAge + 1),
+    )
     SD.n_treatments_population[
-            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
-        ] = n_people_by_age
+        str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
+    ] = n_people_by_age
     return SD, propVacc
 
 
@@ -627,7 +616,7 @@ def doVectorControl(
     params: Parameters,
     SD: SDEquilibrium,
     vectorCoverage: ndarray,
-    ) -> SDEquilibrium:
+) -> SDEquilibrium:
     """
     Vector control function.
     Parameters
@@ -644,40 +633,48 @@ def doVectorControl(
         dataclass containing the updated equilibrium parameter values;
     """
     SD.freeLiving = SD.freeLiving * (1 - vectorCoverage)
-    
+
     return SD
 
+
 def conductKKSurvey(
-        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str, writeSurvey: bool,
+    SD: SDEquilibrium,
+    params: Parameters,
+    t: float,
+    sampleSize: int,
+    nSamples: int,
+    surveyType: str,
+    writeSurvey: bool,
 ) -> Tuple[SDEquilibrium, float]:
-    
     minAge = params.minSurveyAge
     maxAge = params.maxSurveyAge
-   
+
     # get Kato-Katz eggs for each individual
     # if nSamples < 1:
     #     raise ValueError("nSamples < 1")
 
-
-
-    if surveyType == 'KK1':
+    if surveyType == "KK1":
         nSamples = 1
-    else: 
+    else:
         nSamples = 2
         # eggCounts = KKsampleGammaGammaPois(
         #     SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
         #     )
-    eggCounts = getSetOfEggCounts(SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples, surveyType)
-    
-        
+    eggCounts = getSetOfEggCounts(
+        SD.worms.total,
+        SD.worms.female,
+        SD.sv,
+        params,
+        params.Unfertilized,
+        nSamples,
+        surveyType,
+    )
+
     eggCounts = eggCounts / nSamples
 
     # get individuals in chosen survey age group
     ages = -(SD.demography.birthDate - t)
     surveyAged = np.logical_and(ages >= minAge, ages <= maxAge)
-
-    # get egg counts for those individuals
-    surveyEggs = eggCounts[surveyAged]
 
     # get number of samples to take
     KKSampleSize = min(sampleSize, sum(surveyAged))
@@ -688,41 +685,39 @@ def conductKKSurvey(
     # get the eggs for these sampled people
     sampledEggs = eggCounts[sample_indices]
     # get the number of people of each age that are surveyed
-    surveys, _ = np.histogram(ages[sample_indices], bins=np.arange(params.maxHostAge + 1))
-    if writeSurvey == True:
+    surveys, _ = np.histogram(
+        ages[sample_indices], bins=np.arange(params.maxHostAge + 1)
+    )
+    if writeSurvey:
         # add this to the SD n surveys dict
-        SD.n_surveys[
-                str(t) + "," + str("surveys")
-            ] = surveys
+        SD.n_surveys[str(t) + "," + str("surveys")] = surveys
         # get the number of people in each age group
         n_people_by_age, _ = np.histogram(
-                ages,
-                bins=np.arange(0, params.maxHostAge + 1),
-            )
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
         # add this to the SD n survey population dict
-        SD.n_surveys_population[
-                str(t) + "," + str("surveys")
-            ] = n_people_by_age
-        
+        SD.n_surveys_population[str(t) + "," + str("surveys")] = n_people_by_age
+
     positivity = np.count_nonzero(sampledEggs) / KKSampleSize
-    return SD, positivity 
-
-
+    return SD, positivity
 
 
 def conductPOCCCASurvey(
-        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int,  writeSurvey: bool,
+    SD: SDEquilibrium,
+    params: Parameters,
+    t: float,
+    sampleSize: int,
+    writeSurvey: bool,
 ) -> Tuple[SDEquilibrium, float]:
     minAge = params.minSurveyAge
     maxAge = params.maxSurveyAge
     # minAge = 5
     # maxAge = 15
     # get Kato-Katz eggs for each individual
-    
-    
-    POC_CCA_antigen = POC_CCA_test( SD.worms.total, params)
-            
-    
+
+    POC_CCA_antigen = POC_CCA_test(SD.worms.total, params)
+
     # get individuals in chosen survey age group
     ages = -(SD.demography.birthDate - t)
     surveyAged = np.logical_and(ages >= minAge, ages <= maxAge)
@@ -735,43 +730,42 @@ def conductPOCCCASurvey(
     # which people are in the required age range
     true_indices = np.where(surveyAged)[0]
     # sample from these people
-    sample_indices = np.random.choice(true_indices, size=POC_CCA_SampleSize, replace=False)
+    sample_indices = np.random.choice(
+        true_indices, size=POC_CCA_SampleSize, replace=False
+    )
     # get the eggs for these sampled people
     samples = surveyPOC_CCA[sample_indices]
     # get the number of people of each age that are surveyed
-    surveys, _ = np.histogram(ages[sample_indices], bins=np.arange(params.maxHostAge + 1))
-    if writeSurvey == True:
-    # add this to the SD n surveys dict
-        SD.n_surveys[
-                str(t) + "," + str("surveys")
-            ] = surveys
+    surveys, _ = np.histogram(
+        ages[sample_indices], bins=np.arange(params.maxHostAge + 1)
+    )
+    if writeSurvey:
+        # add this to the SD n surveys dict
+        SD.n_surveys[str(t) + "," + str("surveys")] = surveys
         # get the number of people in each age group
         n_people_by_age, _ = np.histogram(
-                ages,
-                bins=np.arange(0, params.maxHostAge + 1),
-            )
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
         # add this to the SD n survey population dict
-        SD.n_surveys_population[
-                str(t) + "," + str("surveys")
-            ] = n_people_by_age
+        SD.n_surveys_population[str(t) + "," + str("surveys")] = n_people_by_age
         # sampledPOC_CCA = np.random.choice(
         #     a=np.array(surveyPOC_CCA), size=int(POC_CCA_SampleSize), replace=False
     # )
     positivity = sum(samples > 0) / POC_CCA_SampleSize
-    return SD, positivity 
+    return SD, positivity
 
 
 def conductPCRSurvey(
-        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int
+    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int
 ) -> Tuple[SDEquilibrium, float]:
     minAge = params.minSurveyAge
     maxAge = params.maxSurveyAge
 
     # get Kato-Katz eggs for each individual
-    
-    PCR_antigen = PCR_test( SD.worms.total, SD.worms.female, params)
-            
-    
+
+    PCR_antigen = PCR_test(SD.worms.total, SD.worms.female, params)
+
     # get individuals in chosen survey age group
     ages = -(SD.demography.birthDate - t)
     surveyAged = np.logical_and(ages >= minAge, ages <= maxAge)
@@ -786,50 +780,64 @@ def conductPCRSurvey(
         a=np.array(surveyPCR), size=int(PCR_SampleSize), replace=False
     )
     positivity = sum(sampledPCR > 0) / PCR_SampleSize
-    return positivity 
+    return positivity
+
 
 def conductSurvey(
-    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str, writeSurvey: bool
+    SD: SDEquilibrium,
+    params: Parameters,
+    t: float,
+    sampleSize: int,
+    nSamples: int,
+    surveyType: str,
+    writeSurvey: bool,
 ) -> Tuple[SDEquilibrium, float]:
     # get min and max age for survey
     if sampleSize > 0:
-        if (surveyType == 'KK1') | (surveyType == 'KK2'):
-            SD, positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType, writeSurvey)
-        if surveyType == 'POC-CCA':
+        if (surveyType == "KK1") | (surveyType == "KK2"):
+            SD, positivity = conductKKSurvey(
+                SD, params, t, sampleSize, nSamples, surveyType, writeSurvey
+            )
+        if surveyType == "POC-CCA":
             SD, positivity = conductPOCCCASurvey(SD, params, t, sampleSize, writeSurvey)
-        if surveyType == 'PCR':
+        if surveyType == "PCR":
             positivity = conductPCRSurvey(SD, params, t, sampleSize)
         SD.numSurvey += 1
     else:
         ages = -(SD.demography.birthDate - t)
-        
+
         # get the number of people in each age group
         n_people_by_age, _ = np.histogram(
-                ages,
-                bins=np.arange(0, params.maxHostAge + 1),
-            )
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
         # add this to the SD n survey population dict
-        SD.n_surveys_population[
-                str(t) + "," + str("surveys")
-            ] = n_people_by_age
-        SD.n_surveys[
-                str(t) + "," + str("surveys")
-            ] = np.zeros(len(n_people_by_age))
+        SD.n_surveys_population[str(t) + "," + str("surveys")] = n_people_by_age
+        SD.n_surveys[str(t) + "," + str("surveys")] = np.zeros(len(n_people_by_age))
         positivity = 0
     # return the prevalence
     return SD, positivity
 
 
 def conductSurveyTwo(
-    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: int
+    SD: SDEquilibrium,
+    params: Parameters,
+    t: float,
+    sampleSize: int,
+    nSamples: int,
+    surveyType: int,
 ) -> Tuple[SDEquilibrium, float]:
-
     # get Kato-Katz eggs for each individual
     if nSamples < 1:
         raise ValueError("nSamples < 1")
     eggCounts = getSetOfEggCounts(
-        SD.worms.total, SD.worms.female, SD.sv, params, params.Unfertilized,  nSamples,
-        surveyType
+        SD.worms.total,
+        SD.worms.female,
+        SD.sv,
+        params,
+        params.Unfertilized,
+        nSamples,
+        surveyType,
     )
     for _ in range(nSamples):
         eggCounts = np.add(
@@ -841,7 +849,7 @@ def conductSurveyTwo(
                 params,
                 params.Unfertilized,
                 nSamples,
-                surveyType
+                surveyType,
             ),
         )
     eggCounts = eggCounts / nSamples
