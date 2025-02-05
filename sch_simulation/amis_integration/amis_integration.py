@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import os
-import time
 from typing import Literal
 import pandas as pd
 import pickle
@@ -118,11 +117,7 @@ def run_and_extract_results(
     R0 = parameter_set[0]
     k = parameter_set[1]
 
-    start_time = time.time()
-
     results, end_state = returnYearlyPrevalenceEstimate(R0, k, seed, fixed_parameters)
-
-    end_time = time.time()
 
     return extract_relevant_results(results, year_indices), end_state
 

@@ -974,13 +974,6 @@ def multiple_simulations_after_burnin(
     raw_data.n_surveys = {}
     raw_data.n_surveys_population = {}
 
-    worms = helsim_structures.Worms(
-        total=raw_data.worms.total, female=raw_data.worms.female
-    )
-    demography = helsim_structures.Demography(
-        birthDate=raw_data.demography.birthDate,
-        deathDate=raw_data.demography.deathDate,
-    )
     simData = raw_data
 
     # Convert all layers to correct data format
