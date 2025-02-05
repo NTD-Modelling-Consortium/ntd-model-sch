@@ -1,11 +1,23 @@
-from sch_simulation.helsim_RUN_KK import *
-from sch_simulation.helsim_FUNC_KK import *
-from sch_simulation.helsim_FUNC_KK.results_processing import getBurdens
-import pickle
-import numpy as np
-import time
-import os
+import copy
 from multiprocessing import Pool
+import os
+import pickle
+import time
+
+from joblib import Parallel, delayed
+import numpy as np
+import pandas as pd
+
+from sch_simulation.helsim_FUNC_KK import (
+    configuration,
+    file_parsing,
+    results_processing,
+    utils,
+)
+from sch_simulation.helsim_RUN_KK import (
+    doRealizationSurveyCoveragePickle,
+    loadParameters,
+)
 
 species = "ascaris"
 
@@ -26,9 +38,9 @@ def adjustR0AndKParams(parameters, R0, k):
     parameters.k = k
 
     # configure the parameters
-    parameters = configure(parameters)
-    parameters.psi = getPsi(parameters)
-    parameters.equiData = getEquilibrium(parameters)
+    parameters = configuration.configure(parameters)
+    parameters.psi = utils.getPsi(parameters)
+    parameters.equiData = configuration.getEquilibrium(parameters)
     return parameters
 
 
@@ -38,7 +50,7 @@ def generateSimData(seed, params, R0, k):
     # to generate the new population for each simulation
     params = adjustR0AndKParams(params, R0, k)
     # return the starting simData
-    return setupSD(params)
+    return configuration.setupSD(params)
 
 
 def constructNTDMCResults(params, res, startYear):
@@ -94,16 +106,18 @@ def returnNTDMCOutputs(
     nSamples=2,
     sampleSize=100,
 ):
-    output = extractHostData([results])
-    prevalence, _, medium_prevalence, heavy_prevalence, _ = getBurdens(
-        output,
-        params,
-        numReps,
-        ageBand,
-        params.Unfertilized,
-        surveyType,
-        nSamples,
-        sampleSize,
+    output = results_processing.extractHostData([results])
+    prevalence, _, medium_prevalence, heavy_prevalence, _ = (
+        results_processing.getBurdens(
+            output,
+            params,
+            numReps,
+            ageBand,
+            params.Unfertilized,
+            surveyType,
+            nSamples,
+            sampleSize,
+        )
     )
     allTimes = output[0].timePoints + startYear
     if PopType == "SAC":
@@ -216,13 +230,13 @@ def wrap_function(iu):
     """
 
     # read in parameter and coverage files
-    _ = parse_coverage_input(coverageFileName, coverageTextFileStorageName)
+    _ = file_parsing.parse_coverage_input(coverageFileName, coverageTextFileStorageName)
     # initialize the parameters
     params = loadParameters(paramFileName, demogName)
     # add coverage data to parameters file
-    params = readCoverageFile(coverageTextFileStorageName, params)
+    params = file_parsing.readCoverageFile(coverageTextFileStorageName, params)
     # add vector control data to parameters
-    params = parse_vector_control_input(coverageFileName, params)
+    params = file_parsing.parse_vector_control_input(coverageFileName, params)
 
     # read in fitted parameters for IU
     simparams = pd.read_csv(RkFilePath)
